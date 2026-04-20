@@ -1,0 +1,1875 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>乡村农场生活</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+            background-color: #2d5a27;
+            color: #333;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .game-wrapper {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 10px;
+        }
+
+        /* 顶部栏 */
+        .top-bar {
+            background: rgba(255,255,255,0.95);
+            border-radius: 15px;
+            padding: 12px 15px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .top-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .top-item .icon { font-size: 20px; }
+        .coins { color: #e6a817; }
+        .level { color: #4a7c59; }
+        .season { color: #5a7d9a; }
+        .day { color: #8b5a2b; }
+
+        /* 主区域 */
+        .main-area {
+            background: rgba(255,255,255,0.95);
+            border-radius: 15px;
+            padding: 15px;
+            min-height: 420px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+            position: relative;
+        }
+
+        .page-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #4a7c59;
+            margin-bottom: 15px;
+            text-align: center;
+            padding-bottom: 10px;
+            border-bottom: 2px dashed #c8e6c9;
+        }
+
+        /* ====== 农场场景 ====== */
+        .farm-scene {
+            position: relative;
+            width: 100%;
+            height: 380px;
+            background:
+                radial-gradient(circle at 20% 80%, rgba(139,195,74,0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(139,195,74,0.2) 0%, transparent 40%),
+                linear-gradient(180deg, #a5d6a7 0%, #81c784 100%);
+            border-radius: 15px;
+            border: 3px solid #66bb6a;
+            overflow: hidden;
+        }
+        /* 草地纹理 */
+        .farm-scene::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-image:
+                radial-gradient(circle, #66bb6a 1px, transparent 1px);
+            background-size: 20px 20px;
+            opacity: 0.15;
+            pointer-events: none;
+        }
+        /* 栅栏 */
+        .fence-top, .fence-bottom, .fence-left, .fence-right {
+            position: absolute;
+            background: #8d6e63;
+            z-index: 5;
+        }
+        .fence-top {
+            top: 0; left: 0; right: 0; height: 8px;
+            background: repeating-linear-gradient(90deg, #8d6e63 0px, #8d6e63 15px, #6d4c41 15px, #6d4c41 18px);
+        }
+        .fence-bottom {
+            bottom: 0; left: 0; right: 0; height: 8px;
+            background: repeating-linear-gradient(90deg, #8d6e63 0px, #8d6e63 15px, #6d4c41 15px, #6d4c41 18px);
+        }
+        .fence-left {
+            top: 0; left: 0; bottom: 0; width: 8px;
+            background: repeating-linear-gradient(0deg, #8d6e63 0px, #8d6e63 15px, #6d4c41 15px, #6d4c41 18px);
+        }
+        .fence-right {
+            top: 0; right: 0; bottom: 0; width: 8px;
+            background: repeating-linear-gradient(0deg, #8d6e63 0px, #8d6e63 15px, #6d4c41 15px, #6d4c41 18px);
+        }
+        /* 小水塘 */
+        .pond {
+            position: absolute;
+            bottom: 40px; right: 30px;
+            width: 70px; height: 50px;
+            background: #4fc3f7;
+            border-radius: 50%;
+            opacity: 0.6;
+            z-index: 2;
+        }
+        .pond::after {
+            content: '';
+            position: absolute;
+            top: 5px; left: 10px;
+            width: 50px; height: 35px;
+            background: #81d4fa;
+            border-radius: 50%;
+            opacity: 0.5;
+        }
+        /* 树木 */
+        .tree {
+            position: absolute;
+            font-size: 40px;
+            z-index: 3;
+            pointer-events: none;
+            filter: drop-shadow(1px 2px 2px rgba(0,0,0,0.2));
+        }
+        /* 花朵点缀 */
+        .flower-dot {
+            position: absolute;
+            font-size: 12px;
+            z-index: 2;
+            pointer-events: none;
+            animation: flowerSway 3s ease-in-out infinite;
+        }
+        @keyframes flowerSway {
+            0%, 100% { transform: rotate(-5deg); }
+            50% { transform: rotate(5deg); }
+        }
+
+        /* 动物在场景中 */
+        .scene-animal {
+            position: absolute;
+            cursor: pointer;
+            z-index: 10;
+            transition: left 0.8s ease-in-out, top 0.8s ease-in-out, transform 0.3s;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .scene-animal:hover {
+            z-index: 20;
+        }
+        .scene-animal .animal-emoji {
+            font-size: 38px;
+            display: block;
+            filter: drop-shadow(1px 2px 2px rgba(0,0,0,0.2));
+            transition: transform 0.3s;
+        }
+        .scene-animal:hover .animal-emoji {
+            transform: scale(1.2);
+        }
+        .scene-animal .animal-name-tag {
+            position: absolute;
+            bottom: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255,255,255,0.9);
+            padding: 1px 6px;
+            border-radius: 8px;
+            font-size: 10px;
+            font-weight: bold;
+            color: #33691e;
+            white-space: nowrap;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .scene-animal:hover .animal-name-tag {
+            opacity: 1;
+        }
+        .scene-animal .product-badge {
+            position: absolute;
+            top: -8px; right: -8px;
+            font-size: 16px;
+            animation: productPulse 1s ease-in-out infinite;
+            filter: drop-shadow(0 1px 2px rgba(0,0,0,0.2));
+        }
+        .scene-animal .pregnant-badge {
+            position: absolute;
+            top: -8px; left: -8px;
+            font-size: 14px;
+        }
+        .scene-animal .mood-indicator {
+            position: absolute;
+            top: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        .scene-animal .thought-bubble {
+            position: absolute;
+            top: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            border-radius: 10px;
+            padding: 3px 8px;
+            font-size: 14px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            animation: bubblePop 2s ease-out forwards;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+        .scene-animal .thought-bubble::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 5px 5px 0;
+            border-style: solid;
+            border-color: white transparent transparent;
+        }
+        @keyframes bubblePop {
+            0% { transform: translateX(-50%) scale(0); opacity: 0; }
+            20% { transform: translateX(-50%) scale(1.1); opacity: 1; }
+            80% { transform: translateX(-50%) scale(1); opacity: 1; }
+            100% { transform: translateX(-50%) scale(1) translateY(-10px); opacity: 0; }
+        }
+        @keyframes productPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.3); }
+        }
+
+        /* 动画状态 */
+        .walking .animal-emoji { animation: walkBounce 0.4s ease-in-out infinite; }
+        @keyframes walkBounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-4px); }
+        }
+        .eating .animal-emoji { animation: eatNibble 0.6s ease-in-out infinite; }
+        @keyframes eatNibble {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(-10deg) translateY(2px); }
+            75% { transform: rotate(10deg) translateY(2px); }
+        }
+        .sleeping .animal-emoji { animation: sleepZzz 2s ease-in-out infinite; opacity: 0.7; }
+        @keyframes sleepZzz {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(0.95); }
+        }
+        .sleeping .zzz {
+            position: absolute;
+            top: -15px; right: -5px;
+            font-size: 12px;
+            animation: zzzFloat 2s ease-out infinite;
+        }
+        @keyframes zzzFloat {
+            0% { transform: translateY(0) translateX(0); opacity: 1; }
+            100% { transform: translateY(-20px) translateX(5px); opacity: 0; }
+        }
+        .playing .animal-emoji { animation: playJump 0.5s ease-in-out infinite; }
+        @keyframes playJump {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-10px) rotate(-5deg); }
+        }
+
+        .add-animal-btn {
+            position: absolute;
+            bottom: 10px; left: 10px;
+            background: rgba(255,255,255,0.9);
+            border: 2px dashed #4caf50;
+            border-radius: 12px;
+            padding: 8px 15px;
+            cursor: pointer;
+            font-size: 13px;
+            color: #4caf50;
+            font-weight: bold;
+            z-index: 15;
+            transition: all 0.2s;
+        }
+        .add-animal-btn:hover {
+            background: #e8f5e9;
+            transform: scale(1.05);
+        }
+
+        .empty-farm-msg {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: rgba(0,0,0,0.3);
+            z-index: 4;
+        }
+        .empty-farm-msg .big { font-size: 50px; }
+
+        /* 田地页面 */
+        .field-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 10px;
+            padding: 5px;
+        }
+        .plot {
+            background: #d7ccc8;
+            border-radius: 12px;
+            padding: 10px;
+            text-align: center;
+            min-height: 110px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+            position: relative;
+        }
+        .plot.planted {
+            background: #e8f5e9;
+            border-color: #c8e6c9;
+        }
+        .plot:hover {
+            transform: scale(1.03);
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+        .plot .plot-emoji {
+            font-size: 36px;
+            display: block;
+            margin-bottom: 5px;
+        }
+        .plot .plot-name {
+            font-size: 12px;
+            font-weight: bold;
+            color: #33691e;
+        }
+        .plot .plot-progress {
+            font-size: 10px;
+            color: #666;
+            margin-top: 3px;
+        }
+        .plot .plot-water {
+            font-size: 10px;
+            color: #2196f3;
+            margin-top: 2px;
+        }
+        .plot .harvest-ready {
+            position: absolute;
+            top: -5px; right: -5px;
+            font-size: 18px;
+            animation: productPulse 1s ease-in-out infinite;
+        }
+        .plot .plot-num {
+            position: absolute;
+            top: 3px; left: 6px;
+            font-size: 10px;
+            color: #999;
+        }
+
+        /* 商店页面 */
+        .shop-section {
+            margin-bottom: 20px;
+        }
+        .shop-section-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #4a7c59;
+            margin-bottom: 10px;
+            padding-left: 5px;
+            border-left: 4px solid #81c784;
+        }
+        .shop-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 10px;
+        }
+        .shop-item {
+            background: #f5f5f5;
+            border-radius: 12px;
+            padding: 12px;
+            text-align: center;
+            border: 2px solid #e0e0e0;
+            transition: all 0.2s;
+        }
+        .shop-item:hover {
+            border-color: #81c784;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+        }
+        .shop-item .shop-emoji { font-size: 36px; display: block; margin-bottom: 5px; }
+        .shop-item .shop-name { font-size: 13px; font-weight: bold; }
+        .shop-item .shop-desc { font-size: 11px; color: #888; margin: 3px 0; }
+        .shop-item .shop-price { font-size: 14px; color: #e6a817; font-weight: bold; }
+        .shop-item .buy-btn {
+            margin-top: 8px;
+            background: #4caf50;
+            color: white;
+            border: none;
+            padding: 6px 15px;
+            border-radius: 15px;
+            font-size: 12px;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+        .buy-btn:hover { background: #43a047; }
+        .buy-btn:disabled { background: #bdbdbd; cursor: not-allowed; }
+        .buy-btn.locked {
+            background: #9e9e9e;
+            cursor: not-allowed;
+        }
+
+        /* 仓库页面 */
+        .inventory-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+            gap: 10px;
+            padding: 5px;
+        }
+        .inv-item {
+            background: #fff8e1;
+            border-radius: 12px;
+            padding: 12px 8px;
+            text-align: center;
+            border: 2px solid #ffe0b2;
+            position: relative;
+        }
+        .inv-item .inv-emoji { font-size: 32px; display: block; margin-bottom: 3px; }
+        .inv-item .inv-name { font-size: 12px; font-weight: bold; }
+        .inv-item .inv-count {
+            position: absolute;
+            top: 5px; right: 8px;
+            background: #ff9800;
+            color: white;
+            font-size: 11px;
+            font-weight: bold;
+            padding: 2px 6px;
+            border-radius: 10px;
+        }
+        .inv-item .sell-btn {
+            margin-top: 6px;
+            background: #ff9800;
+            color: white;
+            border: none;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 11px;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .sell-btn:hover { background: #f57c00; }
+
+        /* 升级页面 */
+        .upgrade-card {
+            background: #e3f2fd;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border: 2px solid #bbdefb;
+        }
+        .upgrade-card .up-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #1565c0;
+            margin-bottom: 8px;
+        }
+        .upgrade-card .up-desc {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+        .upgrade-card .up-cost {
+            font-size: 14px;
+            color: #e6a817;
+            font-weight: bold;
+        }
+        .upgrade-card .up-btn {
+            margin-top: 10px;
+            background: #2196f3;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 15px;
+            font-size: 13px;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .up-btn:hover { background: #1976d2; }
+        .up-btn:disabled { background: #bdbdbd; cursor: not-allowed; }
+        .up-btn.maxed { background: #4caf50; cursor: default; }
+
+        /* 成就页面 */
+        .ach-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .ach-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 15px;
+            background: #f5f5f5;
+            border-radius: 12px;
+            border: 2px solid #e0e0e0;
+        }
+        .ach-item.completed {
+            background: #e8f5e9;
+            border-color: #a5d6a7;
+        }
+        .ach-item .ach-emoji { font-size: 32px; }
+        .ach-item .ach-info { flex: 1; }
+        .ach-item .ach-name { font-size: 14px; font-weight: bold; }
+        .ach-item .ach-desc { font-size: 12px; color: #888; }
+        .ach-item .ach-reward { font-size: 12px; color: #e6a817; }
+        .ach-item .ach-status {
+            font-size: 20px;
+        }
+
+        /* 底部导航 */
+        .bottom-nav {
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 5px;
+            background: rgba(255,255,255,0.95);
+            border-radius: 15px;
+            margin-top: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+        }
+        .nav-btn {
+            background: none;
+            border: none;
+            color: #888;
+            cursor: pointer;
+            font-size: 12px;
+            padding: 6px 12px;
+            border-radius: 12px;
+            transition: all 0.2s;
+            font-family: inherit;
+            text-align: center;
+        }
+        .nav-btn.active {
+            color: #4a7c59;
+            background: #e8f5e9;
+        }
+        .nav-btn .nav-emoji { font-size: 22px; display: block; margin-bottom: 1px; }
+
+        /* 弹窗 */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+        .modal-overlay.hidden { display: none; }
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            max-width: 380px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        .modal-title {
+            font-size: 18px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 15px;
+            color: #4a7c59;
+        }
+        .modal-close {
+            text-align: center;
+            margin-top: 15px;
+        }
+        .btn {
+            background: #4caf50;
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 20px;
+            font-size: 14px;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+        .btn:hover { background: #43a047; }
+        .btn-secondary {
+            background: #9e9e9e;
+        }
+        .btn-secondary:hover { background: #757575; }
+
+        .hidden { display: none !important; }
+
+        /* 进度条 */
+        .progress-bar {
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 4px;
+        }
+        .progress-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.3s;
+        }
+        .fill-green { background: #4caf50; }
+        .fill-blue { background: #2196f3; }
+        .fill-orange { background: #ff9800; }
+
+        /* 通知 */
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #4caf50;
+            color: white;
+            padding: 10px 25px;
+            border-radius: 20px;
+            font-size: 14px;
+            z-index: 300;
+            animation: notifIn 0.3s ease-out;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        @keyframes notifIn {
+            0% { transform: translateX(-50%) translateY(-20px); opacity: 0; }
+            100% { transform: translateX(-50%) translateY(0); opacity: 1; }
+        }
+
+        /* 浮动文字 */
+        .float-text {
+            position: fixed;
+            font-size: 16px;
+            font-weight: bold;
+            pointer-events: none;
+            z-index: 200;
+            animation: floatUp 1s ease-out forwards;
+        }
+        @keyframes floatUp {
+            0% { transform: translateY(0); opacity: 1; }
+            100% { transform: translateY(-50px); opacity: 0; }
+        }
+
+        @media (max-width: 600px) {
+            .farm-scene { height: 320px; }
+            .scene-animal .animal-emoji { font-size: 30px; }
+            .field-grid { grid-template-columns: repeat(3, 1fr); }
+            .shop-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-wrapper">
+        <div class="top-bar">
+            <div class="top-item coins"><span class="icon">🪙</span><span id="coins">500</span></div>
+            <div class="top-item level"><span class="icon">⭐</span>Lv.<span id="level">1</span></div>
+            <div class="top-item season"><span class="icon" id="seasonIcon">🌸</span><span id="season">春季</span></div>
+            <div class="top-item day"><span class="icon">📅</span>第<span id="day">1</span>天</div>
+        </div>
+
+        <div class="main-area" id="mainArea"></div>
+
+        <div class="bottom-nav">
+            <button class="nav-btn active" data-page="farm" onclick="switchPage('farm')">
+                <span class="nav-emoji">🏠</span>农场
+            </button>
+            <button class="nav-btn" data-page="field" onclick="switchPage('field')">
+                <span class="nav-emoji">🌾</span>田地
+            </button>
+            <button class="nav-btn" data-page="shop" onclick="switchPage('shop')">
+                <span class="nav-emoji">🏪</span>商店
+            </button>
+            <button class="nav-btn" data-page="inventory" onclick="switchPage('inventory')">
+                <span class="nav-emoji">📦</span>仓库
+            </button>
+            <button class="nav-btn" data-page="upgrade" onclick="switchPage('upgrade')">
+                <span class="nav-emoji">🔨</span>扩建
+            </button>
+            <button class="nav-btn" data-page="achievements" onclick="switchPage('achievements')">
+                <span class="nav-emoji">🏆</span>成就
+            </button>
+        </div>
+    </div>
+
+    <!-- 动物详情弹窗 -->
+    <div class="modal-overlay hidden" id="animalModal">
+        <div class="modal-content">
+            <div class="modal-title" id="animalModalTitle">动物详情</div>
+            <div id="animalModalBody"></div>
+            <div class="modal-close">
+                <button class="btn btn-secondary" onclick="closeModal('animalModal')">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 种植选择弹窗 -->
+    <div class="modal-overlay hidden" id="plantModal">
+        <div class="modal-content">
+            <div class="modal-title">选择种子</div>
+            <div id="plantModalBody"></div>
+            <div class="modal-close">
+                <button class="btn btn-secondary" onclick="closeModal('plantModal')">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============ 游戏数据 ============
+        const ANIMAL_TYPES = {
+            chick: { name: '小鸡', emoji: '🐤', stages: ['🐤', '🐔', '🐓'], stageNames: ['幼崽', '成年', '壮年期'], growthNeeded: [0, 100, 300], product: 'egg', productEmoji: '🥚', productName: '鸡蛋', productPrice: 15 },
+            cat: { name: '小猫', emoji: '🐱', stages: ['🐱', '🐈', '🐈‍⬛'], stageNames: ['幼崽', '成年', '壮年期'], growthNeeded: [0, 120, 350], product: 'wool', productEmoji: '🧶', productName: '毛线', productPrice: 20 },
+            dog: { name: '小狗', emoji: '🐶', stages: ['🐶', '🐕', '🦮'], stageNames: ['幼崽', '成年', '壮年期'], growthNeeded: [0, 150, 400], product: 'bone', productEmoji: '🦴', productName: '骨头', productPrice: 25 },
+            cow: { name: '小牛', emoji: '🐮', stages: ['🐮', '🐄', '🐂'], stageNames: ['幼崽', '成年', '壮年期'], growthNeeded: [0, 200, 500], product: 'milk', productEmoji: '🥛', productName: '牛奶', productPrice: 40 },
+            pig: { name: '小猪', emoji: '🐷', stages: ['🐷', '🐖', '🐗'], stageNames: ['幼崽', '成年', '壮年期'], growthNeeded: [0, 180, 450], product: 'truffle', productEmoji: '🍄', productName: '松露', productPrice: 50 },
+            sheep: { name: '小羊', emoji: '🐑', stages: ['🐑', '🐏', '🦙'], stageNames: ['幼崽', '成年', '壮年期'], growthNeeded: [0, 160, 400], product: 'wool2', productEmoji: '🧵', productName: '羊毛', productPrice: 35 },
+        };
+
+        const CROP_TYPES = {
+            wheat: { name: '小麦', emoji: '🌾', seedPrice: 10, sellPrice: 25, growTime: 30, season: ['spring', 'summer', 'autumn'] },
+            carrot: { name: '胡萝卜', emoji: '🥕', seedPrice: 15, sellPrice: 40, growTime: 60, season: ['spring', 'autumn', 'winter'] },
+            tomato: { name: '番茄', emoji: '🍅', seedPrice: 20, sellPrice: 55, growTime: 90, season: ['summer', 'autumn'] },
+            corn: { name: '玉米', emoji: '🌽', seedPrice: 25, sellPrice: 70, growTime: 120, season: ['summer'] },
+            strawberry: { name: '草莓', emoji: '🍓', seedPrice: 30, sellPrice: 90, growTime: 150, season: ['spring'] },
+            pumpkin: { name: '南瓜', emoji: '🎃', seedPrice: 40, sellPrice: 120, growTime: 180, season: ['autumn'] },
+            potato: { name: '土豆', emoji: '🥔', seedPrice: 18, sellPrice: 45, growTime: 75, season: ['spring', 'autumn', 'winter'] },
+        };
+
+        const SEASONS = {
+            spring: { name: '春季', emoji: '🌸', cropBonus: 1.2 },
+            summer: { name: '夏季', emoji: '☀️', cropBonus: 1.0 },
+            autumn: { name: '秋季', emoji: '🍂', cropBonus: 1.1 },
+            winter: { name: '冬季', emoji: '❄️', cropBonus: 0.8 },
+        };
+
+        const SEASON_ORDER = ['spring', 'summer', 'autumn', 'winter'];
+
+        const UPGRADES = {
+            field: { name: '扩建田地', desc: '增加一块种植土地', baseCost: 200, costScale: 1.5, max: 16, icon: '🌱' },
+            barn: { name: '扩建畜棚', desc: '增加一个动物栏位', baseCost: 300, costScale: 1.6, max: 12, icon: '🏠' },
+            well: { name: '升级水井', desc: '浇水效果提升，作物生长加速', baseCost: 500, costScale: 2.0, max: 5, icon: '🌊' },
+            house: { name: '升级农舍', desc: '解锁更多高级动物', baseCost: 1000, costScale: 2.5, max: 3, icon: '🏡' },
+        };
+
+        const ACHIEVEMENTS = [
+            { id: 'first_animal', name: '初次饲养', desc: '拥有第一只动物', emoji: '🐤', reward: 50, check: (s) => s.animals.length >= 1 },
+            { id: 'five_animals', name: '动物爱好者', desc: '拥有5只动物', emoji: '🐾', reward: 100, check: (s) => s.animals.length >= 5 },
+            { id: 'first_crop', name: '初次收获', desc: '收获第一茬作物', emoji: '🌾', reward: 50, check: (s) => s.stats.cropsHarvested >= 1 },
+            { id: 'rich', name: '小有积蓄', desc: '拥有500月见币', emoji: '💰', reward: 100, check: (s) => s.coins >= 500 },
+            { id: 'wealthy', name: '农场大亨', desc: '拥有2000月见币', emoji: '🪙', reward: 300, check: (s) => s.coins >= 2000 },
+            { id: 'harvest_10', name: '丰收季节', desc: '累计收获10次作物', emoji: '🌻', reward: 100, check: (s) => s.stats.cropsHarvested >= 10 },
+            { id: 'harvest_50', name: '大丰收', desc: '累计收获50次作物', emoji: '🌽', reward: 300, check: (s) => s.stats.cropsHarvested >= 50 },
+            { id: 'level_5', name: '农场升级', desc: '农场达到5级', emoji: '⭐', reward: 200, check: (s) => s.level >= 5 },
+            { id: 'breed_first', name: '生命奇迹', desc: '第一次动物繁殖', emoji: '💕', reward: 100, check: (s) => s.stats.bred >= 1 },
+            { id: 'sell_100', name: '交易达人', desc: '累计出售获得100月见币', emoji: '📈', reward: 150, check: (s) => s.stats.sold >= 100 },
+        ];
+
+        // ============ 游戏状态 ============
+        let gameState = loadGame();
+
+        function getInitialState() {
+            const now = new Date();
+            const month = now.getMonth() + 1;
+            let season = 'spring';
+            if (month >= 6 && month <= 8) season = 'summer';
+            else if (month >= 9 && month <= 11) season = 'autumn';
+            else if (month === 12 || month <= 2) season = 'winter';
+
+            return {
+                coins: 200,
+                level: 1,
+                xp: 0,
+                xpNeeded: 100,
+                season: season,
+                day: 1,
+                gameTime: 0,
+                animals: [],
+                plots: Array(4).fill(null).map((_, i) => ({ id: i, crop: null })),
+                inventory: {},
+                upgrades: { field: 4, barn: 3, well: 1, house: 1 },
+                achievements: [],
+                stats: { cropsHarvested: 0, sold: 0, bred: 0, fed: 0 },
+                nextAnimalId: 1,
+                lastTick: Date.now(),
+            };
+        }
+
+        function loadGame() {
+            try {
+                const saved = localStorage.getItem('farmLifeGame');
+                if (saved) {
+                    const data = JSON.parse(saved);
+                    // 给已有动物添加位置和行为数据
+                    data.animals.forEach(a => {
+                        if (a.x === undefined) a.x = 10 + Math.random() * 70;
+                        if (a.y === undefined) a.y = 10 + Math.random() * 70;
+                        if (a.behavior === undefined) a.behavior = 'idle';
+                        if (a.behaviorTimer === undefined) a.behaviorTimer = 0;
+                        if (a.targetX === undefined) a.targetX = a.x;
+                        if (a.targetY === undefined) a.targetY = a.y;
+                        if (a.facing === undefined) a.facing = 1;
+                        if (a.speed === undefined) a.speed = 0.3 + Math.random() * 0.4;
+                    });
+                    return data;
+                }
+            } catch (e) {}
+            return getInitialState();
+        }
+
+        function saveGame() {
+            localStorage.setItem('farmLifeGame', JSON.stringify(gameState));
+        }
+
+        // ============ 工具函数 ============
+        function showNotification(text) {
+            const el = document.createElement('div');
+            el.className = 'notification';
+            el.textContent = text;
+            document.body.appendChild(el);
+            setTimeout(() => el.remove(), 2000);
+        }
+
+        function showFloatText(x, y, text) {
+            const el = document.createElement('div');
+            el.className = 'float-text';
+            el.textContent = text;
+            el.style.left = x + 'px';
+            el.style.top = y + 'px';
+            document.body.appendChild(el);
+            setTimeout(() => el.remove(), 1000);
+        }
+
+        function getUpgradeCost(type) {
+            const up = UPGRADES[type];
+            const current = gameState.upgrades[type];
+            if (current >= up.max) return null;
+            return Math.floor(up.baseCost * Math.pow(up.costScale, current - 1));
+        }
+
+        function getAnimalStage(animal) {
+            const type = ANIMAL_TYPES[animal.typeId];
+            for (let i = type.growthNeeded.length - 1; i >= 0; i--) {
+                if (animal.growth >= type.growthNeeded[i]) return i;
+            }
+            return 0;
+        }
+
+        function addXp(amount) {
+            gameState.xp += amount;
+            if (gameState.xp >= gameState.xpNeeded) {
+                gameState.level++;
+                gameState.xp -= gameState.xpNeeded;
+                gameState.xpNeeded = Math.floor(gameState.xpNeeded * 1.5);
+                showNotification(`🎉 农场升到 ${gameState.level} 级！`);
+            }
+            saveGame();
+            updateDisplay();
+        }
+
+        // ============ 页面切换 ============
+        let currentPage = 'farm';
+
+        function switchPage(page) {
+            currentPage = page;
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.page === page);
+            });
+            renderPage();
+        }
+
+        function renderPage() {
+            const area = document.getElementById('mainArea');
+            area.innerHTML = '';
+
+            switch (currentPage) {
+                case 'farm': renderFarm(area); break;
+                case 'field': renderField(area); break;
+                case 'shop': renderShop(area); break;
+                case 'inventory': renderInventory(area); break;
+                case 'upgrade': renderUpgrade(area); break;
+                case 'achievements': renderAchievements(area); break;
+            }
+        }
+
+        // ============ 农场场景 ============
+        function renderFarm(area) {
+            const title = document.createElement('div');
+            title.className = 'page-title';
+            title.textContent = '🏠 我的农场';
+            area.appendChild(title);
+
+            const scene = document.createElement('div');
+            scene.className = 'farm-scene';
+            scene.id = 'farmScene';
+
+            // 栅栏
+            scene.innerHTML = `
+                <div class="fence-top"></div>
+                <div class="fence-bottom"></div>
+                <div class="fence-left"></div>
+                <div class="fence-right"></div>
+                <div class="pond"></div>
+                <div class="tree" style="top:20px;left:20px;">🌳</div>
+                <div class="tree" style="top:60px;right:30px;">🌲</div>
+                <div class="tree" style="bottom:80px;left:50px;">🌳</div>
+                <div class="flower-dot" style="top:30%;left:40%;">🌼</div>
+                <div class="flower-dot" style="top:60%;left:70%;">🌻</div>
+                <div class="flower-dot" style="top:45%;left:25%;">🌸</div>
+                <div class="flower-dot" style="bottom:25%;left:45%;">🌺</div>
+                <div class="flower-dot" style="top:20%;left:60%;">🌷</div>
+            `;
+
+            if (gameState.animals.length === 0) {
+                scene.innerHTML += `
+                    <div class="empty-farm-msg">
+                        <div class="big">🌱</div>
+                        <div style="font-size:14px;">农场还是空的</div>
+                        <div style="font-size:12px;margin-top:5px;">去商店购买你的第一只动物吧！</div>
+                    </div>
+                `;
+            } else {
+                gameState.animals.forEach(animal => {
+                    const el = createAnimalElement(animal);
+                    scene.appendChild(el);
+                });
+            }
+
+            // 添加动物按钮
+            const maxAnimals = gameState.upgrades.barn;
+            if (gameState.animals.length < maxAnimals) {
+                const addBtn = document.createElement('button');
+                addBtn.className = 'add-animal-btn';
+                addBtn.textContent = `➕ 添加动物 (${gameState.animals.length}/${maxAnimals})`;
+                addBtn.onclick = () => switchPage('shop');
+                scene.appendChild(addBtn);
+            }
+
+            area.appendChild(scene);
+        }
+
+        function createAnimalElement(animal) {
+            const type = ANIMAL_TYPES[animal.typeId];
+            const stage = getAnimalStage(animal);
+            const el = document.createElement('div');
+            el.className = 'scene-animal';
+            el.id = `animal-${animal.id}`;
+            el.style.left = animal.x + '%';
+            el.style.top = animal.y + '%';
+            el.style.transform = `scaleX(${animal.facing})`;
+
+            // 行为状态类
+            if (animal.behavior === 'walking') el.classList.add('walking');
+            else if (animal.behavior === 'eating') el.classList.add('eating');
+            else if (animal.behavior === 'sleeping') el.classList.add('sleeping');
+            else if (animal.behavior === 'playing') el.classList.add('playing');
+
+            let moodEmoji = '';
+            if (animal.hunger < 20) moodEmoji = '😫';
+            else if (animal.happy < 20) moodEmoji = '😢';
+            else if (animal.hunger > 80 && animal.happy > 80) moodEmoji = '😊';
+
+            const productReady = stage >= 1 && animal.productReady;
+            const pregnant = animal.pregnant;
+
+            el.innerHTML = `
+                ${moodEmoji ? `<span class="mood-indicator">${moodEmoji}</span>` : ''}
+                ${productReady ? `<span class="product-badge">${type.productEmoji}</span>` : ''}
+                ${pregnant ? `<span class="pregnant-badge">🤰</span>` : ''}
+                <span class="animal-emoji">${type.stages[stage]}</span>
+                ${animal.behavior === 'sleeping' ? '<span class="zzz">💤</span>' : ''}
+                <span class="animal-name-tag">${animal.name || type.name}</span>
+            `;
+
+            el.onclick = (e) => {
+                e.stopPropagation();
+                openAnimalModal(animal);
+            };
+
+            return el;
+        }
+
+        // 更新动物位置（不重新渲染）
+        function updateAnimalPositions() {
+            if (currentPage !== 'farm') return;
+            gameState.animals.forEach(animal => {
+                const el = document.getElementById(`animal-${animal.id}`);
+                if (el) {
+                    el.style.left = animal.x + '%';
+                    el.style.top = animal.y + '%';
+                    el.style.transform = `scaleX(${animal.facing})`;
+
+                    // 更新行为类
+                    el.classList.remove('walking', 'eating', 'sleeping', 'playing');
+                    if (animal.behavior === 'walking') el.classList.add('walking');
+                    else if (animal.behavior === 'eating') el.classList.add('eating');
+                    else if (animal.behavior === 'sleeping') el.classList.add('sleeping');
+                    else if (animal.behavior === 'playing') el.classList.add('playing');
+
+                    // 更新睡眠符号
+                    const zzz = el.querySelector('.zzz');
+                    if (animal.behavior === 'sleeping' && !zzz) {
+                        const span = document.createElement('span');
+                        span.className = 'zzz';
+                        span.textContent = '💤';
+                        el.appendChild(span);
+                    } else if (animal.behavior !== 'sleeping' && zzz) {
+                        zzz.remove();
+                    }
+
+                    // 更新产品标记
+                    const badge = el.querySelector('.product-badge');
+                    const type = ANIMAL_TYPES[animal.typeId];
+                    const stage = getAnimalStage(animal);
+                    const shouldShow = stage >= 1 && animal.productReady;
+                    if (shouldShow && !badge) {
+                        const b = document.createElement('span');
+                        b.className = 'product-badge';
+                        b.textContent = type.productEmoji;
+                        el.insertBefore(b, el.firstChild);
+                    } else if (!shouldShow && badge) {
+                        badge.remove();
+                    }
+
+                    // 更新心情
+                    const mood = el.querySelector('.mood-indicator');
+                    let moodEmoji = '';
+                    if (animal.hunger < 20) moodEmoji = '😫';
+                    else if (animal.happy < 20) moodEmoji = '😢';
+                    else if (animal.hunger > 80 && animal.happy > 80) moodEmoji = '😊';
+
+                    if (moodEmoji) {
+                        if (mood) mood.textContent = moodEmoji;
+                        else {
+                            const m = document.createElement('span');
+                            m.className = 'mood-indicator';
+                            m.textContent = moodEmoji;
+                            el.insertBefore(m, el.firstChild);
+                        }
+                    } else if (mood) {
+                        mood.remove();
+                    }
+                }
+            });
+        }
+
+        // 动物行为AI
+        function updateAnimalBehavior() {
+            gameState.animals.forEach(animal => {
+                const type = ANIMAL_TYPES[animal.typeId];
+
+                // 如果动物状态很差，优先表达需求
+                if (animal.hunger < 20) {
+                    animal.behavior = 'idle';
+                    return;
+                }
+
+                animal.behaviorTimer -= 1;
+
+                if (animal.behaviorTimer <= 0) {
+                    // 选择新行为
+                    const behaviors = ['idle', 'walking', 'eating', 'sleeping', 'playing'];
+                    const weights = [30, 40, 15, 10, 5];
+
+                    // 饥饿时更可能吃
+                    if (animal.hunger < 50) weights[2] = 40;
+                    // 困倦时更可能睡
+                    if (animal.happy < 40) weights[3] = 25;
+                    // 开心时更可能玩
+                    if (animal.happy > 70) weights[4] = 15;
+
+                    let total = weights.reduce((a, b) => a + b, 0);
+                    let r = Math.random() * total;
+                    let chosen = 0;
+                    for (let i = 0; i < weights.length; i++) {
+                        r -= weights[i];
+                        if (r <= 0) { chosen = i; break; }
+                    }
+
+                    animal.behavior = behaviors[chosen];
+                    animal.behaviorTimer = 3 + Math.floor(Math.random() * 5); // 3-7秒
+
+                    // 走动时设置目标位置
+                    if (animal.behavior === 'walking') {
+                        animal.targetX = 5 + Math.random() * 85;
+                        animal.targetY = 5 + Math.random() * 80;
+                        animal.facing = animal.targetX > animal.x ? 1 : -1;
+                    }
+                }
+
+                // 执行行为
+                if (animal.behavior === 'walking') {
+                    const dx = animal.targetX - animal.x;
+                    const dy = animal.targetY - animal.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist > 1) {
+                        animal.x += (dx / dist) * animal.speed;
+                        animal.y += (dy / dist) * animal.speed;
+                        animal.facing = dx > 0 ? 1 : -1;
+                    } else {
+                        animal.behavior = 'idle';
+                        animal.behaviorTimer = 2;
+                    }
+                } else if (animal.behavior === 'eating') {
+                    animal.hunger = Math.min(100, animal.hunger + 0.5);
+                } else if (animal.behavior === 'sleeping') {
+                    animal.happy = Math.min(100, animal.happy + 0.3);
+                } else if (animal.behavior === 'playing') {
+                    animal.happy = Math.min(100, animal.happy + 0.5);
+                    animal.hunger = Math.max(0, animal.hunger - 0.2);
+                }
+            });
+        }
+
+        // 显示动物想法气泡
+        function showAnimalThoughts() {
+            if (currentPage !== 'farm') return;
+            gameState.animals.forEach(animal => {
+                const el = document.getElementById(`animal-${animal.id}`);
+                if (!el) return;
+                if (Math.random() > 0.3) return; // 30%概率显示
+                if (el.querySelector('.thought-bubble')) return; // 已有气泡不覆盖
+
+                let thought = '';
+                if (animal.hunger < 30) thought = '😫 好饿...';
+                else if (animal.happy < 30) thought = '😢 无聊...';
+                else if (animal.hunger > 80 && animal.happy > 80) {
+                    const thoughts = ['😊 开心！', '💕 喜欢你！', '🎵 ~', '🌟 舒服~'];
+                    thought = thoughts[Math.floor(Math.random() * thoughts.length)];
+                }
+
+                if (thought) {
+                    const bubble = document.createElement('div');
+                    bubble.className = 'thought-bubble';
+                    bubble.textContent = thought;
+                    el.appendChild(bubble);
+                    setTimeout(() => bubble.remove(), 2000);
+                }
+            });
+        }
+
+        function openAnimalModal(animal) {
+            const type = ANIMAL_TYPES[animal.typeId];
+            const stage = getAnimalStage(animal);
+
+            document.getElementById('animalModalTitle').textContent = animal.name || type.name;
+
+            const body = document.getElementById('animalModalBody');
+            body.innerHTML = `
+                <div style="text-align:center; margin-bottom:15px;">
+                    <div style="font-size:60px;">${type.stages[stage]}</div>
+                    <div style="font-size:14px; color:#888;">${type.stageNames[stage]}</div>
+                </div>
+                <div style="margin-bottom:10px;">
+                    <div style="font-size:12px; display:flex; justify-content:space-between;">
+                        <span>饱食度</span><span>${Math.round(animal.hunger)}%</span>
+                    </div>
+                    <div class="progress-bar"><div class="progress-fill fill-green" style="width:${animal.hunger}%"></div></div>
+                </div>
+                <div style="margin-bottom:10px;">
+                    <div style="font-size:12px; display:flex; justify-content:space-between;">
+                        <span>幸福度</span><span>${Math.round(animal.happy)}%</span>
+                    </div>
+                    <div class="progress-bar"><div class="progress-fill fill-orange" style="width:${animal.happy}%"></div></div>
+                </div>
+                <div style="margin-bottom:15px;">
+                    <div style="font-size:12px; display:flex; justify-content:space-between;">
+                        <span>成长值</span><span>${Math.round(animal.growth)}</span>
+                    </div>
+                    <div class="progress-bar"><div class="progress-fill fill-blue" style="width:${Math.min(100, animal.growth / (type.growthNeeded[Math.min(stage + 1, 2)] || 500) * 100)}%"></div></div>
+                </div>
+                <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:8px;">
+                    <button class="btn" style="padding:8px; font-size:12px;" onclick="interactAnimal(${animal.id}, 'feed')">
+                        🍎 喂食
+                    </button>
+                    <button class="btn" style="padding:8px; font-size:12px;" onclick="interactAnimal(${animal.id}, 'pet')">
+                        💕 抚摸
+                    </button>
+                    <button class="btn" style="padding:8px; font-size:12px;" onclick="interactAnimal(${animal.id}, 'play')">
+                        🎾 玩耍
+                    </button>
+                    ${stage >= 1 && animal.productReady ? `<button class="btn" style="padding:8px; font-size:12px; grid-column: span 3;" onclick="collectProduct(${animal.id})">
+                        🧺 收取${type.productName}
+                    </button>` : ''}
+                    ${stage >= 1 && !animal.pregnant ? `<button class="btn" style="padding:8px; font-size:12px; grid-column: span 3; background:#e91e63;" onclick="breedAnimal(${animal.id})">
+                        💕 寻找伴侣繁殖
+                    </button>` : ''}
+                    ${animal.pregnant ? `<button class="btn" style="padding:8px; font-size:12px; grid-column: span 3; background:#9c27b0;" disabled>
+                        🤰 怀孕中... 还剩${Math.ceil(animal.pregnantTime / 60)}分钟
+                    </button>` : ''}
+                </div>
+            `;
+
+            document.getElementById('animalModal').classList.remove('hidden');
+        }
+
+        function interactAnimal(animalId, action) {
+            const animal = gameState.animals.find(a => a.id === animalId);
+            if (!animal) return;
+            const type = ANIMAL_TYPES[animal.typeId];
+
+            switch (action) {
+                case 'feed':
+                    if (gameState.coins < 5) { showNotification('🪙 月见币不足！'); return; }
+                    gameState.coins -= 5;
+                    animal.hunger = Math.min(100, animal.hunger + 30);
+                    animal.growth += 5;
+                    animal.happy = Math.min(100, animal.happy + 5);
+                    gameState.stats.fed++;
+                    animal.behavior = 'eating';
+                    animal.behaviorTimer = 3;
+                    showNotification(`🍎 ${animal.name || type.name} 吃得很开心！`);
+                    break;
+                case 'pet':
+                    animal.happy = Math.min(100, animal.happy + 20);
+                    animal.behavior = 'playing';
+                    animal.behaviorTimer = 2;
+                    showNotification(`💕 ${animal.name || type.name} 蹭了蹭你！`);
+                    break;
+                case 'play':
+                    if (animal.hunger < 20) { showNotification('⚠️ 它太饿了，先喂食吧！'); return; }
+                    animal.happy = Math.min(100, animal.happy + 15);
+                    animal.hunger = Math.max(0, animal.hunger - 10);
+                    animal.growth += 3;
+                    animal.behavior = 'playing';
+                    animal.behaviorTimer = 4;
+                    showNotification(`🎾 ${animal.name || type.name} 玩得很开心！`);
+                    break;
+            }
+
+            const oldStage = getAnimalStage(animal);
+            const newStage = getAnimalStage(animal);
+            if (newStage > oldStage) {
+                showNotification(`🎉 ${animal.name || type.name} 成长为 ${type.stageNames[newStage]}！`);
+                addXp(20);
+            }
+
+            if (newStage >= 1 && !animal.productReady && animal.hunger > 50 && animal.happy > 50) {
+                animal.productTimer = (animal.productTimer || 0) + 1;
+                if (animal.productTimer >= 3) {
+                    animal.productReady = true;
+                    animal.productTimer = 0;
+                }
+            }
+
+            saveGame();
+            updateDisplay();
+            closeModal('animalModal');
+            renderPage();
+        }
+
+        function collectProduct(animalId) {
+            const animal = gameState.animals.find(a => a.id === animalId);
+            if (!animal || !animal.productReady) return;
+            const type = ANIMAL_TYPES[animal.typeId];
+
+            animal.productReady = false;
+            animal.productTimer = 0;
+
+            const key = type.product;
+            gameState.inventory[key] = (gameState.inventory[key] || 0) + 1;
+
+            showNotification(`🧺 获得 ${type.productName} x1！`);
+            addXp(5);
+            saveGame();
+            closeModal('animalModal');
+            renderPage();
+        }
+
+        function breedAnimal(animalId) {
+            const animal = gameState.animals.find(a => a.id === animalId);
+            if (!animal) return;
+            const stage = getAnimalStage(animal);
+            if (stage < 1) { showNotification('⚠️ 动物需要成年后才能繁殖！'); return; }
+
+            const mate = gameState.animals.find(a =>
+                a.id !== animalId &&
+                a.typeId === animal.typeId &&
+                getAnimalStage(a) >= 1 &&
+                !a.pregnant
+            );
+
+            if (!mate) {
+                showNotification('⚠️ 需要另一只成年的同类动物！');
+                return;
+            }
+
+            animal.pregnant = true;
+            animal.pregnantTime = 300;
+            gameState.stats.bred++;
+            showNotification(`💕 ${animal.name || ANIMAL_TYPES[animal.typeId].name} 怀孕了！`);
+            saveGame();
+            closeModal('animalModal');
+            renderPage();
+        }
+
+        // ============ 田地页面 ============
+        function renderField(area) {
+            const title = document.createElement('div');
+            title.className = 'page-title';
+            title.textContent = '🌾 我的田地';
+            area.appendChild(title);
+
+            const grid = document.createElement('div');
+            grid.className = 'field-grid';
+
+            gameState.plots.forEach((plot, idx) => {
+                const div = document.createElement('div');
+                div.className = 'plot' + (plot.crop ? ' planted' : '');
+                div.innerHTML = `<span class="plot-num">#${idx + 1}</span>`;
+
+                if (!plot.crop) {
+                    div.innerHTML += `
+                        <span class="plot-emoji" style="opacity:0.3; font-size:28px;">🌱</span>
+                        <div class="plot-name" style="color:#888;">空地</div>
+                        <div class="plot-progress">点击种植</div>
+                    `;
+                    div.onclick = () => openPlantModal(idx);
+                } else {
+                    const cropType = CROP_TYPES[plot.crop.type];
+                    const progress = Math.min(100, plot.crop.progress / cropType.growTime * 100);
+                    const isReady = plot.crop.progress >= cropType.growTime;
+
+                    div.innerHTML += `
+                        ${isReady ? '<span class="harvest-ready">✨</span>' : ''}
+                        <span class="plot-emoji">${cropType.emoji}</span>
+                        <div class="plot-name">${cropType.name}</div>
+                        <div class="plot-progress">${isReady ? '可收获!' : Math.round(progress) + '%'}</div>
+                        ${!isReady ? `<div class="plot-water">💧 ${Math.round(plot.crop.water)}%</div>` : ''}
+                    `;
+
+                    if (isReady) {
+                        div.onclick = () => harvestCrop(idx);
+                    } else {
+                        div.onclick = () => waterCrop(idx);
+                    }
+                }
+
+                grid.appendChild(div);
+            });
+
+            area.appendChild(grid);
+        }
+
+        function openPlantModal(plotIdx) {
+            const body = document.getElementById('plantModalBody');
+            body.innerHTML = '';
+
+            Object.entries(CROP_TYPES).forEach(([key, crop]) => {
+                const seasonOk = crop.season.includes(gameState.season);
+                const div = document.createElement('div');
+                div.style = 'display:flex; align-items:center; gap:10px; padding:10px; margin:5px 0; background:#f5f5f5; border-radius:10px;';
+                div.innerHTML = `
+                    <span style="font-size:36px;">${crop.emoji}</span>
+                    <div style="flex:1;">
+                        <div style="font-weight:bold;">${crop.name}</div>
+                        <div style="font-size:12px; color:#888;">
+                            🪙${crop.seedPrice} | 卖${crop.sellPrice} | ${Math.ceil(crop.growTime / 60)}分成熟
+                        </div>
+                        <div style="font-size:11px; color:${seasonOk ? '#4caf50' : '#f44336'};">
+                            季节: ${crop.season.map(s => SEASONS[s].name).join('、')}
+                        </div>
+                    </div>
+                    <button class="btn" style="padding:6px 15px; font-size:12px;" ${!seasonOk || gameState.coins < crop.seedPrice ? 'disabled' : ''} onclick="plantCrop('${key}', ${plotIdx})">
+                        种植
+                    </button>
+                `;
+                body.appendChild(div);
+            });
+
+            document.getElementById('plantModal').classList.remove('hidden');
+        }
+
+        function plantCrop(cropKey, plotIdx) {
+            const crop = CROP_TYPES[cropKey];
+            if (gameState.coins < crop.seedPrice) { showNotification('🪙 月见币不足！'); return; }
+            if (!crop.season.includes(gameState.season)) { showNotification('⚠️ 当前季节不适合种植！'); return; }
+
+            gameState.coins -= crop.seedPrice;
+            gameState.plots[plotIdx].crop = {
+                type: cropKey,
+                progress: 0,
+                water: 100,
+            };
+
+            showNotification(`🌱 种下了 ${crop.name}！`);
+            saveGame();
+            updateDisplay();
+            closeModal('plantModal');
+            renderPage();
+        }
+
+        function waterCrop(plotIdx) {
+            const plot = gameState.plots[plotIdx];
+            if (!plot.crop) return;
+
+            plot.crop.water = Math.min(100, plot.crop.water + 40);
+            showNotification(`💧 浇水成功！`);
+            saveGame();
+            renderPage();
+        }
+
+        function harvestCrop(plotIdx) {
+            const plot = gameState.plots[plotIdx];
+            if (!plot.crop) return;
+
+            const cropType = CROP_TYPES[plot.crop.type];
+            const bonus = SEASONS[gameState.season].cropBonus;
+            const sellPrice = Math.floor(cropType.sellPrice * bonus);
+
+            const key = plot.crop.type + '_crop';
+            gameState.inventory[key] = (gameState.inventory[key] || 0) + 1;
+
+            gameState.stats.cropsHarvested++;
+            plot.crop = null;
+
+            showNotification(`🌾 收获了 ${cropType.name}！`);
+            addXp(10);
+            saveGame();
+            renderPage();
+        }
+
+        // ============ 商店页面 ============
+        function renderShop(area) {
+            const title = document.createElement('div');
+            title.className = 'page-title';
+            title.textContent = '🏪 商店';
+            area.appendChild(title);
+
+            const animalSection = document.createElement('div');
+            animalSection.className = 'shop-section';
+            animalSection.innerHTML = '<div class="shop-section-title">🐾 动物幼崽</div>';
+
+            const animalGrid = document.createElement('div');
+            animalGrid.className = 'shop-grid';
+
+            const animalPrices = { chick: 50, cat: 80, dog: 100, cow: 200, pig: 250, sheep: 150 };
+            const houseLevel = gameState.upgrades.house;
+            const animalUnlockLevel = { chick: 1, cat: 1, dog: 1, cow: 2, pig: 2, sheep: 3 };
+
+            Object.entries(ANIMAL_TYPES).forEach(([key, type]) => {
+                const price = animalPrices[key];
+                const unlockLv = animalUnlockLevel[key];
+                const unlocked = houseLevel >= unlockLv;
+                const maxAnimals = gameState.upgrades.barn;
+                const atMax = gameState.animals.length >= maxAnimals;
+
+                const item = document.createElement('div');
+                item.className = 'shop-item';
+                item.innerHTML = `
+                    <span class="shop-emoji">${type.stages[0]}</span>
+                    <div class="shop-name">${type.name}</div>
+                    <div class="shop-desc">成年产${type.productName}</div>
+                    <div class="shop-price">🪙 ${price}</div>
+                    <button class="buy-btn ${!unlocked || atMax ? 'locked' : ''}" ${!unlocked || atMax ? 'disabled' : ''} onclick="buyAnimal('${key}', ${price})">
+                        ${atMax ? '栏位已满' : (unlocked ? '购买' : `需房屋Lv.${unlockLv}`)}
+                    </button>
+                `;
+                animalGrid.appendChild(item);
+            });
+
+            animalSection.appendChild(animalGrid);
+            area.appendChild(animalSection);
+
+            const seedSection = document.createElement('div');
+            seedSection.className = 'shop-section';
+            seedSection.innerHTML = '<div class="shop-section-title">🌱 种子</div>';
+
+            const seedGrid = document.createElement('div');
+            seedGrid.className = 'shop-grid';
+
+            Object.entries(CROP_TYPES).forEach(([key, crop]) => {
+                const seasonOk = crop.season.includes(gameState.season);
+                const item = document.createElement('div');
+                item.className = 'shop-item';
+                item.innerHTML = `
+                    <span class="shop-emoji">${crop.emoji}</span>
+                    <div class="shop-name">${crop.name}种子</div>
+                    <div class="shop-desc">${Math.ceil(crop.growTime / 60)}分钟成熟</div>
+                    <div class="shop-price">🪙 ${crop.seedPrice}</div>
+                    <button class="buy-btn" ${!seasonOk || gameState.coins < crop.seedPrice ? 'disabled' : ''} onclick="buySeed('${key}', ${crop.seedPrice})">
+                        ${!seasonOk ? '季节不合' : '购买'}
+                    </button>
+                `;
+                seedGrid.appendChild(item);
+            });
+
+            seedSection.appendChild(seedGrid);
+            area.appendChild(seedSection);
+        }
+
+        function buyAnimal(typeId, price) {
+            if (gameState.coins < price) { showNotification('🪙 月见币不足！'); return; }
+            const maxAnimals = gameState.upgrades.barn;
+            if (gameState.animals.length >= maxAnimals) { showNotification('⚠️ 畜棚已满，请先扩建！'); return; }
+
+            gameState.coins -= price;
+            gameState.animals.push({
+                id: gameState.nextAnimalId++,
+                typeId: typeId,
+                name: null,
+                hunger: 80,
+                happy: 60,
+                growth: 0,
+                level: 1,
+                productReady: false,
+                productTimer: 0,
+                pregnant: false,
+                pregnantTime: 0,
+                x: 10 + Math.random() * 70,
+                y: 10 + Math.random() * 70,
+                targetX: 0,
+                targetY: 0,
+                behavior: 'idle',
+                behaviorTimer: 0,
+                facing: 1,
+                speed: 0.3 + Math.random() * 0.4,
+            });
+
+            showNotification(`🐾 购买了 ${ANIMAL_TYPES[typeId].name}！`);
+            addXp(10);
+            saveGame();
+            updateDisplay();
+            renderPage();
+        }
+
+        function buySeed(cropKey, price) {
+            const crop = CROP_TYPES[cropKey];
+            if (!crop.season.includes(gameState.season)) { showNotification('⚠️ 当前季节不适合！'); return; }
+            if (gameState.coins < price) { showNotification('🪙 月见币不足！'); return; }
+
+            const emptyPlot = gameState.plots.find(p => !p.crop);
+            if (!emptyPlot) { showNotification('⚠️ 没有空地了，请先收获或扩建！'); return; }
+
+            gameState.coins -= price;
+            emptyPlot.crop = {
+                type: cropKey,
+                progress: 0,
+                water: 100,
+            };
+
+            showNotification(`🌱 种下了 ${crop.name}！`);
+            saveGame();
+            updateDisplay();
+            renderPage();
+        }
+
+        // ============ 仓库页面 ============
+        function renderInventory(area) {
+            const title = document.createElement('div');
+            title.className = 'page-title';
+            title.textContent = '📦 仓库';
+            area.appendChild(title);
+
+            const entries = Object.entries(gameState.inventory).filter(([_, count]) => count > 0);
+
+            if (entries.length === 0) {
+                const empty = document.createElement('div');
+                empty.className = 'empty-msg';
+                empty.innerHTML = '<div class="big">📦</div><div>仓库是空的</div><div style="font-size:13px; margin-top:10px;">收获作物和收集动物产品后会出现在这里</div>';
+                area.appendChild(empty);
+                return;
+            }
+
+            const grid = document.createElement('div');
+            grid.className = 'inventory-grid';
+
+            entries.forEach(([key, count]) => {
+                let emoji, name, price;
+                if (key.endsWith('_crop')) {
+                    const cropKey = key.replace('_crop', '');
+                    const crop = CROP_TYPES[cropKey];
+                    if (!crop) return;
+                    emoji = crop.emoji;
+                    name = crop.name;
+                    price = Math.floor(crop.sellPrice * SEASONS[gameState.season].cropBonus);
+                } else {
+                    const animal = Object.values(ANIMAL_TYPES).find(a => a.product === key);
+                    if (!animal) return;
+                    emoji = animal.productEmoji;
+                    name = animal.productName;
+                    price = animal.productPrice;
+                }
+
+                const item = document.createElement('div');
+                item.className = 'inv-item';
+                item.innerHTML = `
+                    <span class="inv-count">${count}</span>
+                    <span class="inv-emoji">${emoji}</span>
+                    <div class="inv-name">${name}</div>
+                    <div style="font-size:11px; color:#e6a817; margin-top:3px;">🪙 ${price}</div>
+                    <button class="sell-btn" onclick="sellItem('${key}', ${price})">出售</button>
+                `;
+                grid.appendChild(item);
+            });
+
+            area.appendChild(grid);
+
+            const sellAll = document.createElement('div');
+            sellAll.style = 'text-align:center; margin-top:15px;';
+            sellAll.innerHTML = `<button class="btn" onclick="sellAllItems()">💰 全部出售</button>`;
+            area.appendChild(sellAll);
+        }
+
+        function sellItem(key, price) {
+            if (!gameState.inventory[key] || gameState.inventory[key] <= 0) return;
+            const count = gameState.inventory[key];
+            const total = price * count;
+            gameState.coins += total;
+            gameState.stats.sold += total;
+            gameState.inventory[key] = 0;
+            showNotification(`💰 出售获得 ${total} 月见币！`);
+            addXp(2);
+            saveGame();
+            updateDisplay();
+            renderPage();
+        }
+
+        function sellAllItems() {
+            let total = 0;
+            Object.entries(gameState.inventory).forEach(([key, count]) => {
+                if (count <= 0) return;
+                let price;
+                if (key.endsWith('_crop')) {
+                    const cropKey = key.replace('_crop', '');
+                    price = Math.floor(CROP_TYPES[cropKey].sellPrice * SEASONS[gameState.season].cropBonus);
+                } else {
+                    const animal = Object.values(ANIMAL_TYPES).find(a => a.product === key);
+                    price = animal ? animal.productPrice : 0;
+                }
+                total += price * count;
+                gameState.inventory[key] = 0;
+            });
+
+            if (total === 0) { showNotification('📦 没有可出售的物品！'); return; }
+
+            gameState.coins += total;
+            gameState.stats.sold += total;
+            showNotification(`💰 全部出售获得 ${total} 月见币！`);
+            addXp(5);
+            saveGame();
+            updateDisplay();
+            renderPage();
+        }
+
+        // ============ 扩建页面 ============
+        function renderUpgrade(area) {
+            const title = document.createElement('div');
+            title.className = 'page-title';
+            title.textContent = '🔨 农场扩建';
+            area.appendChild(title);
+
+            Object.entries(UPGRADES).forEach(([key, up]) => {
+                const current = gameState.upgrades[key];
+                const cost = getUpgradeCost(key);
+                const isMax = current >= up.max;
+
+                const card = document.createElement('div');
+                card.className = 'upgrade-card';
+                card.innerHTML = `
+                    <div class="up-title">${up.icon} ${up.name} (Lv.${current}/${up.max})</div>
+                    <div class="up-desc">${up.desc}</div>
+                    ${!isMax ? `<div class="up-cost">🪙 ${cost}</div>` : '<div style="color:#4caf50; font-weight:bold;">✅ 已升至最高级</div>'}
+                    <button class="up-btn ${isMax ? 'maxed' : ''}" ${isMax || gameState.coins < cost ? 'disabled' : ''} onclick="doUpgrade('${key}')">
+                        ${isMax ? '已满级' : '升级'}
+                    </button>
+                `;
+                area.appendChild(card);
+            });
+        }
+
+        function doUpgrade(type) {
+            const cost = getUpgradeCost(type);
+            if (cost === null || gameState.coins < cost) return;
+
+            gameState.coins -= cost;
+            gameState.upgrades[type]++;
+
+            if (type === 'field') {
+                gameState.plots.push({ id: gameState.plots.length, crop: null });
+            }
+
+            showNotification(`🔨 ${UPGRADES[type].name} 升级成功！`);
+            addXp(15);
+            saveGame();
+            updateDisplay();
+            renderPage();
+        }
+
+        // ============ 成就页面 ============
+        function renderAchievements(area) {
+            const title = document.createElement('div');
+            title.className = 'page-title';
+            title.textContent = '🏆 成就';
+            area.appendChild(title);
+
+            const list = document.createElement('div');
+            list.className = 'ach-list';
+
+            ACHIEVEMENTS.forEach(ach => {
+                const completed = gameState.achievements.includes(ach.id);
+                const canComplete = !completed && ach.check(gameState);
+
+                if (canComplete) {
+                    gameState.achievements.push(ach.id);
+                    gameState.coins += ach.reward;
+                    showNotification(`🏆 解锁成就：${ach.name}！奖励 ${ach.reward} 月见币`);
+                    saveGame();
+                    updateDisplay();
+                }
+
+                const item = document.createElement('div');
+                item.className = 'ach-item' + (completed ? ' completed' : '');
+                item.innerHTML = `
+                    <span class="ach-emoji">${ach.emoji}</span>
+                    <div class="ach-info">
+                        <div class="ach-name">${ach.name}</div>
+                        <div class="ach-desc">${ach.desc}</div>
+                        <div class="ach-reward">奖励: 🪙 ${ach.reward}</div>
+                    </div>
+                    <span class="ach-status">${completed ? '✅' : '⬜'}</span>
+                `;
+                list.appendChild(item);
+            });
+
+            area.appendChild(list);
+        }
+
+        // ============ 弹窗 ============
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+
+        // ============ 时间推进 ============
+        function gameTick() {
+            const now = Date.now();
+            const elapsed = (now - gameState.lastTick) / 1000;
+            gameState.lastTick = now;
+            gameState.gameTime += elapsed;
+
+            const newDay = Math.floor(gameState.gameTime / 60) + 1;
+            if (newDay > gameState.day) {
+                gameState.day = newDay;
+                const seasonIdx = Math.floor((gameState.day - 1) / 30) % 4;
+                const newSeason = SEASON_ORDER[seasonIdx];
+                if (newSeason !== gameState.season) {
+                    gameState.season = newSeason;
+                    showNotification(`${SEASONS[newSeason].emoji} 季节变换为${SEASONS[newSeason].name}了！`);
+                }
+            }
+
+            let changed = false;
+
+            gameState.animals.forEach(animal => {
+                const type = ANIMAL_TYPES[animal.typeId];
+                const stage = getAnimalStage(animal);
+
+                animal.hunger = Math.max(0, animal.hunger - 0.1 * elapsed);
+                animal.happy = Math.max(0, animal.happy - 0.05 * elapsed);
+
+                if (stage >= 1 && !animal.productReady && animal.hunger > 50 && animal.happy > 50) {
+                    animal.productTimer = (animal.productTimer || 0) + elapsed;
+                    if (animal.productTimer >= 60) {
+                        animal.productReady = true;
+                        animal.productTimer = 0;
+                    }
+                }
+
+                if (animal.pregnant) {
+                    animal.pregnantTime -= elapsed;
+                    if (animal.pregnantTime <= 0) {
+                        animal.pregnant = false;
+                        animal.pregnantTime = 0;
+                        const maxAnimals = gameState.upgrades.barn;
+                        if (gameState.animals.length < maxAnimals) {
+                            gameState.animals.push({
+                                id: gameState.nextAnimalId++,
+                                typeId: animal.typeId,
+                                name: null,
+                                hunger: 80, happy: 80, growth: 0, level: 1,
+                                productReady: false, productTimer: 0,
+                                pregnant: false, pregnantTime: 0,
+                                x: animal.x + (Math.random() - 0.5) * 20,
+                                y: animal.y + (Math.random() - 0.5) * 20,
+                                targetX: 0, targetY: 0,
+                                behavior: 'idle', behaviorTimer: 0,
+                                facing: 1,
+                                speed: 0.3 + Math.random() * 0.4,
+                            });
+                            showNotification(`🎉 ${type.name} 生下了宝宝！`);
+                        }
+                    }
+                }
+
+                changed = true;
+            });
+
+            gameState.plots.forEach(plot => {
+                if (!plot.crop) return;
+                const cropType = CROP_TYPES[plot.crop.type];
+
+                plot.crop.water = Math.max(0, plot.crop.water - 0.05 * elapsed);
+
+                if (plot.crop.progress < cropType.growTime && plot.crop.water > 0) {
+                    const wellBonus = 1 + (gameState.upgrades.well - 1) * 0.2;
+                    const seasonBonus = cropType.season.includes(gameState.season) ? 1 : 0.3;
+                    plot.crop.progress += elapsed * wellBonus * seasonBonus;
+                }
+
+                changed = true;
+            });
+
+            if (changed) saveGame();
+        }
+
+        function updateDisplay() {
+            const s = SEASONS[gameState.season];
+            document.getElementById('coins').textContent = gameState.coins;
+            document.getElementById('level').textContent = gameState.level;
+            document.getElementById('season').textContent = s.name;
+            document.getElementById('seasonIcon').textContent = s.emoji;
+            document.getElementById('day').textContent = gameState.day;
+        }
+
+        // ============ 初始化 ============
+        function init() {
+            gameState.lastTick = Date.now();
+            updateDisplay();
+            renderPage();
+
+            // 游戏主循环
+            setInterval(() => {
+                gameTick();
+                updateDisplay();
+                if (currentPage === 'field') {
+                    renderPage();
+                }
+            }, 1000);
+
+            // 动物行为更新（更频繁）
+            setInterval(() => {
+                updateAnimalBehavior();
+                updateAnimalPositions();
+            }, 500);
+
+            // 动物想法气泡
+            setInterval(() => {
+                showAnimalThoughts();
+            }, 3000);
+
+            // 成就检查
+            setInterval(() => {
+                if (currentPage === 'achievements') renderPage();
+            }, 5000);
+        }
+
+        init();
+    </script>
+</body>
+</html>

@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>银行到账-充值数据核查闭环工具</title>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -412,9 +413,16 @@
                         <label style="font-size: 13px; color: #666; display: block; margin-bottom: 6px;">选择核对月份</label>
                         <input type="month" id="auditMonth" value="" style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px;">
                     </div>
+                    <div>
+                        <label style="font-size: 13px; color: #666; display: block; margin-bottom: 6px;">数据加密密码（可选）</label>
+                        <input type="password" id="auditPassword" placeholder="留空则不加密" style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; width: 180px;">
+                    </div>
                     <div id="snapshotInfo" style="font-size: 13px; color: #666;"></div>
                 </div>
                 <div id="snapshotList" style="margin-top: 12px;"></div>
+                <div style="margin-top: 12px;">
+                    <button onclick="clearAllSnapshots()" style="padding: 6px 14px; background: #fff; border: 1px solid #f44336; color: #f44336; border-radius: 6px; cursor: pointer; font-size: 13px;">🗑️ 清除所有历史数据</button>
+                </div>
             </div>
 
             <div class="section">
@@ -777,10 +785,39 @@ function getCurrencySymbol(currency) {
 // ==================== localStorage 快照 ====================
 const LS_KEY = 'dataAuditSnapshots';
 
-function saveSnapshot(month, data) {
+function getAuditPassword() {
+    return document.getElementById('auditPassword')?.value?.trim() || '';
+}
+
+function encryptSnapshot(data, password) {
+    if (!password || !window.CryptoJS) return data;
+    try {
+        const json = JSON.stringify(data);
+        return { _enc: CryptoJS.AES.encrypt(json, password).toString() };
+    } catch (e) {
+        console.error('Encrypt failed:', e);
+        return data;
+    }
+}
+
+function decryptSnapshot(value, password) {
+    if (!value || !value._enc) return value;
+    if (!password || !window.CryptoJS) return null;
+    try {
+        const bytes = CryptoJS.AES.decrypt(value._enc, password);
+        const decrypted = bytes.toString(CryptoJS.enc.Utf8);
+        if (!decrypted) return null;
+        return JSON.parse(decrypted);
+    } catch (e) {
+        console.error('Decrypt failed:', e);
+        return null;
+    }
+}
+
+function saveSnapshot(month, data, password) {
     try {
         const all = JSON.parse(localStorage.getItem(LS_KEY) || '{}');
-        all[month] = {
+        const snapshot = {
             timestamp: new Date().toISOString(),
             bankRecords: data.bankRecords,
             arrivalRecords: data.arrivalRecords,
@@ -789,6 +826,7 @@ function saveSnapshot(month, data) {
             results: data.results,
             month: month,
         };
+        all[month] = encryptSnapshot(snapshot, password);
         localStorage.setItem(LS_KEY, JSON.stringify(all));
         return true;
     } catch (e) {
@@ -797,10 +835,12 @@ function saveSnapshot(month, data) {
     }
 }
 
-function loadSnapshot(month) {
+function loadSnapshot(month, password) {
     try {
         const all = JSON.parse(localStorage.getItem(LS_KEY) || '{}');
-        return all[month] || null;
+        const val = all[month];
+        if (!val) return null;
+        return decryptSnapshot(val, password);
     } catch (e) {
         console.error('Load snapshot failed:', e);
         return null;
@@ -825,6 +865,14 @@ function deleteSnapshot(month) {
     } catch (e) {
         return false;
     }
+}
+
+function clearAllSnapshots() {
+    if (!confirm('确定要清除所有已保存的历史核对数据吗？此操作不可恢复！')) return;
+    localStorage.removeItem(LS_KEY);
+    updateSnapshotInfo();
+    renderSnapshotList();
+    alert('已清除所有历史数据');
 }
 
 function detectBankType(headers, filename) {
@@ -1369,7 +1417,8 @@ function startAudit() {
 
             // 加载上月未匹配的到账记录（跨月匹配）
             const prevMonth = getPreviousMonth(appData.month);
-            const prevSnapshot = prevMonth ? loadSnapshot(prevMonth) : null;
+            const password = getAuditPassword();
+            const prevSnapshot = prevMonth ? loadSnapshot(prevMonth, password) : null;
             if (prevSnapshot && prevSnapshot.results && prevSnapshot.results.layer1) {
                 const matchedKeys = new Set();
                 prevSnapshot.results.layer1.forEach(r => {
@@ -2013,7 +2062,8 @@ function showResults() {
             platformRecords: appData.originalRecords?.platform || [],
             results: appData.results,
         };
-        const saved = saveSnapshot(appData.month, snapshotData);
+        const password = getAuditPassword();
+        const saved = saveSnapshot(appData.month, snapshotData, password);
         if (saved) {
             console.log(`[AuditTool] Snapshot saved for ${appData.month}`);
         }
@@ -2218,10 +2268,16 @@ function renderSnapshotList() {
         container.innerHTML = '';
         return;
     }
+    const password = getAuditPassword();
     let html = '<div style="font-size: 13px; color: #666; margin-bottom: 8px;">📦 已保存的历史数据：</div>';
     html += '<div style="display: flex; gap: 8px; flex-wrap: wrap;">';
     months.forEach(m => {
-        html += `<span style="background: #e3f2fd; color: #1565c0; padding: 4px 10px; border-radius: 4px; font-size: 12px;">${m}</span>`;
+        const snap = loadSnapshot(m, password);
+        const isEncrypted = snap === null && JSON.parse(localStorage.getItem(LS_KEY) || '{}')[m]?._enc;
+        const label = isEncrypted ? `🔒 ${m}` : m;
+        const bg = isEncrypted ? '#fce4ec' : '#e3f2fd';
+        const color = isEncrypted ? '#c62828' : '#1565c0';
+        html += `<span style="background: ${bg}; color: ${color}; padding: 4px 10px; border-radius: 4px; font-size: 12px;">${label}</span>`;
     });
     html += '</div>';
     container.innerHTML = html;
@@ -2230,9 +2286,18 @@ function renderSnapshotList() {
 function updateSnapshotInfo() {
     const month = appData.month;
     const prevMonth = getPreviousMonth(month);
-    const prevSnap = loadSnapshot(prevMonth);
+    const password = getAuditPassword();
+    const prevSnap = loadSnapshot(prevMonth, password);
     const infoEl = document.getElementById('snapshotInfo');
-    if (prevSnap) {
+    if (prevSnap === null) {
+        // 可能是加密数据但密码不对，或者没有数据
+        const all = JSON.parse(localStorage.getItem(LS_KEY) || '{}');
+        if (all[prevMonth] && all[prevMonth]._enc) {
+            infoEl.innerHTML = `<span style="color: #e65100;">🔒 ${prevMonth} 数据已加密，请输入密码查看</span>`;
+        } else {
+            infoEl.innerHTML = '';
+        }
+    } else if (prevSnap) {
         const unmatched = (prevSnap.results.layer1 || []).filter(r => r.status !== 'match').length;
         infoEl.innerHTML = `<span style="color: #2196f3;">💡 检测到 ${prevMonth} 已保存数据，上月未匹配记录 ${unmatched} 条</span>`;
     } else {
@@ -2248,6 +2313,13 @@ document.addEventListener('DOMContentLoaded', () => {
         monthInput.addEventListener('change', () => {
             appData.month = monthInput.value;
             updateSnapshotInfo();
+        });
+    }
+    const pwdInput = document.getElementById('auditPassword');
+    if (pwdInput) {
+        pwdInput.addEventListener('input', () => {
+            updateSnapshotInfo();
+            renderSnapshotList();
         });
     }
     renderSnapshotList();

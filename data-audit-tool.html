@@ -445,6 +445,24 @@
                 <div class="file-list" id="platformFileList"></div>
             </div>
 
+            <div class="section" style="background: linear-gradient(135deg, #f0f3ff 0%, #e8f5e9 100%);">
+                <div class="section-title"><span class="icon">✅</span>选择要核对的层级（勾选至少一项）</div>
+                <div style="display: flex; gap: 30px; flex-wrap: wrap;">
+                    <label style="display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer;">
+                        <input type="checkbox" id="enableLayer1" checked>
+                        <span>第一层：银行导出 vs 到账表</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer;">
+                        <input type="checkbox" id="enableLayer2" checked>
+                        <span>第二层：到账表 vs 充值表</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer;">
+                        <input type="checkbox" id="enableLayer3" checked>
+                        <span>第三层：充值表 vs 平台后台</span>
+                    </label>
+                </div>
+            </div>
+
             <div class="action-bar">
                 <div></div>
                 <button class="btn btn-primary" onclick="goToStep(2)">下一步：确认列映射 →</button>
@@ -486,11 +504,7 @@
 
             <div class="section">
                 <div class="section-title"><span class="icon">🔍</span>差异明细</div>
-                <div class="result-tabs">
-                    <button class="result-tab active" onclick="showResultTab('layer1')">第一层：银行 vs 到账表 <span class="badge" id="badge1">0</span></button>
-                    <button class="result-tab" onclick="showResultTab('layer2')">第二层：到账表 vs 充值表 <span class="badge" id="badge2">0</span></button>
-                    <button class="result-tab" onclick="showResultTab('layer3')">第三层：充值表 vs 平台后台 <span class="badge" id="badge3">0</span></button>
-                </div>
+                <div class="result-tabs" id="resultTabs"></div>
                 <div id="resultLayer1"></div>
                 <div id="resultLayer2" class="hidden"></div>
                 <div id="resultLayer3" class="hidden"></div>
@@ -512,6 +526,7 @@ const appData = {
     platformFiles: [],  // [{file, type, rawData, detectedPlatform}]
     mapping: {},        // 列映射配置
     results: {},        // 核对结果
+    enabledLayers: { 1: true, 2: true, 3: true }, // 启用的核对层
 };
 
 // ==================== 银行识别配置 ====================
@@ -840,7 +855,38 @@ function goToStep(step) {
     document.querySelectorAll('.step-content').forEach(el => el.classList.add('hidden'));
     document.getElementById('step' + step).classList.remove('hidden');
 
-    if (step === 2) buildMappingUI();
+    if (step === 2) {
+        // Read layer selection from checkboxes
+        appData.enabledLayers[1] = document.getElementById('enableLayer1').checked;
+        appData.enabledLayers[2] = document.getElementById('enableLayer2').checked;
+        appData.enabledLayers[3] = document.getElementById('enableLayer3').checked;
+
+        // Validate at least one layer is selected
+        if (!appData.enabledLayers[1] && !appData.enabledLayers[2] && !appData.enabledLayers[3]) {
+            alert('请至少选择一个核对层级！');
+            return;
+        }
+
+        // Validate required files for selected layers
+        if (appData.enabledLayers[1] && appData.bankFiles.length === 0) {
+            alert('第一层核对需要上传银行导出文件！');
+            return;
+        }
+        if ((appData.enabledLayers[1] || appData.enabledLayers[2]) && !appData.arrivalFile) {
+            alert('已启用需要到账表的核对层级，请上传到账登记表！');
+            return;
+        }
+        if ((appData.enabledLayers[2] || appData.enabledLayers[3]) && !appData.rechargeFile) {
+            alert('已启用需要充值表的核对层级，请上传充值登记表！');
+            return;
+        }
+        if (appData.enabledLayers[3] && appData.platformFiles.length === 0) {
+            alert('第三层核对需要上传平台后台文件！');
+            return;
+        }
+
+        buildMappingUI();
+    }
     if (step === 3) startAudit();
     if (step === 4) showResults();
 }
@@ -850,7 +896,8 @@ function buildMappingUI() {
     const container = document.getElementById('mappingContainer');
     container.innerHTML = '';
 
-    // 银行文件映射
+    // 银行文件映射（仅第一层启用时显示）
+    if (appData.enabledLayers[1]) {
     appData.bankFiles.forEach((item, idx) => {
         const card = document.createElement('div');
         card.className = 'mapping-card';
@@ -891,9 +938,10 @@ function buildMappingUI() {
         card.innerHTML = html;
         container.appendChild(card);
     });
+    } // end bank mapping
 
-    // 到账表映射
-    if (appData.arrivalFile) {
+    // 到账表映射（第一层或第二层启用时显示）
+    if ((appData.enabledLayers[1] || appData.enabledLayers[2]) && appData.arrivalFile) {
         const card = document.createElement('div');
         card.className = 'mapping-card';
         const headers = appData.arrivalFile.rawData.headers;
@@ -934,8 +982,8 @@ function buildMappingUI() {
         container.appendChild(card);
     }
 
-    // 充值表映射
-    if (appData.rechargeFile) {
+    // 充值表映射（第二层或第三层启用时显示）
+    if ((appData.enabledLayers[2] || appData.enabledLayers[3]) && appData.rechargeFile) {
         const card = document.createElement('div');
         card.className = 'mapping-card';
         const headers = appData.rechargeFile.rawData.headers;
@@ -973,9 +1021,10 @@ function buildMappingUI() {
 
         card.innerHTML = html;
         container.appendChild(card);
-    }
+    } // end recharge mapping
 
-    // 平台文件映射
+    // 平台文件映射（仅第三层启用时显示）
+    if (appData.enabledLayers[3]) {
     appData.platformFiles.forEach((item, idx) => {
         const card = document.createElement('div');
         card.className = 'mapping-card';
@@ -1034,6 +1083,7 @@ function buildMappingUI() {
         card.innerHTML = html;
         container.appendChild(card);
     });
+    } // end platform mapping
 }
 
 function findBestMatch(headers, candidates) {
@@ -1068,52 +1118,62 @@ function confirmMapping() {
         platform: []
     };
 
-    // 银行映射
-    appData.bankFiles.forEach((item, idx) => {
-        appData.mapping.bank.push({
-            index: idx,
-            dateCol: document.getElementById(`bank_date_${idx}`).value,
-            amountCol: document.getElementById(`bank_amount_${idx}`).value,
-            bankType: item.detectedBank,
+    // 银行映射（仅第一层启用时）
+    if (appData.enabledLayers[1]) {
+        appData.bankFiles.forEach((item, idx) => {
+            const dateEl = document.getElementById(`bank_date_${idx}`);
+            const amtEl = document.getElementById(`bank_amount_${idx}`);
+            appData.mapping.bank.push({
+                index: idx,
+                dateCol: dateEl ? dateEl.value : '',
+                amountCol: amtEl ? amtEl.value : '',
+                bankType: item.detectedBank,
+            });
         });
-    });
+    }
 
-    // 到账表映射
-    if (appData.arrivalFile) {
+    // 到账表映射（第一层或第二层启用时）
+    if ((appData.enabledLayers[1] || appData.enabledLayers[2]) && appData.arrivalFile) {
         appData.mapping.arrival = {
-            dateCol: document.getElementById('arrival_date').value,
-            bankCol: document.getElementById('arrival_bank').value,
-            companyCol: document.getElementById('arrival_company').value,
-            amountCol: document.getElementById('arrival_amount').value,
-            platformCol: document.getElementById('arrival_platform').value,
+            dateCol: document.getElementById('arrival_date')?.value || '',
+            bankCol: document.getElementById('arrival_bank')?.value || '',
+            companyCol: document.getElementById('arrival_company')?.value || '',
+            amountCol: document.getElementById('arrival_amount')?.value || '',
+            platformCol: document.getElementById('arrival_platform')?.value || '',
         };
     }
 
-    // 充值表映射
-    if (appData.rechargeFile) {
+    // 充值表映射（第二层或第三层启用时）
+    if ((appData.enabledLayers[2] || appData.enabledLayers[3]) && appData.rechargeFile) {
         appData.mapping.recharge = {
-            dateCol: document.getElementById('recharge_date').value,
-            companyCol: document.getElementById('recharge_company').value,
-            platformCol: document.getElementById('recharge_platform').value,
-            accountCol: document.getElementById('recharge_account').value,
-            amountCol: document.getElementById('recharge_amount').value,
+            dateCol: document.getElementById('recharge_date')?.value || '',
+            companyCol: document.getElementById('recharge_company')?.value || '',
+            platformCol: document.getElementById('recharge_platform')?.value || '',
+            accountCol: document.getElementById('recharge_account')?.value || '',
+            amountCol: document.getElementById('recharge_amount')?.value || '',
         };
     }
 
-    // 平台映射
-    appData.platformFiles.forEach((item, idx) => {
-        const platMap = {
-            index: idx,
-            dateCol: document.getElementById(`plat_date_${idx}`).value,
-            amountCol: document.getElementById(`plat_amount_${idx}`).value,
-            accountCol: document.getElementById(`plat_account_${idx}`)?.value || '',
-            platformType: item.detectedPlatform,
-        };
-        if (item.detectedPlatform === 'GG') {
-            platMap.ggDateCol = document.getElementById(`plat_ggdate_${idx}`)?.value || '';
-        }
-        appData.mapping.platform.push(platMap);
-    });
+    // 平台映射（仅第三层启用时）
+    if (appData.enabledLayers[3]) {
+        appData.platformFiles.forEach((item, idx) => {
+            const dateEl = document.getElementById(`plat_date_${idx}`);
+            const amtEl = document.getElementById(`plat_amount_${idx}`);
+            const accEl = document.getElementById(`plat_account_${idx}`);
+            const platMap = {
+                index: idx,
+                dateCol: dateEl ? dateEl.value : '',
+                amountCol: amtEl ? amtEl.value : '',
+                accountCol: accEl ? accEl.value : '',
+                platformType: item.detectedPlatform,
+            };
+            if (item.detectedPlatform === 'GG') {
+                const ggEl = document.getElementById(`plat_ggdate_${idx}`);
+                platMap.ggDateCol = ggEl ? ggEl.value : '';
+            }
+            appData.mapping.platform.push(platMap);
+        });
+    }
 
     goToStep(3);
 }
@@ -1124,37 +1184,59 @@ function startAudit() {
     const progressText = document.getElementById('progressText');
 
     setTimeout(() => {
-        progressFill.style.width = '10%';
-        progressText.textContent = '正在提取银行到账数据...';
+        let progress = 0;
+        appData.results = { layer1: [], layer2: [], layer3: [] };
 
-        // 1. 提取银行数据
-        const bankRecords = extractBankRecords();
-        progressFill.style.width = '25%';
-        progressText.textContent = '正在提取到账表数据...';
+        // Layer 1: 银行 vs 到账表
+        if (appData.enabledLayers[1]) {
+            progressFill.style.width = '15%';
+            progressText.textContent = '正在提取银行到账数据...';
+            const bankRecords = extractBankRecords();
 
-        // 2. 提取到账表数据
-        const arrivalRecords = extractArrivalRecords();
-        progressFill.style.width = '40%';
-        progressText.textContent = '正在提取充值表数据...';
+            progressFill.style.width = '30%';
+            progressText.textContent = '正在提取到账表数据...';
+            const arrivalRecords = extractArrivalRecords();
 
-        // 3. 提取充值表数据
-        const rechargeRecords = extractRechargeRecords();
-        progressFill.style.width = '55%';
-        progressText.textContent = '正在提取平台后台数据...';
+            progressFill.style.width = '45%';
+            progressText.textContent = '正在执行第一层核对...';
+            appData.results.layer1 = compareLayer1(bankRecords, arrivalRecords);
+            progress = 45;
+        }
 
-        // 4. 提取平台数据
-        const platformRecords = extractPlatformRecords();
-        progressFill.style.width = '70%';
-        progressText.textContent = '正在执行三层核对...';
+        // Layer 2: 到账表 vs 充值表
+        if (appData.enabledLayers[2]) {
+            progressFill.style.width = (progress + 15) + '%';
+            progressText.textContent = '正在提取到账表数据...';
+            const arrivalRecords = extractArrivalRecords();
 
-        // 5. 执行核对
-        const layer1 = compareLayer1(bankRecords, arrivalRecords);
-        const layer2 = compareLayer2(arrivalRecords, rechargeRecords);
-        const layer3 = compareLayer3(rechargeRecords, platformRecords);
+            progressFill.style.width = (progress + 30) + '%';
+            progressText.textContent = '正在提取充值表数据...';
+            const rechargeRecords = extractRechargeRecords();
+
+            progressFill.style.width = (progress + 45) + '%';
+            progressText.textContent = '正在执行第二层核对...';
+            appData.results.layer2 = compareLayer2(arrivalRecords, rechargeRecords);
+            progress += 45;
+        }
+
+        // Layer 3: 充值表 vs 平台后台
+        if (appData.enabledLayers[3]) {
+            progressFill.style.width = (progress + 15) + '%';
+            progressText.textContent = '正在提取充值表数据...';
+            const rechargeRecords = extractRechargeRecords();
+
+            progressFill.style.width = (progress + 30) + '%';
+            progressText.textContent = '正在提取平台后台数据...';
+            const platformRecords = extractPlatformRecords();
+
+            progressFill.style.width = (progress + 45) + '%';
+            progressText.textContent = '正在执行第三层核对...';
+            appData.results.layer3 = compareLayer3(rechargeRecords, platformRecords);
+            progress += 45;
+        }
+
         progressFill.style.width = '90%';
         progressText.textContent = '正在生成报告...';
-
-        appData.results = { layer1, layer2, layer3 };
 
         progressFill.style.width = '100%';
         progressText.textContent = '核对完成！';
@@ -1524,82 +1606,130 @@ function compareLayer3(rechargeRecords, platformRecords) {
 function showResults() {
     const { layer1, layer2, layer3 } = appData.results;
 
-    // 汇总看板
-    const bankTotal = layer1.reduce((s, r) => s + (r.bankAmount || 0), 0);
-    const arrivalTotal = layer1.reduce((s, r) => s + (r.arrivalAmount || 0), 0);
-    const rechargeTotal = layer2.reduce((s, r) => s + (r.rechargeAmount || 0), 0);
-    const platformTotal = layer3.reduce((s, r) => s + (r.platformAmount || 0), 0);
+    // 构建看板卡片
+    const cards = [];
 
-    const l1Match = layer1.filter(r => r.status === 'match').length;
-    const l1Mismatch = layer1.filter(r => r.status === 'mismatch').length;
-    const l1Missing = layer1.filter(r => r.status === 'missing').length;
+    if (appData.enabledLayers[1]) {
+        const bankTotal = layer1.reduce((s, r) => s + (r.bankAmount || 0), 0);
+        const arrivalTotal = layer1.reduce((s, r) => s + (r.arrivalAmount || 0), 0);
+        const l1Match = layer1.filter(r => r.status === 'match').length;
+        const l1Mismatch = layer1.filter(r => r.status === 'mismatch').length;
+        const l1Missing = layer1.filter(r => r.status === 'missing').length;
+        cards.push(`
+            <div class="dash-card">
+                <div class="label">银行到账总额</div>
+                <div class="value">${formatMoney(bankTotal)}</div>
+            </div>
+            <div class="dash-card" style="border-top-color:#4caf50">
+                <div class="label">到账表登记总额</div>
+                <div class="value">${formatMoney(arrivalTotal)}</div>
+                <div class="diff ${bankTotal === arrivalTotal ? 'positive' : 'negative'}">
+                    差异: ${formatMoney(bankTotal - arrivalTotal)}
+                </div>
+            </div>
+            <div class="dash-card" style="border-top-color:#2196f3">
+                <div class="label">第一层匹配率</div>
+                <div class="value">${layer1.length ? Math.round(l1Match / layer1.length * 100) : 0}%</div>
+                <div class="diff" style="color:#666;font-size:12px;">
+                    ✓${l1Match} ⚠${l1Mismatch} ✗${l1Missing}
+                </div>
+            </div>
+        `);
+    }
 
-    const l2Match = layer2.filter(r => r.status === 'match').length;
-    const l2Mismatch = layer2.filter(r => r.status === 'mismatch').length;
-    const l2Missing = layer2.filter(r => r.status === 'missing').length;
+    if (appData.enabledLayers[2]) {
+        const arrivalTotal = layer2.reduce((s, r) => s + (r.arrivalAmount || 0), 0);
+        const rechargeTotal = layer2.reduce((s, r) => s + (r.rechargeAmount || 0), 0);
+        const l2Match = layer2.filter(r => r.status === 'match').length;
+        const l2Mismatch = layer2.filter(r => r.status === 'mismatch').length;
+        const l2Missing = layer2.filter(r => r.status === 'missing').length;
+        cards.push(`
+            <div class="dash-card" style="border-top-color:#4caf50">
+                <div class="label">到账表总额</div>
+                <div class="value">${formatMoney(arrivalTotal)}</div>
+            </div>
+            <div class="dash-card" style="border-top-color:#ff9800">
+                <div class="label">充值表总额</div>
+                <div class="value">${formatMoney(rechargeTotal)}</div>
+                <div class="diff ${arrivalTotal === rechargeTotal ? 'positive' : 'negative'}">
+                    差异: ${formatMoney(arrivalTotal - rechargeTotal)}
+                </div>
+            </div>
+            <div class="dash-card" style="border-top-color:#2196f3">
+                <div class="label">第二层匹配率</div>
+                <div class="value">${layer2.length ? Math.round(l2Match / layer2.length * 100) : 0}%</div>
+                <div class="diff" style="color:#666;font-size:12px;">
+                    ✓${l2Match} ⚠${l2Mismatch} ✗${l2Missing}
+                </div>
+            </div>
+        `);
+    }
 
-    const l3Match = layer3.filter(r => r.status === 'match').length;
-    const l3Mismatch = layer3.filter(r => r.status === 'mismatch').length;
-    const l3Missing = layer3.filter(r => r.status === 'missing').length;
+    if (appData.enabledLayers[3]) {
+        const rechargeTotal = layer3.reduce((s, r) => s + (r.rechargeAmount || 0), 0);
+        const platformTotal = layer3.reduce((s, r) => s + (r.platformAmount || 0), 0);
+        const l3Match = layer3.filter(r => r.status === 'match').length;
+        const l3Mismatch = layer3.filter(r => r.status === 'mismatch').length;
+        const l3Missing = layer3.filter(r => r.status === 'missing').length;
+        cards.push(`
+            <div class="dash-card" style="border-top-color:#ff9800">
+                <div class="label">充值表总额</div>
+                <div class="value">${formatMoney(rechargeTotal)}</div>
+            </div>
+            <div class="dash-card" style="border-top-color:#f44336">
+                <div class="label">平台后台总额</div>
+                <div class="value">${formatMoney(platformTotal)}</div>
+                <div class="diff ${rechargeTotal === platformTotal ? 'positive' : 'negative'}">
+                    差异: ${formatMoney(rechargeTotal - platformTotal)}
+                </div>
+            </div>
+            <div class="dash-card" style="border-top-color:#2196f3">
+                <div class="label">第三层匹配率</div>
+                <div class="value">${layer3.length ? Math.round(l3Match / layer3.length * 100) : 0}%</div>
+                <div class="diff" style="color:#666;font-size:12px;">
+                    ✓${l3Match} ⚠${l3Mismatch} ✗${l3Missing}
+                </div>
+            </div>
+        `);
+    }
 
-    document.getElementById('dashboard').innerHTML = `
-        <div class="dash-card">
-            <div class="label">银行到账总额</div>
-            <div class="value">${formatMoney(bankTotal)}</div>
-        </div>
-        <div class="dash-card" style="border-top-color:#4caf50">
-            <div class="label">到账表登记总额</div>
-            <div class="value">${formatMoney(arrivalTotal)}</div>
-            <div class="diff ${bankTotal === arrivalTotal ? 'positive' : 'negative'}">
-                差异: ${formatMoney(bankTotal - arrivalTotal)}
-            </div>
-        </div>
-        <div class="dash-card" style="border-top-color:#ff9800">
-            <div class="label">充值表总额</div>
-            <div class="value">${formatMoney(rechargeTotal)}</div>
-            <div class="diff ${arrivalTotal === rechargeTotal ? 'positive' : 'negative'}">
-                差异: ${formatMoney(arrivalTotal - rechargeTotal)}
-            </div>
-        </div>
-        <div class="dash-card" style="border-top-color:#f44336">
-            <div class="label">平台后台总额</div>
-            <div class="value">${formatMoney(platformTotal)}</div>
-            <div class="diff ${rechargeTotal === platformTotal ? 'positive' : 'negative'}">
-                差异: ${formatMoney(rechargeTotal - platformTotal)}
-            </div>
-        </div>
-        <div class="dash-card" style="border-top-color:#2196f3">
-            <div class="label">第一层匹配率</div>
-            <div class="value">${layer1.length ? Math.round(l1Match / layer1.length * 100) : 0}%</div>
-            <div class="diff" style="color:#666;font-size:12px;">
-                ✓${l1Match} ⚠${l1Mismatch} ✗${l1Missing}
-            </div>
-        </div>
-        <div class="dash-card" style="border-top-color:#2196f3">
-            <div class="label">第二层匹配率</div>
-            <div class="value">${layer2.length ? Math.round(l2Match / layer2.length * 100) : 0}%</div>
-            <div class="diff" style="color:#666;font-size:12px;">
-                ✓${l2Match} ⚠${l2Mismatch} ✗${l2Missing}
-            </div>
-        </div>
-        <div class="dash-card" style="border-top-color:#2196f3">
-            <div class="label">第三层匹配率</div>
-            <div class="value">${layer3.length ? Math.round(l3Match / layer3.length * 100) : 0}%</div>
-            <div class="diff" style="color:#666;font-size:12px;">
-                ✓${l3Match} ⚠${l3Mismatch} ✗${l3Missing}
-            </div>
-        </div>
-    `;
+    document.getElementById('dashboard').innerHTML = cards.join('');
 
-    // 差异数量徽章
-    document.getElementById('badge1').textContent = layer1.filter(r => r.status !== 'match').length;
-    document.getElementById('badge2').textContent = layer2.filter(r => r.status !== 'match').length;
-    document.getElementById('badge3').textContent = layer3.filter(r => r.status !== 'match').length;
+    // 动态生成Tab按钮
+    const tabs = [];
+    if (appData.enabledLayers[1]) {
+        tabs.push(`<button class="result-tab ${tabs.length === 0 ? 'active' : ''}" onclick="showResultTab('layer1')">
+            第一层：银行 vs 到账表 <span class="badge" id="badge1">${layer1.filter(r => r.status !== 'match').length}</span>
+        </button>`);
+    }
+    if (appData.enabledLayers[2]) {
+        tabs.push(`<button class="result-tab ${tabs.length === 0 ? 'active' : ''}" onclick="showResultTab('layer2')">
+            第二层：到账表 vs 充值表 <span class="badge" id="badge2">${layer2.filter(r => r.status !== 'match').length}</span>
+        </button>`);
+    }
+    if (appData.enabledLayers[3]) {
+        tabs.push(`<button class="result-tab ${tabs.length === 0 ? 'active' : ''}" onclick="showResultTab('layer3')">
+            第三层：充值表 vs 平台后台 <span class="badge" id="badge3">${layer3.filter(r => r.status !== 'match').length}</span>
+        </button>`);
+    }
+    document.getElementById('resultTabs').innerHTML = tabs.join('');
 
-    // 渲染三层表格
-    renderLayer1(layer1);
-    renderLayer2(layer2);
-    renderLayer3(layer3);
+    // 默认显示第一个启用的层
+    document.getElementById('resultLayer1').classList.add('hidden');
+    document.getElementById('resultLayer2').classList.add('hidden');
+    document.getElementById('resultLayer3').classList.add('hidden');
+    if (appData.enabledLayers[1]) {
+        document.getElementById('resultLayer1').classList.remove('hidden');
+    } else if (appData.enabledLayers[2]) {
+        document.getElementById('resultLayer2').classList.remove('hidden');
+    } else if (appData.enabledLayers[3]) {
+        document.getElementById('resultLayer3').classList.remove('hidden');
+    }
+
+    // 渲染表格
+    if (appData.enabledLayers[1]) renderLayer1(layer1);
+    if (appData.enabledLayers[2]) renderLayer2(layer2);
+    if (appData.enabledLayers[3]) renderLayer3(layer3);
 }
 
 function renderLayer1(data) {
@@ -1695,7 +1825,8 @@ function showResultTab(layer) {
     document.getElementById('resultLayer1').classList.add('hidden');
     document.getElementById('resultLayer2').classList.add('hidden');
     document.getElementById('resultLayer3').classList.add('hidden');
-    document.getElementById('resultLayer' + layer.slice(-1)).classList.remove('hidden');
+    const layerNum = layer.replace('layer', '');
+    document.getElementById('resultLayer' + layerNum).classList.remove('hidden');
 }
 
 // ==================== 导出Excel ====================
@@ -1704,60 +1835,78 @@ function exportResults() {
 
     const wb = XLSX.utils.book_new();
 
-    // Sheet1: 第一层
-    const s1Data = [['状态', '日期', '银行', '银行到账金额', '到账表金额', '差异', '银行笔数', '到账笔数', '说明']];
-    layer1.forEach(r => {
-        s1Data.push([
-            r.status === 'match' ? '匹配' : r.status === 'mismatch' ? '金额不符' : '缺失',
-            r.date, r.bank, r.bankAmount, r.arrivalAmount, r.diff,
-            r.bankCount, r.arrivalCount, r.side || ''
-        ]);
-    });
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(s1Data), '第一层-银行vs到账表');
+    // Sheet1: 第一层（如启用）
+    if (appData.enabledLayers[1]) {
+        const s1Data = [['状态', '日期', '银行', '银行到账金额', '到账表金额', '差异', '银行笔数', '到账笔数', '说明']];
+        layer1.forEach(r => {
+            s1Data.push([
+                r.status === 'match' ? '匹配' : r.status === 'mismatch' ? '金额不符' : '缺失',
+                r.date, r.bank, r.bankAmount, r.arrivalAmount, r.diff,
+                r.bankCount, r.arrivalCount, r.side || ''
+            ]);
+        });
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(s1Data), '第一层-银行vs到账表');
+    }
 
-    // Sheet2: 第二层
-    const s2Data = [['状态', '日期', '公司名称', '平台', '到账金额', '充值金额', '差异', '说明']];
-    layer2.forEach(r => {
-        s2Data.push([
-            r.status === 'match' ? '匹配' : r.status === 'mismatch' ? '金额不符' : '缺失',
-            r.date, r.company, r.platform, r.arrivalAmount, r.rechargeAmount, r.diff,
-            r.side || ''
-        ]);
-    });
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(s2Data), '第二层-到账表vs充值表');
+    // Sheet2: 第二层（如启用）
+    if (appData.enabledLayers[2]) {
+        const s2Data = [['状态', '日期', '公司名称', '平台', '到账金额', '充值金额', '差异', '说明']];
+        layer2.forEach(r => {
+            s2Data.push([
+                r.status === 'match' ? '匹配' : r.status === 'mismatch' ? '金额不符' : '缺失',
+                r.date, r.company, r.platform, r.arrivalAmount, r.rechargeAmount, r.diff,
+                r.side || ''
+            ]);
+        });
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(s2Data), '第二层-到账表vs充值表');
+    }
 
-    // Sheet3: 第三层
-    const s3Data = [['状态', '平台', '日期', '账户', '充值表金额', '后台金额', '差异', '说明']];
-    layer3.forEach(r => {
-        s3Data.push([
-            r.status === 'match' ? '匹配' : r.status === 'mismatch' ? '金额不符' : '缺失',
-            r.platform, r.date, r.account, r.rechargeAmount, r.platformAmount, r.diff,
-            r.side || ''
-        ]);
-    });
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(s3Data), '第三层-充值表vs平台后台');
+    // Sheet3: 第三层（如启用）
+    if (appData.enabledLayers[3]) {
+        const s3Data = [['状态', '平台', '日期', '账户', '充值表金额', '后台金额', '差异', '说明']];
+        layer3.forEach(r => {
+            s3Data.push([
+                r.status === 'match' ? '匹配' : r.status === 'mismatch' ? '金额不符' : '缺失',
+                r.platform, r.date, r.account, r.rechargeAmount, r.platformAmount, r.diff,
+                r.side || ''
+            ]);
+        });
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(s3Data), '第三层-充值表vs平台后台');
+    }
 
-    // Sheet4: 汇总
-    const bankTotal = layer1.reduce((s, r) => s + (r.bankAmount || 0), 0);
-    const arrivalTotal = layer1.reduce((s, r) => s + (r.arrivalAmount || 0), 0);
-    const rechargeTotal = layer2.reduce((s, r) => s + (r.rechargeAmount || 0), 0);
-    const platformTotal = layer3.reduce((s, r) => s + (r.platformAmount || 0), 0);
-
+    // Sheet4: 汇总（只包含启用的层）
     const s4Data = [
         ['核对汇总报告'],
         ['生成时间', new Date().toLocaleString('zh-CN')],
         [],
-        ['层级', '银行/到账总额', '到账/充值总额', '充值/平台总额', '差异'],
-        ['第一层（银行 vs 到账表）', bankTotal, arrivalTotal, '-', bankTotal - arrivalTotal],
-        ['第二层（到账表 vs 充值表）', '-', arrivalTotal, rechargeTotal, arrivalTotal - rechargeTotal],
-        ['第三层（充值表 vs 平台后台）', '-', rechargeTotal, platformTotal, rechargeTotal - platformTotal],
-        [],
-        ['匹配情况统计'],
-        ['层级', '匹配', '金额不符', '缺失', '总计'],
-        ['第一层', layer1.filter(r=>r.status==='match').length, layer1.filter(r=>r.status==='mismatch').length, layer1.filter(r=>r.status==='missing').length, layer1.length],
-        ['第二层', layer2.filter(r=>r.status==='match').length, layer2.filter(r=>r.status==='mismatch').length, layer2.filter(r=>r.status==='missing').length, layer2.length],
-        ['第三层', layer3.filter(r=>r.status==='match').length, layer3.filter(r=>r.status==='mismatch').length, layer3.filter(r=>r.status==='missing').length, layer3.length],
     ];
+
+    if (appData.enabledLayers[1]) {
+        const bankTotal = layer1.reduce((s, r) => s + (r.bankAmount || 0), 0);
+        const arrivalTotal1 = layer1.reduce((s, r) => s + (r.arrivalAmount || 0), 0);
+        s4Data.push(['第一层（银行 vs 到账表）', `银行总额: ${bankTotal}`, `到账总额: ${arrivalTotal1}`, `差异: ${bankTotal - arrivalTotal1}`]);
+        s4Data.push(['', '匹配', '金额不符', '缺失', '总计']);
+        s4Data.push(['', layer1.filter(r=>r.status==='match').length, layer1.filter(r=>r.status==='mismatch').length, layer1.filter(r=>r.status==='missing').length, layer1.length]);
+        s4Data.push([]);
+    }
+
+    if (appData.enabledLayers[2]) {
+        const arrivalTotal2 = layer2.reduce((s, r) => s + (r.arrivalAmount || 0), 0);
+        const rechargeTotal2 = layer2.reduce((s, r) => s + (r.rechargeAmount || 0), 0);
+        s4Data.push(['第二层（到账表 vs 充值表）', `到账总额: ${arrivalTotal2}`, `充值总额: ${rechargeTotal2}`, `差异: ${arrivalTotal2 - rechargeTotal2}`]);
+        s4Data.push(['', '匹配', '金额不符', '缺失', '总计']);
+        s4Data.push(['', layer2.filter(r=>r.status==='match').length, layer2.filter(r=>r.status==='mismatch').length, layer2.filter(r=>r.status==='missing').length, layer2.length]);
+        s4Data.push([]);
+    }
+
+    if (appData.enabledLayers[3]) {
+        const rechargeTotal3 = layer3.reduce((s, r) => s + (r.rechargeAmount || 0), 0);
+        const platformTotal3 = layer3.reduce((s, r) => s + (r.platformAmount || 0), 0);
+        s4Data.push(['第三层（充值表 vs 平台后台）', `充值总额: ${rechargeTotal3}`, `平台总额: ${platformTotal3}`, `差异: ${rechargeTotal3 - platformTotal3}`]);
+        s4Data.push(['', '匹配', '金额不符', '缺失', '总计']);
+        s4Data.push(['', layer3.filter(r=>r.status==='match').length, layer3.filter(r=>r.status==='mismatch').length, layer3.filter(r=>r.status==='missing').length, layer3.length]);
+    }
+
     XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(s4Data), '汇总');
 
     XLSX.writeFile(wb, `数据核查报告_${new Date().toISOString().slice(0,10)}.xlsx`);

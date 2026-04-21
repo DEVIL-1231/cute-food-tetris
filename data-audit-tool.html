@@ -333,6 +333,10 @@
         .status-tag.match { background: #c8e6c9; color: #2e7d32; }
         .status-tag.mismatch { background: #ffecb3; color: #e65100; }
         .status-tag.missing { background: #ffcdd2; color: #c62828; }
+        .status-tag.crossMonthMatch { background: #e1bee7; color: #6a1b9a; }
+        .status-tag.crossMonthMismatch { background: #e1bee7; color: #6a1b9a; }
+        .result-table tr.crossMonthMatch { background: #f3e5f5; }
+        .result-table tr.crossMonthMismatch { background: #f3e5f5; }
         .status-tag.duplicate { background: #ffe0b2; color: #e65100; }
 
         .amount { font-family: 'Courier New', monospace; font-weight: 600; }
@@ -401,6 +405,18 @@
 
         <!-- 步骤1：上传文件 -->
         <div id="step1" class="step-content">
+            <div class="section" style="background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);">
+                <div class="section-title"><span class="icon">📅</span>核对月份设置</div>
+                <div style="display: flex; gap: 24px; flex-wrap: wrap; align-items: center;">
+                    <div>
+                        <label style="font-size: 13px; color: #666; display: block; margin-bottom: 6px;">选择核对月份</label>
+                        <input type="month" id="auditMonth" value="" style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px;">
+                    </div>
+                    <div id="snapshotInfo" style="font-size: 13px; color: #666;"></div>
+                </div>
+                <div id="snapshotList" style="margin-top: 12px;"></div>
+            </div>
+
             <div class="section">
                 <div class="section-title"><span class="icon">🏦</span>银行导出文件（支持6家银行，可多选）</div>
                 <div class="drop-zone" onclick="document.getElementById('bankFiles').click()"
@@ -520,13 +536,14 @@
 <script>
 // ==================== 全局数据存储 ====================
 const appData = {
-    bankFiles: [],      // [{file, type, rawData, detectedBank}]
-    arrivalFile: null,  // {file, rawData}
-    rechargeFile: null, // {file, rawData}
-    platformFiles: [],  // [{file, type, rawData, detectedPlatform}]
-    mapping: {},        // 列映射配置
-    results: {},        // 核对结果
-    enabledLayers: { 1: true, 2: true, 3: true }, // 启用的核对层
+    bankFiles: [],
+    arrivalFile: null,
+    rechargeFile: null,
+    platformFiles: [],
+    mapping: {},
+    results: {},
+    enabledLayers: { 1: true, 2: true, 3: true },
+    month: getCurrentMonth(), // 当前核对月份
 };
 
 // ==================== 银行识别配置 ====================
@@ -535,6 +552,8 @@ const BANK_CONFIGS = {
         keywords: ['Transaction Type', 'Description', 'Withdrawals', 'Deposits', 'Balance'],
         dateCol: ['Date'],
         amountCol: ['Deposits'],
+        currencyCol: [], // 华美默认 USD
+        defaultCurrency: 'USD',
         filter: (row) => parseAmount(row['Deposits']) > 0,
         bankName: (row, filename) => '华美银行',
     },
@@ -542,6 +561,8 @@ const BANK_CONFIGS = {
         keywords: ['详情', '支出', '存入', '结余', 'USD', '美元', '日期', 'Date'],
         dateCol: ['日期', '日期 Date', 'Date'],
         amountCol: ['存入(USD 美元)', '存入 (USD 美元)', '存入', '存入金额'],
+        currencyCol: [], // 从表头推断 USD
+        defaultCurrency: 'USD',
         filter: (row) => {
             // 尝试多个可能的存入列名
             const amountKeys = ['存入(USD 美元)', '存入 (USD 美元)', '存入', '存入金额'];
@@ -557,6 +578,8 @@ const BANK_CONFIGS = {
         keywords: ['賬戶名稱Account Name', '交易日期Transaction Date', '扣賬/入賬Debit/Credit', '金額Amount'],
         dateCol: ['交易日期Transaction Date'],
         amountCol: ['金額Amount'],
+        currencyCol: [],
+        defaultCurrency: 'HKD',
         filter: (row) => {
             const dc = String(row['扣賬/入賬Debit/Credit'] || '').trim().toUpperCase();
             return dc === 'CR' || dc === 'CREDIT' || dc === '入賬';
@@ -567,6 +590,7 @@ const BANK_CONFIGS = {
         keywords: ['Create Time', 'Bill ID', 'Bill Currency', 'Bill Amount', 'Status'],
         dateCol: ['Create Time'],
         amountCol: ['Bill Amount'],
+        currencyCol: ['Bill Currency'],
         filter: (row) => {
             const status = String(row['Status'] || '').trim().toLowerCase();
             return status === 'paid' && parseAmount(row['Bill Amount']) > 0;
@@ -577,6 +601,7 @@ const BANK_CONFIGS = {
         keywords: ['Time', 'Currency', 'Amount', 'TransactionId', 'Account No.', 'Status'],
         dateCol: ['Time'],
         amountCol: ['Amount'],
+        currencyCol: ['Currency'],
         filter: (row) => parseAmount(row['Amount']) > 0,
         bankName: (row, filename) => 'PingPong',
     },
@@ -584,6 +609,7 @@ const BANK_CONFIGS = {
         keywords: [],
         dateCol: [],
         amountCol: [],
+        currencyCol: [],
         filter: () => true,
         bankName: (row, filename) => '其他银行',
     }
@@ -596,6 +622,7 @@ const PLATFORM_CONFIGS = {
         dateCol: ['申请时间'],
         amountCol: ['交易金额'],
         accountCol: ['广告账号名称'],
+        currencyCol: ['币种'],
         filter: (row) => parseAmount(row['交易金额']) !== 0,
     },
     'TD充值': {
@@ -603,6 +630,7 @@ const PLATFORM_CONFIGS = {
         dateCol: ['申请时间'],
         amountCol: ['充值金额'],
         accountCol: ['账户名称'],
+        currencyCol: ['币种'],
         filter: (row) => {
             const platform = String(row['媒体平台'] || '').trim().toLowerCase();
             return (platform === 'facebook' || platform === 'td') && parseAmount(row['充值金额']) !== 0;
@@ -613,6 +641,7 @@ const PLATFORM_CONFIGS = {
         dateCol: ['申请时间'],
         amountCol: ['操作金额'],
         accountCol: ['账户名称'],
+        currencyCol: ['币种'],
         filter: (row) => {
             const platform = String(row['媒体平台'] || '').trim().toLowerCase();
             return (platform === 'facebook' || platform === 'td') && parseAmount(row['操作金额']) !== 0;
@@ -623,6 +652,7 @@ const PLATFORM_CONFIGS = {
         dateCol: ['申请时间'],
         amountCol: ['充值金额'],
         accountCol: ['账户名称'],
+        currencyCol: ['币种'],
         filter: (row) => {
             const platform = String(row['媒体平台'] || '').trim().toLowerCase();
             return (platform === 'pinterest' || platform === 'pin') && parseAmount(row['充值金额']) !== 0;
@@ -633,6 +663,7 @@ const PLATFORM_CONFIGS = {
         dateCol: ['操作时间'],
         amountCol: ['操作金额'],
         accountCol: ['广告账户名称'],
+        currencyCol: ['币种'],
         filter: (row) => parseAmount(row['操作金额']) !== 0,
     },
     'BING': {
@@ -640,6 +671,7 @@ const PLATFORM_CONFIGS = {
         dateCol: ['操作时间'],
         amountCol: ['发生金额'],
         accountCol: ['Number'],
+        currencyCol: ['币种'],
         filter: (row) => parseAmount(row['发生金额']) !== 0,
     },
     'GG': {
@@ -647,6 +679,7 @@ const PLATFORM_CONFIGS = {
         dateCol: ['日期辅助列'], // U列
         amountCol: ['预算金额'],
         accountCol: ['账号名称'],
+        currencyCol: ['货币代码'],
         filter: (row) => parseAmount(row['预算金额']) !== 0,
     },
 };
@@ -658,6 +691,23 @@ function parseAmount(val) {
     const cleaned = String(val).replace(/[,，]/g, '').replace(/[^\d.-]/g, '');
     const num = parseFloat(cleaned);
     return isNaN(num) ? 0 : num;
+}
+
+function parseCurrency(val) {
+    if (!val) return '';
+    const str = String(val).trim().toUpperCase();
+    const map = {
+        'USD': 'USD', '$': 'USD', '美元': 'USD', '美金': 'USD',
+        'CNY': 'CNY', 'RMB': 'CNY', '¥': 'CNY', '人民币': 'CNY', '元': 'CNY',
+        'HKD': 'HKD', '港币': 'HKD', '港幣': 'HKD',
+        'GBP': 'GBP', '£': 'GBP', '英镑': 'GBP',
+        'EUR': 'EUR', '€': 'EUR', '欧元': 'EUR',
+        'JPY': 'JPY', '¥': 'JPY', '日元': 'JPY',
+    };
+    for (const [key, code] of Object.entries(map)) {
+        if (str.includes(key)) return code;
+    }
+    return str;
 }
 
 function parseDate(val) {
@@ -706,6 +756,75 @@ function formatDate(date) {
 function formatMoney(amount) {
     if (amount === undefined || amount === null) return '-';
     return amount.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function getCurrentMonth() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+}
+
+function getPreviousMonth(monthStr) {
+    const [y, m] = monthStr.split('-').map(Number);
+    const d = new Date(y, m - 2, 1);
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+}
+
+function getCurrencySymbol(currency) {
+    const map = { 'USD': '$', 'CNY': '¥', 'HKD': 'HK$', 'GBP': '£', 'EUR': '€', 'JPY': '¥' };
+    return map[currency] || '';
+}
+
+// ==================== localStorage 快照 ====================
+const LS_KEY = 'dataAuditSnapshots';
+
+function saveSnapshot(month, data) {
+    try {
+        const all = JSON.parse(localStorage.getItem(LS_KEY) || '{}');
+        all[month] = {
+            timestamp: new Date().toISOString(),
+            bankRecords: data.bankRecords,
+            arrivalRecords: data.arrivalRecords,
+            rechargeRecords: data.rechargeRecords,
+            platformRecords: data.platformRecords,
+            results: data.results,
+            month: month,
+        };
+        localStorage.setItem(LS_KEY, JSON.stringify(all));
+        return true;
+    } catch (e) {
+        console.error('Save snapshot failed:', e);
+        return false;
+    }
+}
+
+function loadSnapshot(month) {
+    try {
+        const all = JSON.parse(localStorage.getItem(LS_KEY) || '{}');
+        return all[month] || null;
+    } catch (e) {
+        console.error('Load snapshot failed:', e);
+        return null;
+    }
+}
+
+function listSnapshots() {
+    try {
+        const all = JSON.parse(localStorage.getItem(LS_KEY) || '{}');
+        return Object.keys(all).sort().reverse();
+    } catch (e) {
+        return [];
+    }
+}
+
+function deleteSnapshot(month) {
+    try {
+        const all = JSON.parse(localStorage.getItem(LS_KEY) || '{}');
+        delete all[month];
+        localStorage.setItem(LS_KEY, JSON.stringify(all));
+        return true;
+    } catch (e) {
+        return false;
+    }
 }
 
 function detectBankType(headers, filename) {
@@ -870,6 +989,12 @@ function goToStep(step) {
     document.getElementById('step' + step).classList.remove('hidden');
 
     if (step === 2) {
+        // Read month
+        const monthInput = document.getElementById('auditMonth');
+        if (monthInput && monthInput.value) {
+            appData.month = monthInput.value;
+        }
+
         // Read layer selection from checkboxes
         appData.enabledLayers[1] = document.getElementById('enableLayer1').checked;
         appData.enabledLayers[2] = document.getElementById('enableLayer2').checked;
@@ -936,6 +1061,14 @@ function buildMappingUI() {
             ${amtDetected ? '<span class="auto-detected">✓ 自动识别</span>' : '<span class="manual">⚠ 请手动选择</span>'}
         </div>`;
 
+        // 币种列
+        const currDetected = findBestMatch(headers, bankConfig.currencyCol);
+        html += `<div class="mapping-row">
+            <label>币种列</label>
+            <select id="bank_currency_${idx}">${buildOptions(headers, currDetected)}</select>
+            ${currDetected ? '<span class="auto-detected">✓ 自动识别</span>' : '<span class="manual">可选</span>'}
+        </div>`;
+
         // 预览
         html += `<table class="preview-table"><thead><tr><th>${headers.join('</th><th>')}</th></tr></thead><tbody>`;
         for (let i = 0; i < Math.min(3, item.rawData.rows.length); i++) {
@@ -969,6 +1102,7 @@ function buildMappingUI() {
             { label: '到账金额', keys: ['到账金额', '到款金额', '金额'], id: 'arrival_amount' },
             { label: '服务产品/平台', keys: ['服务产品', '产品', '平台'], id: 'arrival_platform' },
             { label: '费用用途', keys: ['费用用途', '用途'], id: 'arrival_feePurpose' },
+            { label: '币种', keys: ['币种', '货币', 'Currency'], id: 'arrival_currency' },
         ];
 
         mappings.forEach(m => {
@@ -1011,6 +1145,7 @@ function buildMappingUI() {
             { label: '充值平台', keys: ['充值平台', '平台'], id: 'recharge_platform' },
             { label: '账户名称', keys: ['帐户名称', '账户名称', '账号名称'], id: 'recharge_account' },
             { label: '充值金额', keys: ['充值金额（不含税）', '充值金额', '预存金额（不含税）'], id: 'recharge_amount' },
+            { label: '币种', keys: ['币种', '货币', 'Currency'], id: 'recharge_currency' },
         ];
 
         mappings.forEach(m => {
@@ -1062,6 +1197,14 @@ function buildMappingUI() {
             <label>金额列</label>
             <select id="plat_amount_${idx}">${buildOptions(headers, amtDetected)}</select>
             ${amtDetected ? '<span class="auto-detected">✓ 自动识别</span>' : '<span class="manual">⚠ 请手动选择</span>'}
+        </div>`;
+
+        // 币种列
+        const currDetected = findBestMatch(headers, platConfig.currencyCol);
+        html += `<div class="mapping-row">
+            <label>币种列</label>
+            <select id="plat_currency_${idx}">${buildOptions(headers, currDetected)}</select>
+            ${currDetected ? '<span class="auto-detected">✓ 自动识别</span>' : '<span class="manual">可选</span>'}
         </div>`;
 
         // 账户列
@@ -1138,10 +1281,12 @@ function confirmMapping() {
         appData.bankFiles.forEach((item, idx) => {
             const dateEl = document.getElementById(`bank_date_${idx}`);
             const amtEl = document.getElementById(`bank_amount_${idx}`);
+            const currEl = document.getElementById(`bank_currency_${idx}`);
             appData.mapping.bank.push({
                 index: idx,
                 dateCol: dateEl ? dateEl.value : '',
                 amountCol: amtEl ? amtEl.value : '',
+                currencyCol: currEl ? currEl.value : '',
                 bankType: item.detectedBank,
             });
         });
@@ -1156,6 +1301,7 @@ function confirmMapping() {
             amountCol: document.getElementById('arrival_amount')?.value || '',
             platformCol: document.getElementById('arrival_platform')?.value || '',
             feePurposeCol: document.getElementById('arrival_feePurpose')?.value || '',
+            currencyCol: document.getElementById('arrival_currency')?.value || '',
         };
     }
 
@@ -1167,6 +1313,7 @@ function confirmMapping() {
             platformCol: document.getElementById('recharge_platform')?.value || '',
             accountCol: document.getElementById('recharge_account')?.value || '',
             amountCol: document.getElementById('recharge_amount')?.value || '',
+            currencyCol: document.getElementById('recharge_currency')?.value || '',
         };
     }
 
@@ -1176,11 +1323,13 @@ function confirmMapping() {
             const dateEl = document.getElementById(`plat_date_${idx}`);
             const amtEl = document.getElementById(`plat_amount_${idx}`);
             const accEl = document.getElementById(`plat_account_${idx}`);
+            const currEl = document.getElementById(`plat_currency_${idx}`);
             const platMap = {
                 index: idx,
                 dateCol: dateEl ? dateEl.value : '',
                 amountCol: amtEl ? amtEl.value : '',
                 accountCol: accEl ? accEl.value : '',
+                currencyCol: currEl ? currEl.value : '',
                 platformType: item.detectedPlatform,
             };
             if (item.detectedPlatform === 'GG') {
@@ -1202,6 +1351,7 @@ function startAudit() {
     setTimeout(() => {
         let progress = 0;
         appData.results = { layer1: [], layer2: [], layer3: [] };
+        appData.originalRecords = {};
 
         // Layer 1: 银行 vs 到账表
         if (appData.enabledLayers[1]) {
@@ -1213,8 +1363,36 @@ function startAudit() {
             progressText.textContent = '正在提取到账表数据...';
             const arrivalRecords = extractArrivalRecords();
 
+            // 保存原始记录（用于快照）
+            appData.originalRecords.bank = [...bankRecords];
+            appData.originalRecords.arrival = [...arrivalRecords];
+
+            // 加载上月未匹配的到账记录（跨月匹配）
+            const prevMonth = getPreviousMonth(appData.month);
+            const prevSnapshot = prevMonth ? loadSnapshot(prevMonth) : null;
+            if (prevSnapshot && prevSnapshot.results && prevSnapshot.results.layer1) {
+                const matchedKeys = new Set();
+                prevSnapshot.results.layer1.forEach(r => {
+                    if (r.status === 'match') {
+                        matchedKeys.add(`${r.date}_${r.bank}`);
+                    }
+                });
+                const crossMonthRecords = [];
+                (prevSnapshot.arrivalRecords || []).forEach(r => {
+                    if (r.crossMonth) return; // 不重复携带上上月的合成记录
+                    const key = `${r.date}_${r.bank}`;
+                    if (!matchedKeys.has(key)) {
+                        crossMonthRecords.push({ ...r, crossMonth: true, crossMonthSource: prevMonth });
+                    }
+                });
+                if (crossMonthRecords.length > 0) {
+                    arrivalRecords.push(...crossMonthRecords);
+                }
+            }
+
             progressFill.style.width = '45%';
             progressText.textContent = '正在执行第一层核对...';
+            appData.records = { bank: bankRecords, arrival: arrivalRecords };
             appData.results.layer1 = compareLayer1(bankRecords, arrivalRecords);
             progress = 45;
         }
@@ -1228,6 +1406,10 @@ function startAudit() {
             progressFill.style.width = (progress + 30) + '%';
             progressText.textContent = '正在提取充值表数据...';
             const rechargeRecords = extractRechargeRecords();
+
+            if (!appData.records) appData.records = {};
+            appData.records.arrival = arrivalRecords;
+            appData.records.recharge = rechargeRecords;
 
             progressFill.style.width = (progress + 45) + '%';
             progressText.textContent = '正在执行第二层核对...';
@@ -1244,6 +1426,10 @@ function startAudit() {
             progressFill.style.width = (progress + 30) + '%';
             progressText.textContent = '正在提取平台后台数据...';
             const platformRecords = extractPlatformRecords();
+
+            if (!appData.records) appData.records = {};
+            appData.records.recharge = rechargeRecords;
+            appData.records.platform = platformRecords;
 
             progressFill.style.width = (progress + 45) + '%';
             progressText.textContent = '正在执行第三层核对...';
@@ -1297,10 +1483,20 @@ function extractBankRecords() {
 
             const bankName = config.bankName ? config.bankName(row, item.file.name) : mapping.bankType;
 
+            // 读取币种
+            let currency = '';
+            if (mapping.currencyCol && row[mapping.currencyCol] !== undefined) {
+                currency = parseCurrency(row[mapping.currencyCol]);
+            }
+            if (!currency && config.defaultCurrency) {
+                currency = config.defaultCurrency;
+            }
+
             records.push({
                 date: formatDate(date),
                 bank: bankName,
                 amount: amount,
+                currency: currency,
                 raw: row,
             });
         });
@@ -1319,6 +1515,7 @@ function extractArrivalRecords() {
         if (!date || amount === 0) return;
 
         const feePurpose = m.feePurposeCol ? String(row[m.feePurposeCol] || '').trim() : '';
+        const currency = m.currencyCol ? parseCurrency(row[m.currencyCol]) : '';
 
         records.push({
             date: formatDate(date),
@@ -1327,6 +1524,7 @@ function extractArrivalRecords() {
             platform: String(row[m.platformCol] || '').trim(),
             amount: amount,
             feePurpose: feePurpose,
+            currency: currency,
             raw: row,
         });
     });
@@ -1343,12 +1541,15 @@ function extractRechargeRecords() {
         const amount = parseAmount(row[m.amountCol]);
         if (!date || amount === 0) return;
 
+        const currency = m.currencyCol ? parseCurrency(row[m.currencyCol]) : '';
+
         records.push({
             date: formatDate(date),
             company: String(row[m.companyCol] || '').trim(),
             platform: String(row[m.platformCol] || '').trim(),
             account: String(row[m.accountCol] || '').trim(),
             amount: amount,
+            currency: currency,
             raw: row,
         });
     });
@@ -1369,12 +1570,14 @@ function extractPlatformRecords() {
                 const ggDate = parseDate(row[mapping.ggDateCol]);
                 const amount = parseAmount(row[mapping.amountCol]);
                 const account = String(row[mapping.accountCol] || '').trim();
+                const currency = mapping.currencyCol ? parseCurrency(row[mapping.currencyCol]) : '';
                 if (!ggDate || amount === 0) return;
 
                 ggData.push({
                     date: formatDate(ggDate),
                     account: account,
                     amount: amount,
+                    currency: currency,
                 });
             });
             return;
@@ -1412,11 +1615,14 @@ function extractPlatformRecords() {
                 platformName = 'TD';
             }
 
+            const currency = mapping.currencyCol ? parseCurrency(row[mapping.currencyCol]) : '';
+
             records.push({
                 platform: platformName,
                 date: formatDate(date),
                 account: String(accountVal || '').trim(),
                 amount: amount,
+                currency: currency,
                 raw: row,
             });
         });
@@ -1444,6 +1650,7 @@ function extractPlatformRecords() {
                         date: rows[i].date,
                         account: account,
                         amount: diff,
+                        currency: rows[i].currency || '',
                         note: `${rows[i-1].date} -> ${rows[i].date} 差额`,
                     });
                 }
@@ -1484,9 +1691,11 @@ function compareLayer1(bankRecords, arrivalRecords) {
 
         if (bank && arrival) {
             const diff = Math.abs(bank.amount - arrival.amount);
+            const crossMonthDetail = arrival.details.find(d => d.crossMonth);
+            const hasCrossMonth = !!crossMonthDetail;
             if (diff < 0.01) {
                 results.push({
-                    status: 'match',
+                    status: hasCrossMonth ? 'crossMonthMatch' : 'match',
                     date: bank.date,
                     bank: bank.bank,
                     bankAmount: bank.amount,
@@ -1494,10 +1703,11 @@ function compareLayer1(bankRecords, arrivalRecords) {
                     diff: 0,
                     bankCount: bank.count,
                     arrivalCount: arrival.count,
+                    crossMonthSource: crossMonthDetail?.crossMonthSource,
                 });
             } else {
                 results.push({
-                    status: 'mismatch',
+                    status: hasCrossMonth ? 'crossMonthMismatch' : 'mismatch',
                     date: bank.date,
                     bank: bank.bank,
                     bankAmount: bank.amount,
@@ -1505,6 +1715,7 @@ function compareLayer1(bankRecords, arrivalRecords) {
                     diff: bank.amount - arrival.amount,
                     bankCount: bank.count,
                     arrivalCount: arrival.count,
+                    crossMonthSource: crossMonthDetail?.crossMonthSource,
                 });
             }
         } else if (bank) {
@@ -1628,6 +1839,30 @@ function compareLayer3(rechargeRecords, platformRecords) {
     return results.sort((a, b) => a.date.localeCompare(b.date));
 }
 
+function groupByCurrency(records, amountField) {
+    const groups = {};
+    records.forEach(r => {
+        const c = r.currency || '未识别';
+        if (!groups[c]) groups[c] = 0;
+        groups[c] += r[amountField] || 0;
+    });
+    return groups;
+}
+
+function formatCurrencyBreakdown(groups) {
+    const currencies = Object.keys(groups).sort();
+    if (currencies.length === 0) return '';
+    if (currencies.length === 1 && currencies[0] === '未识别') {
+        return `<div style="margin-top:6px;font-size:13px;color:#666;">${formatMoney(groups['未识别'] || 0)}</div>`;
+    }
+    let html = '<div style="margin-top:6px;">';
+    currencies.forEach(c => {
+        html += `<div style="font-size:12px;color:#666;">${c}: ${formatMoney(groups[c])}</div>`;
+    });
+    html += '</div>';
+    return html;
+}
+
 // ==================== 结果展示 ====================
 function showResults() {
     const { layer1, layer2, layer3 } = appData.results;
@@ -1638,17 +1873,21 @@ function showResults() {
     if (appData.enabledLayers[1]) {
         const bankTotal = layer1.reduce((s, r) => s + (r.bankAmount || 0), 0);
         const arrivalTotal = layer1.reduce((s, r) => s + (r.arrivalAmount || 0), 0);
-        const l1Match = layer1.filter(r => r.status === 'match').length;
-        const l1Mismatch = layer1.filter(r => r.status === 'mismatch').length;
+        const l1Match = layer1.filter(r => r.status === 'match' || r.status === 'crossMonthMatch').length;
+        const l1Mismatch = layer1.filter(r => r.status === 'mismatch' || r.status === 'crossMonthMismatch').length;
         const l1Missing = layer1.filter(r => r.status === 'missing').length;
+        const bankByCurr = groupByCurrency(appData.records?.bank || [], 'amount');
+        const arrivalByCurr = groupByCurrency(appData.records?.arrival || [], 'amount');
         cards.push(`
             <div class="dash-card">
                 <div class="label">银行到账总额</div>
                 <div class="value">${formatMoney(bankTotal)}</div>
+                ${formatCurrencyBreakdown(bankByCurr)}
             </div>
             <div class="dash-card" style="border-top-color:#4caf50">
                 <div class="label">到账表登记总额</div>
                 <div class="value">${formatMoney(arrivalTotal)}</div>
+                ${formatCurrencyBreakdown(arrivalByCurr)}
                 <div class="diff ${bankTotal === arrivalTotal ? 'positive' : 'negative'}">
                     差异: ${formatMoney(bankTotal - arrivalTotal)}
                 </div>
@@ -1669,14 +1908,18 @@ function showResults() {
         const l2Match = layer2.filter(r => r.status === 'match').length;
         const l2Mismatch = layer2.filter(r => r.status === 'mismatch').length;
         const l2Missing = layer2.filter(r => r.status === 'missing').length;
+        const arrivalByCurr = groupByCurrency(appData.records?.arrival || [], 'amount');
+        const rechargeByCurr = groupByCurrency(appData.records?.recharge || [], 'amount');
         cards.push(`
             <div class="dash-card" style="border-top-color:#4caf50">
                 <div class="label">到账表总额</div>
                 <div class="value">${formatMoney(arrivalTotal)}</div>
+                ${formatCurrencyBreakdown(arrivalByCurr)}
             </div>
             <div class="dash-card" style="border-top-color:#ff9800">
                 <div class="label">充值表总额</div>
                 <div class="value">${formatMoney(rechargeTotal)}</div>
+                ${formatCurrencyBreakdown(rechargeByCurr)}
                 <div class="diff ${arrivalTotal === rechargeTotal ? 'positive' : 'negative'}">
                     差异: ${formatMoney(arrivalTotal - rechargeTotal)}
                 </div>
@@ -1697,14 +1940,18 @@ function showResults() {
         const l3Match = layer3.filter(r => r.status === 'match').length;
         const l3Mismatch = layer3.filter(r => r.status === 'mismatch').length;
         const l3Missing = layer3.filter(r => r.status === 'missing').length;
+        const rechargeByCurr = groupByCurrency(appData.records?.recharge || [], 'amount');
+        const platformByCurr = groupByCurrency(appData.records?.platform || [], 'amount');
         cards.push(`
             <div class="dash-card" style="border-top-color:#ff9800">
                 <div class="label">充值表总额</div>
                 <div class="value">${formatMoney(rechargeTotal)}</div>
+                ${formatCurrencyBreakdown(rechargeByCurr)}
             </div>
             <div class="dash-card" style="border-top-color:#f44336">
                 <div class="label">平台后台总额</div>
                 <div class="value">${formatMoney(platformTotal)}</div>
+                ${formatCurrencyBreakdown(platformByCurr)}
                 <div class="diff ${rechargeTotal === platformTotal ? 'positive' : 'negative'}">
                     差异: ${formatMoney(rechargeTotal - platformTotal)}
                 </div>
@@ -1725,7 +1972,7 @@ function showResults() {
     const tabs = [];
     if (appData.enabledLayers[1]) {
         tabs.push(`<button class="result-tab ${tabs.length === 0 ? 'active' : ''}" onclick="showResultTab('layer1')">
-            第一层：银行 vs 到账表 <span class="badge" id="badge1">${layer1.filter(r => r.status !== 'match').length}</span>
+            第一层：银行 vs 到账表 <span class="badge" id="badge1">${layer1.filter(r => r.status !== 'match' && r.status !== 'crossMonthMatch').length}</span>
         </button>`);
     }
     if (appData.enabledLayers[2]) {
@@ -1756,6 +2003,21 @@ function showResults() {
     if (appData.enabledLayers[1]) renderLayer1(layer1);
     if (appData.enabledLayers[2]) renderLayer2(layer2);
     if (appData.enabledLayers[3]) renderLayer3(layer3);
+
+    // 自动保存快照
+    if (appData.month) {
+        const snapshotData = {
+            bankRecords: appData.originalRecords?.bank || [],
+            arrivalRecords: appData.originalRecords?.arrival || [],
+            rechargeRecords: appData.originalRecords?.recharge || [],
+            platformRecords: appData.originalRecords?.platform || [],
+            results: appData.results,
+        };
+        const saved = saveSnapshot(appData.month, snapshotData);
+        if (saved) {
+            console.log(`[AuditTool] Snapshot saved for ${appData.month}`);
+        }
+    }
 }
 
 function renderLayer1(data) {
@@ -1768,8 +2030,18 @@ function renderLayer1(data) {
 
     data.forEach(r => {
         const statusClass = r.status;
-        const statusText = r.status === 'match' ? '✓ 匹配' : r.status === 'mismatch' ? '⚠ 金额不符' : '✗ ' + (r.side || '缺失');
+        let statusText = '';
+        if (r.status === 'match') statusText = '✓ 匹配';
+        else if (r.status === 'mismatch') statusText = '⚠ 金额不符';
+        else if (r.status === 'crossMonthMatch') statusText = '🟣 跨月匹配';
+        else if (r.status === 'crossMonthMismatch') statusText = '🟣 跨月金额不符';
+        else statusText = '✗ ' + (r.side || '缺失');
         const diffClass = r.diff > 0 ? 'positive' : r.diff < 0 ? 'negative' : '';
+
+        let note = '';
+        if (r.status === 'missing') note = r.side || '';
+        else if (r.status === 'mismatch' || r.status === 'crossMonthMismatch') note = '金额不匹配';
+        else if (r.crossMonthSource) note = `来源: ${r.crossMonthSource}`;
 
         html += `<tr class="${statusClass}">
             <td><span class="status-tag ${statusClass}">${statusText}</span></td>
@@ -1780,7 +2052,7 @@ function renderLayer1(data) {
             <td class="amount ${diffClass}">${r.diff > 0 ? '+' : ''}${formatMoney(r.diff)}</td>
             <td>${r.bankCount}</td>
             <td>${r.arrivalCount}</td>
-            <td>${r.status === 'missing' ? (r.side || '') : (r.status === 'mismatch' ? '金额不匹配' : '')}</td>
+            <td>${note}</td>
         </tr>`;
     });
 
@@ -1866,7 +2138,7 @@ function exportResults() {
         const s1Data = [['状态', '日期', '银行', '银行到账金额', '到账表金额', '差异', '银行笔数', '到账笔数', '说明']];
         layer1.forEach(r => {
             s1Data.push([
-                r.status === 'match' ? '匹配' : r.status === 'mismatch' ? '金额不符' : '缺失',
+                r.status === 'match' ? '匹配' : r.status === 'mismatch' ? '金额不符' : r.status === 'crossMonthMatch' ? '跨月匹配' : r.status === 'crossMonthMismatch' ? '跨月金额不符' : '缺失',
                 r.date, r.bank, r.bankAmount, r.arrivalAmount, r.diff,
                 r.bankCount, r.arrivalCount, r.side || ''
             ]);
@@ -1879,7 +2151,7 @@ function exportResults() {
         const s2Data = [['状态', '日期', '公司名称', '平台', '到账金额', '充值金额', '差异', '说明']];
         layer2.forEach(r => {
             s2Data.push([
-                r.status === 'match' ? '匹配' : r.status === 'mismatch' ? '金额不符' : '缺失',
+                r.status === 'match' ? '匹配' : r.status === 'mismatch' ? '金额不符' : r.status === 'crossMonthMatch' ? '跨月匹配' : r.status === 'crossMonthMismatch' ? '跨月金额不符' : '缺失',
                 r.date, r.company, r.platform, r.arrivalAmount, r.rechargeAmount, r.diff,
                 r.side || ''
             ]);
@@ -1892,7 +2164,7 @@ function exportResults() {
         const s3Data = [['状态', '平台', '日期', '账户', '充值表金额', '后台金额', '差异', '说明']];
         layer3.forEach(r => {
             s3Data.push([
-                r.status === 'match' ? '匹配' : r.status === 'mismatch' ? '金额不符' : '缺失',
+                r.status === 'match' ? '匹配' : r.status === 'mismatch' ? '金额不符' : r.status === 'crossMonthMatch' ? '跨月匹配' : r.status === 'crossMonthMismatch' ? '跨月金额不符' : '缺失',
                 r.platform, r.date, r.account, r.rechargeAmount, r.platformAmount, r.diff,
                 r.side || ''
             ]);
@@ -1911,8 +2183,8 @@ function exportResults() {
         const bankTotal = layer1.reduce((s, r) => s + (r.bankAmount || 0), 0);
         const arrivalTotal1 = layer1.reduce((s, r) => s + (r.arrivalAmount || 0), 0);
         s4Data.push(['第一层（银行 vs 到账表）', `银行总额: ${bankTotal}`, `到账总额: ${arrivalTotal1}`, `差异: ${bankTotal - arrivalTotal1}`]);
-        s4Data.push(['', '匹配', '金额不符', '缺失', '总计']);
-        s4Data.push(['', layer1.filter(r=>r.status==='match').length, layer1.filter(r=>r.status==='mismatch').length, layer1.filter(r=>r.status==='missing').length, layer1.length]);
+        s4Data.push(['', '匹配', '跨月匹配', '金额不符', '跨月金额不符', '缺失', '总计']);
+        s4Data.push(['', layer1.filter(r=>r.status==='match').length, layer1.filter(r=>r.status==='crossMonthMatch').length, layer1.filter(r=>r.status==='mismatch').length, layer1.filter(r=>r.status==='crossMonthMismatch').length, layer1.filter(r=>r.status==='missing').length, layer1.length]);
         s4Data.push([]);
     }
 
@@ -1937,6 +2209,50 @@ function exportResults() {
 
     XLSX.writeFile(wb, `数据核查报告_${new Date().toISOString().slice(0,10)}.xlsx`);
 }
+
+// ==================== 页面初始化 ====================
+function renderSnapshotList() {
+    const container = document.getElementById('snapshotList');
+    const months = listSnapshots();
+    if (months.length === 0) {
+        container.innerHTML = '';
+        return;
+    }
+    let html = '<div style="font-size: 13px; color: #666; margin-bottom: 8px;">📦 已保存的历史数据：</div>';
+    html += '<div style="display: flex; gap: 8px; flex-wrap: wrap;">';
+    months.forEach(m => {
+        html += `<span style="background: #e3f2fd; color: #1565c0; padding: 4px 10px; border-radius: 4px; font-size: 12px;">${m}</span>`;
+    });
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+function updateSnapshotInfo() {
+    const month = appData.month;
+    const prevMonth = getPreviousMonth(month);
+    const prevSnap = loadSnapshot(prevMonth);
+    const infoEl = document.getElementById('snapshotInfo');
+    if (prevSnap) {
+        const unmatched = (prevSnap.results.layer1 || []).filter(r => r.status !== 'match').length;
+        infoEl.innerHTML = `<span style="color: #2196f3;">💡 检测到 ${prevMonth} 已保存数据，上月未匹配记录 ${unmatched} 条</span>`;
+    } else {
+        infoEl.innerHTML = '';
+    }
+}
+
+// 初始化月份选择器
+document.addEventListener('DOMContentLoaded', () => {
+    const monthInput = document.getElementById('auditMonth');
+    if (monthInput) {
+        monthInput.value = appData.month;
+        monthInput.addEventListener('change', () => {
+            appData.month = monthInput.value;
+            updateSnapshotInfo();
+        });
+    }
+    renderSnapshotList();
+    updateSnapshotInfo();
+});
 </script>
 </body>
 </html>

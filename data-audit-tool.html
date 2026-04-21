@@ -1,0 +1,1767 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>银行到账-充值数据核查闭环工具</title>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+        header h1 { font-size: 28px; margin-bottom: 8px; }
+        header p { opacity: 0.9; font-size: 14px; }
+
+        .steps-nav {
+            display: flex;
+            justify-content: center;
+            gap: 0;
+            margin-bottom: 30px;
+        }
+        .step-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 24px;
+            background: white;
+            border: 2px solid #e0e0e0;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+        .step-item:first-child { border-radius: 8px 0 0 8px; }
+        .step-item:last-child { border-radius: 0 8px 8px 0; }
+        .step-item.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: transparent;
+        }
+        .step-item.completed { background: #e8f5e9; border-color: #4caf50; color: #2e7d32; }
+        .step-num {
+            width: 28px; height: 28px; border-radius: 50%;
+            background: rgba(0,0,0,0.1);
+            display: flex; align-items: center; justify-content: center;
+            margin-right: 8px; font-size: 14px; font-weight: bold;
+        }
+        .step-item.active .step-num { background: rgba(255,255,255,0.3); }
+
+        .section {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+        .section-title {
+            font-size: 18px; font-weight: 600;
+            margin-bottom: 16px;
+            display: flex; align-items: center;
+            gap: 8px;
+        }
+        .section-title .icon { font-size: 22px; }
+
+        .drop-zone {
+            border: 2px dashed #c0c0c0;
+            border-radius: 10px;
+            padding: 40px 20px;
+            text-align: center;
+            transition: all 0.3s;
+            background: #fafafa;
+            cursor: pointer;
+        }
+        .drop-zone:hover, .drop-zone.dragover {
+            border-color: #667eea;
+            background: #f0f3ff;
+        }
+        .drop-zone .icon { font-size: 48px; margin-bottom: 12px; }
+        .drop-zone p { color: #666; font-size: 14px; }
+        .drop-zone input { display: none; }
+
+        .file-list { margin-top: 16px; }
+        .file-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            border-left: 4px solid #667eea;
+        }
+        .file-item .name { flex: 1; font-weight: 500; }
+        .file-item .type-tag {
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .file-item .type-tag.bank { background: #e3f2fd; color: #1565c0; }
+        .file-item .type-tag.arrival { background: #e8f5e9; color: #2e7d32; }
+        .file-item .type-tag.recharge { background: #fff3e0; color: #e65100; }
+        .file-item .type-tag.platform { background: #fce4ec; color: #c62828; }
+        .file-item .size { color: #999; font-size: 12px; margin-right: 12px; }
+        .file-item .remove {
+            background: #ffebee; color: #c62828;
+            border: none; padding: 4px 10px;
+            border-radius: 4px; cursor: pointer;
+            font-size: 12px;
+        }
+
+        .btn {
+            padding: 12px 32px;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(102,126,234,0.4); }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .btn-secondary {
+            background: #f5f5f5; color: #333;
+            margin-right: 10px;
+        }
+        .btn-success { background: #4caf50; color: white; }
+
+        .mapping-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 20px;
+        }
+        .mapping-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 16px;
+            background: white;
+        }
+        .mapping-card h4 {
+            font-size: 15px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .mapping-row {
+            display: flex;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .mapping-row:last-child { border-bottom: none; }
+        .mapping-row label {
+            width: 120px;
+            font-size: 13px;
+            color: #666;
+        }
+        .mapping-row select {
+            flex: 1;
+            padding: 6px 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 13px;
+        }
+        .mapping-row .auto-detected {
+            color: #4caf50;
+            font-size: 12px;
+            margin-left: 8px;
+        }
+        .mapping-row .manual {
+            color: #ff9800;
+            font-size: 12px;
+            margin-left: 8px;
+        }
+
+        .preview-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+            margin-top: 12px;
+        }
+        .preview-table th, .preview-table td {
+            border: 1px solid #e0e0e0;
+            padding: 6px 10px;
+            text-align: left;
+        }
+        .preview-table th { background: #f5f5f5; font-weight: 600; }
+        .preview-table tr:nth-child(even) { background: #fafafa; }
+
+        .progress-container {
+            display: none;
+            padding: 40px;
+            text-align: center;
+        }
+        .progress-container.active { display: block; }
+        .progress-bar {
+            width: 100%;
+            height: 12px;
+            background: #e0e0e0;
+            border-radius: 6px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 6px;
+            transition: width 0.5s;
+            width: 0%;
+        }
+        .progress-text { font-size: 14px; color: #666; margin-top: 10px; }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .dash-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            border-top: 4px solid #667eea;
+        }
+        .dash-card .value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #333;
+            margin: 8px 0;
+        }
+        .dash-card .label {
+            font-size: 13px;
+            color: #666;
+        }
+        .dash-card .diff {
+            font-size: 14px;
+            margin-top: 6px;
+            font-weight: 600;
+        }
+        .dash-card .diff.positive { color: #4caf50; }
+        .dash-card .diff.negative { color: #f44336; }
+
+        .result-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 8px;
+        }
+        .result-tab {
+            padding: 10px 20px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            color: #666;
+            border-radius: 6px 6px 0 0;
+            position: relative;
+        }
+        .result-tab.active {
+            color: #667eea;
+            background: #f0f3ff;
+        }
+        .result-tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: #667eea;
+            border-radius: 2px;
+        }
+        .result-tab .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+            margin-left: 6px;
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .result-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        .result-table th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+        }
+        .result-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .result-table tr:hover { background: #f5f7fa; }
+        .result-table tr.match { background: #e8f5e9; }
+        .result-table tr.mismatch { background: #fff8e1; }
+        .result-table tr.missing { background: #ffebee; }
+        .result-table tr.duplicate { background: #fff3e0; }
+
+        .status-tag {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .status-tag.match { background: #c8e6c9; color: #2e7d32; }
+        .status-tag.mismatch { background: #ffecb3; color: #e65100; }
+        .status-tag.missing { background: #ffcdd2; color: #c62828; }
+        .status-tag.duplicate { background: #ffe0b2; color: #e65100; }
+
+        .amount { font-family: 'Courier New', monospace; font-weight: 600; }
+        .amount.positive { color: #4caf50; }
+        .amount.negative { color: #f44336; }
+
+        .hidden { display: none !important; }
+
+        .action-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 24px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .gg-date-input {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        .gg-date-input label { font-size: 13px; color: #666; }
+        .gg-date-input input {
+            padding: 6px 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 13px;
+        }
+
+        @media (max-width: 768px) {
+            .steps-nav { flex-wrap: wrap; }
+            .step-item { flex: 1; min-width: 140px; justify-content: center; }
+            .mapping-grid { grid-template-columns: 1fr; }
+            .dashboard { grid-template-columns: 1fr 1fr; }
+            .action-bar { flex-direction: column; gap: 12px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏦 银行到账-充值数据核查闭环工具</h1>
+            <p>支持6家银行 × 6个平台的三层交叉核对 | 数据完全本地处理，不上传服务器</p>
+        </header>
+
+        <div class="steps-nav">
+            <div class="step-item active" data-step="1" onclick="goToStep(1)">
+                <span class="step-num">1</span>
+                <span>上传文件</span>
+            </div>
+            <div class="step-item" data-step="2" onclick="goToStep(2)">
+                <span class="step-num">2</span>
+                <span>确认列映射</span>
+            </div>
+            <div class="step-item" data-step="3" onclick="goToStep(3)">
+                <span class="step-num">3</span>
+                <span>执行核对</span>
+            </div>
+            <div class="step-item" data-step="4" onclick="goToStep(4)">
+                <span class="step-num">4</span>
+                <span>查看结果</span>
+            </div>
+        </div>
+
+        <!-- 步骤1：上传文件 -->
+        <div id="step1" class="step-content">
+            <div class="section">
+                <div class="section-title"><span class="icon">🏦</span>银行导出文件（支持6家银行，可多选）</div>
+                <div class="drop-zone" onclick="document.getElementById('bankFiles').click()"
+                     ondrop="handleDrop(event, 'bank')" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
+                    <div class="icon">📁</div>
+                    <p>点击或拖拽上传银行导出文件<br><small>支持 .xlsx / .xls / .csv</small></p>
+                    <input type="file" id="bankFiles" multiple accept=".xlsx,.xls,.csv" onchange="handleFileSelect(event, 'bank')">
+                </div>
+                <div class="file-list" id="bankFileList"></div>
+            </div>
+
+            <div class="section">
+                <div class="section-title"><span class="icon">📋</span>到账登记表</div>
+                <div class="drop-zone" onclick="document.getElementById('arrivalFile').click()"
+                     ondrop="handleDrop(event, 'arrival')" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
+                    <div class="icon">📄</div>
+                    <p>点击或拖拽上传到账登记表<br><small>支持 .xlsx / .xls / .csv</small></p>
+                    <input type="file" id="arrivalFile" accept=".xlsx,.xls,.csv" onchange="handleFileSelect(event, 'arrival')">
+                </div>
+                <div class="file-list" id="arrivalFileList"></div>
+            </div>
+
+            <div class="section">
+                <div class="section-title"><span class="icon">💳</span>充值登记表</div>
+                <div class="drop-zone" onclick="document.getElementById('rechargeFile').click()"
+                     ondrop="handleDrop(event, 'recharge')" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
+                    <div class="icon">💰</div>
+                    <p>点击或拖拽上传充值登记表<br><small>支持 .xlsx / .xls / .csv</small></p>
+                    <input type="file" id="rechargeFile" accept=".xlsx,.xls,.csv" onchange="handleFileSelect(event, 'recharge')">
+                </div>
+                <div class="file-list" id="rechargeFileList"></div>
+            </div>
+
+            <div class="section">
+                <div class="section-title"><span class="icon">🖥️</span>平台后台数据（YG/TD/LB/BING/GG，可多选）</div>
+                <div class="drop-zone" onclick="document.getElementById('platformFiles').click()"
+                     ondrop="handleDrop(event, 'platform')" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
+                    <div class="icon">📊</div>
+                    <p>点击或拖拽上传平台后台文件<br><small>支持 .xlsx / .xls / .csv</small></p>
+                    <input type="file" id="platformFiles" multiple accept=".xlsx,.xls,.csv" onchange="handleFileSelect(event, 'platform')">
+                </div>
+                <div class="file-list" id="platformFileList"></div>
+            </div>
+
+            <div class="action-bar">
+                <div></div>
+                <button class="btn btn-primary" onclick="goToStep(2)">下一步：确认列映射 →</button>
+            </div>
+        </div>
+
+        <!-- 步骤2：确认列映射 -->
+        <div id="step2" class="step-content hidden">
+            <div class="section">
+                <div class="section-title"><span class="icon">🔧</span>列映射确认</div>
+                <p style="color:#666;font-size:14px;margin-bottom:20px;">系统已自动识别列名，请检查是否正确，如有误请手动调整下拉框。</p>
+                <div id="mappingContainer" class="mapping-grid"></div>
+            </div>
+
+            <div class="action-bar">
+                <button class="btn btn-secondary" onclick="goToStep(1)">← 上一步</button>
+                <button class="btn btn-primary" onclick="confirmMapping()">下一步：执行核对 →</button>
+            </div>
+        </div>
+
+        <!-- 步骤3：执行核对 -->
+        <div id="step3" class="step-content hidden">
+            <div class="progress-container active" id="progressContainer">
+                <div class="icon" style="font-size:64px;">⏳</div>
+                <h3 style="margin:16px 0;">正在执行数据核对...</h3>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="progress-text" id="progressText">准备中...</div>
+            </div>
+        </div>
+
+        <!-- 步骤4：查看结果 -->
+        <div id="step4" class="step-content hidden">
+            <div class="section">
+                <div class="section-title"><span class="icon">📊</span>核对汇总看板</div>
+                <div class="dashboard" id="dashboard"></div>
+            </div>
+
+            <div class="section">
+                <div class="section-title"><span class="icon">🔍</span>差异明细</div>
+                <div class="result-tabs">
+                    <button class="result-tab active" onclick="showResultTab('layer1')">第一层：银行 vs 到账表 <span class="badge" id="badge1">0</span></button>
+                    <button class="result-tab" onclick="showResultTab('layer2')">第二层：到账表 vs 充值表 <span class="badge" id="badge2">0</span></button>
+                    <button class="result-tab" onclick="showResultTab('layer3')">第三层：充值表 vs 平台后台 <span class="badge" id="badge3">0</span></button>
+                </div>
+                <div id="resultLayer1"></div>
+                <div id="resultLayer2" class="hidden"></div>
+                <div id="resultLayer3" class="hidden"></div>
+            </div>
+
+            <div class="action-bar">
+                <button class="btn btn-secondary" onclick="goToStep(1)">🔄 重新上传</button>
+                <button class="btn btn-success" onclick="exportResults()">📥 导出Excel报告</button>
+            </div>
+        </div>
+    </div>
+
+<script>
+// ==================== 全局数据存储 ====================
+const appData = {
+    bankFiles: [],      // [{file, type, rawData, detectedBank}]
+    arrivalFile: null,  // {file, rawData}
+    rechargeFile: null, // {file, rawData}
+    platformFiles: [],  // [{file, type, rawData, detectedPlatform}]
+    mapping: {},        // 列映射配置
+    results: {},        // 核对结果
+};
+
+// ==================== 银行识别配置 ====================
+const BANK_CONFIGS = {
+    '华美': {
+        keywords: ['Transaction Type', 'Description', 'Withdrawals', 'Deposits', 'Balance'],
+        dateCol: ['Date'],
+        amountCol: ['Deposits'],
+        filter: (row) => parseAmount(row['Deposits']) > 0,
+        bankName: (row, filename) => '华美银行',
+    },
+    '汇丰': {
+        keywords: ['详情', '支出(USD 美元)', '存入(USD 美元)', '结余(USD 美元)'],
+        dateCol: ['日期'],
+        amountCol: ['存入(USD 美元)'],
+        filter: (row) => parseAmount(row['存入(USD 美元)']) > 0,
+        bankName: (row, filename) => '汇丰银行',
+    },
+    '中银': {
+        keywords: ['賬戶名稱Account Name', '交易日期Transaction Date', '扣賬/入賬Debit/Credit', '金額Amount'],
+        dateCol: ['交易日期Transaction Date'],
+        amountCol: ['金額Amount'],
+        filter: (row) => {
+            const dc = String(row['扣賬/入賬Debit/Credit'] || '').trim().toUpperCase();
+            return dc === 'CR' || dc === 'CREDIT' || dc === '入賬';
+        },
+        bankName: (row, filename) => '中银银行',
+    },
+    '连连': {
+        keywords: ['Create Time', 'Bill ID', 'Bill Currency', 'Bill Amount', 'Status'],
+        dateCol: ['Create Time'],
+        amountCol: ['Bill Amount'],
+        filter: (row) => {
+            const status = String(row['Status'] || '').trim().toLowerCase();
+            return status === 'paid' && parseAmount(row['Bill Amount']) > 0;
+        },
+        bankName: (row, filename) => '连连银行',
+    },
+    'pingpong': {
+        keywords: ['Time', 'Currency', 'Amount', 'TransactionId', 'Account No.', 'Status'],
+        dateCol: ['Time'],
+        amountCol: ['Amount'],
+        filter: (row) => parseAmount(row['Amount']) > 0,
+        bankName: (row, filename) => 'PingPong',
+    },
+    '其他': {
+        keywords: [],
+        dateCol: [],
+        amountCol: [],
+        filter: () => true,
+        bankName: (row, filename) => '其他银行',
+    }
+};
+
+// ==================== 平台识别配置 ====================
+const PLATFORM_CONFIGS = {
+    'YG': {
+        keywords: ['交易编号', '子客户', '广告账号', '广告账号名称', '交易金额', '申请时间', '状态'],
+        dateCol: ['申请时间'],
+        amountCol: ['交易金额'],
+        accountCol: ['广告账号名称'],
+        filter: (row) => parseAmount(row['交易金额']) !== 0,
+    },
+    'TD充值': {
+        keywords: ['账户ID', '账户名称', '媒体平台', '申请状态', '充值金额', '币种', '申请ID', '申请时间'],
+        dateCol: ['申请时间'],
+        amountCol: ['充值金额'],
+        accountCol: ['账户名称'],
+        filter: (row) => {
+            const platform = String(row['媒体平台'] || '').trim().toLowerCase();
+            return (platform === 'facebook' || platform === 'td') && parseAmount(row['充值金额']) !== 0;
+        },
+    },
+    'TD减款': {
+        keywords: ['账户ID', '账户名称', '转入账户', '媒体平台', '申请状态', '申请类型', '操作金额', '币种', '申请ID', '申请时间'],
+        dateCol: ['申请时间'],
+        amountCol: ['操作金额'],
+        accountCol: ['账户名称'],
+        filter: (row) => {
+            const platform = String(row['媒体平台'] || '').trim().toLowerCase();
+            return (platform === 'facebook' || platform === 'td') && parseAmount(row['操作金额']) !== 0;
+        },
+    },
+    'PIN': {
+        keywords: ['账户ID', '账户名称', '媒体平台', '申请状态', '充值金额', '币种', '申请ID', '申请时间'],
+        dateCol: ['申请时间'],
+        amountCol: ['充值金额'],
+        accountCol: ['账户名称'],
+        filter: (row) => {
+            const platform = String(row['媒体平台'] || '').trim().toLowerCase();
+            return (platform === 'pinterest' || platform === 'pin') && parseAmount(row['充值金额']) !== 0;
+        },
+    },
+    'LB': {
+        keywords: ['操作流水号', '订单编号', '广告账户ID', '广告账户名称', '操作类型', '操作金额', '操作状态', '操作时间'],
+        dateCol: ['操作时间'],
+        amountCol: ['操作金额'],
+        accountCol: ['广告账户名称'],
+        filter: (row) => parseAmount(row['操作金额']) !== 0,
+    },
+    'BING': {
+        keywords: ['状态', '类型', '发生金额', 'Number', 'XID', '当前余额', '充值后金额', '操作人', '操作时间'],
+        dateCol: ['操作时间'],
+        amountCol: ['发生金额'],
+        accountCol: ['Number'],
+        filter: (row) => parseAmount(row['发生金额']) !== 0,
+    },
+    'GG': {
+        keywords: ['账号状态', '账号名称', '账号外部客户 ID', '货币代码', '预算金额', '剩余账号预算'],
+        dateCol: ['日期辅助列'], // U列
+        amountCol: ['预算金额'],
+        accountCol: ['账号名称'],
+        filter: (row) => parseAmount(row['预算金额']) !== 0,
+    },
+};
+
+// ==================== 工具函数 ====================
+function parseAmount(val) {
+    if (val === null || val === undefined || val === '') return 0;
+    if (typeof val === 'number') return val;
+    const cleaned = String(val).replace(/[,，]/g, '').replace(/[^\d.-]/g, '');
+    const num = parseFloat(cleaned);
+    return isNaN(num) ? 0 : num;
+}
+
+function parseDate(val) {
+    if (!val) return null;
+    if (val instanceof Date) return val;
+    // Excel serial number
+    if (typeof val === 'number' && val > 30000) {
+        return new Date((val - 25569) * 86400 * 1000);
+    }
+    const str = String(val).trim();
+    // 2026/1/15, 2026-01-15, 15/01/2026
+    const patterns = [
+        /^(\d{4})\.(\d{1,2})\.(\d{1,2})$/,               // 2026.01.31
+        /^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/,      // 2026/1/15
+        /^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/,      // 15/1/2026
+        /^(\d{4})年(\d{1,2})月(\d{1,2})日$/,              // 2026年1月15日
+    ];
+    // 月份格式：2026.01 或 2026.01月 → 取该月最后一天
+    const monthPattern = /^(\d{4})\.(\d{1,2})月?$/;
+    const mm = str.match(monthPattern);
+    if (mm) {
+        const y = parseInt(mm[1]), mo = parseInt(mm[2]);
+        return new Date(y, mo, 0); // 该月最后一天
+    }
+    for (const p of patterns) {
+        const m = str.match(p);
+        if (m) {
+            let y, mo, d;
+            if (m[3].length === 4) { y = m[3]; mo = m[2]; d = m[1]; }
+            else { y = m[1]; mo = m[2]; d = m[3]; }
+            return new Date(y, mo - 1, d);
+        }
+    }
+    // Try native parse
+    const d = new Date(str);
+    return isNaN(d.getTime()) ? null : d;
+}
+
+function formatDate(date) {
+    if (!date) return '';
+    const d = new Date(date);
+    if (isNaN(d.getTime())) return String(date);
+    return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function formatMoney(amount) {
+    if (amount === undefined || amount === null) return '-';
+    return amount.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function detectBankType(headers) {
+    const headerStr = headers.join(' ');
+    for (const [bank, config] of Object.entries(BANK_CONFIGS)) {
+        if (bank === '其他') continue;
+        const matchCount = config.keywords.filter(k => headerStr.includes(k)).length;
+        if (matchCount >= 3) return bank;
+    }
+    // 尝试根据文件名检测
+    return '其他';
+}
+
+function detectPlatformType(headers, filename) {
+    const headerStr = headers.join(' ');
+    for (const [platform, config] of Object.entries(PLATFORM_CONFIGS)) {
+        const matchCount = config.keywords.filter(k => headerStr.includes(k)).length;
+        if (matchCount >= 3) return platform;
+    }
+    // 根据文件名检测
+    const lower = filename.toLowerCase();
+    if (lower.includes('yg') || lower.includes('引力')) return 'YG';
+    if (lower.includes('td') && lower.includes('减')) return 'TD减款';
+    if (lower.includes('td')) return 'TD充值';
+    if (lower.includes('lb')) return 'LB';
+    if (lower.includes('bing')) return 'BING';
+    if (lower.includes('gg') || lower.includes('google')) return 'GG';
+    if (lower.includes('pin') || lower.includes('pinterest')) return 'PIN';
+    return 'YG'; // 默认
+}
+
+// ==================== 文件处理 ====================
+function handleDragOver(e) {
+    e.preventDefault();
+    e.currentTarget.classList.add('dragover');
+}
+
+function handleDragLeave(e) {
+    e.currentTarget.classList.remove('dragover');
+}
+
+function handleDrop(e, type) {
+    e.preventDefault();
+    e.currentTarget.classList.remove('dragover');
+    const files = Array.from(e.dataTransfer.files);
+    processFiles(files, type);
+}
+
+function handleFileSelect(e, type) {
+    const files = Array.from(e.target.files);
+    processFiles(files, type);
+}
+
+function processFiles(files, type) {
+    files.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+            const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+
+            if (jsonData.length < 2) {
+                showNotification('文件数据为空：' + file.name);
+                return;
+            }
+
+            const headers = jsonData[0];
+            const rows = [];
+            for (let i = 1; i < jsonData.length; i++) {
+                const row = {};
+                headers.forEach((h, idx) => {
+                    row[h] = jsonData[i][idx];
+                });
+                rows.push(row);
+            }
+
+            const rawData = { headers, rows, sheetName: workbook.SheetNames[0] };
+
+            if (type === 'bank') {
+                const detectedBank = detectBankType(headers);
+                appData.bankFiles.push({ file, type: detectedBank, rawData, detectedBank });
+                updateFileList('bankFileList', appData.bankFiles, 'bank');
+            } else if (type === 'arrival') {
+                appData.arrivalFile = { file, rawData };
+                updateFileList('arrivalFileList', [appData.arrivalFile], 'arrival');
+            } else if (type === 'recharge') {
+                appData.rechargeFile = { file, rawData };
+                updateFileList('rechargeFileList', [appData.rechargeFile], 'recharge');
+            } else if (type === 'platform') {
+                const detectedPlatform = detectPlatformType(headers, file.name);
+                appData.platformFiles.push({ file, type: detectedPlatform, rawData, detectedPlatform });
+                updateFileList('platformFileList', appData.platformFiles, 'platform');
+            }
+        };
+        reader.readAsArrayBuffer(file);
+    });
+}
+
+function updateFileList(elementId, files, fileType) {
+    const container = document.getElementById(elementId);
+    container.innerHTML = '';
+    files.forEach((item, index) => {
+        const div = document.createElement('div');
+        div.className = 'file-item';
+        let tagClass = fileType;
+        let tagText = item.type || '未识别';
+        if (fileType === 'bank') tagText = (item.detectedBank || '其他') + '银行';
+        if (fileType === 'platform') tagText = item.detectedPlatform || '未识别';
+
+        div.innerHTML = `
+            <span class="type-tag ${tagClass}">${tagText}</span>
+            <span class="name">${item.file.name}</span>
+            <span class="size">${(item.file.size / 1024).toFixed(1)} KB</span>
+            <span class="rows">${item.rawData.rows.length} 行</span>
+            <button class="remove" onclick="removeFile('${fileType}', ${index})">删除</button>
+        `;
+        container.appendChild(div);
+    });
+}
+
+function removeFile(type, index) {
+    if (type === 'bank') {
+        appData.bankFiles.splice(index, 1);
+        updateFileList('bankFileList', appData.bankFiles, 'bank');
+    } else if (type === 'arrival') {
+        appData.arrivalFile = null;
+        document.getElementById('arrivalFileList').innerHTML = '';
+    } else if (type === 'recharge') {
+        appData.rechargeFile = null;
+        document.getElementById('rechargeFileList').innerHTML = '';
+    } else if (type === 'platform') {
+        appData.platformFiles.splice(index, 1);
+        updateFileList('platformFileList', appData.platformFiles, 'platform');
+    }
+}
+
+function showNotification(msg) {
+    // 简单alert，后续可美化
+    alert(msg);
+}
+
+// ==================== 步骤导航 ====================
+function goToStep(step) {
+    // 更新导航
+    document.querySelectorAll('.step-item').forEach(item => {
+        item.classList.remove('active');
+        const s = parseInt(item.dataset.step);
+        if (s < step) item.classList.add('completed');
+        else item.classList.remove('completed');
+        if (s === step) item.classList.add('active');
+    });
+
+    // 显示对应内容
+    document.querySelectorAll('.step-content').forEach(el => el.classList.add('hidden'));
+    document.getElementById('step' + step).classList.remove('hidden');
+
+    if (step === 2) buildMappingUI();
+    if (step === 3) startAudit();
+    if (step === 4) showResults();
+}
+
+// ==================== 列映射 ====================
+function buildMappingUI() {
+    const container = document.getElementById('mappingContainer');
+    container.innerHTML = '';
+
+    // 银行文件映射
+    appData.bankFiles.forEach((item, idx) => {
+        const card = document.createElement('div');
+        card.className = 'mapping-card';
+        const headers = item.rawData.headers;
+        const bankConfig = BANK_CONFIGS[item.detectedBank] || BANK_CONFIGS['其他'];
+
+        let html = `<h4>🏦 ${item.file.name} <small style="color:#999">(${item.detectedBank || '其他'}银行)</small></h4>`;
+
+        // 日期列
+        const dateDetected = findBestMatch(headers, bankConfig.dateCol);
+        html += `<div class="mapping-row">
+            <label>日期列</label>
+            <select id="bank_date_${idx}">${buildOptions(headers, dateDetected)}</select>
+            ${dateDetected ? '<span class="auto-detected">✓ 自动识别</span>' : '<span class="manual">⚠ 请手动选择</span>'}
+        </div>`;
+
+        // 金额列
+        const amtDetected = findBestMatch(headers, bankConfig.amountCol);
+        html += `<div class="mapping-row">
+            <label>金额列</label>
+            <select id="bank_amount_${idx}">${buildOptions(headers, amtDetected)}</select>
+            ${amtDetected ? '<span class="auto-detected">✓ 自动识别</span>' : '<span class="manual">⚠ 请手动选择</span>'}
+        </div>`;
+
+        // 预览
+        html += `<table class="preview-table"><thead><tr><th>${headers.join('</th><th>')}</th></tr></thead><tbody>`;
+        for (let i = 0; i < Math.min(3, item.rawData.rows.length); i++) {
+            html += '<tr>';
+            headers.forEach(h => {
+                let val = item.rawData.rows[i][h];
+                if (val instanceof Date) val = formatDate(val);
+                html += `<td>${val !== undefined ? val : ''}</td>`;
+            });
+            html += '</tr>';
+        }
+        html += '</tbody></table>';
+
+        card.innerHTML = html;
+        container.appendChild(card);
+    });
+
+    // 到账表映射
+    if (appData.arrivalFile) {
+        const card = document.createElement('div');
+        card.className = 'mapping-card';
+        const headers = appData.arrivalFile.rawData.headers;
+
+        let html = `<h4>📋 到账表 <small style="color:#999">(${appData.arrivalFile.file.name})</small></h4>`;
+
+        const mappings = [
+            { label: '到账日期', keys: ['到账日期（网银）', '到账日期', '日期'], id: 'arrival_date' },
+            { label: '收款人/银行', keys: ['收款人', '银行', '收款账号'], id: 'arrival_bank' },
+            { label: '公司名称', keys: ['公司名称（客户名称）', '公司名称', '客户名称'], id: 'arrival_company' },
+            { label: '到账金额', keys: ['到账金额', '到款金额', '金额'], id: 'arrival_amount' },
+            { label: '服务产品/平台', keys: ['服务产品', '产品', '平台'], id: 'arrival_platform' },
+        ];
+
+        mappings.forEach(m => {
+            const detected = findBestMatch(headers, m.keys);
+            html += `<div class="mapping-row">
+                <label>${m.label}</label>
+                <select id="${m.id}">${buildOptions(headers, detected)}</select>
+                ${detected ? '<span class="auto-detected">✓ 自动识别</span>' : '<span class="manual">⚠ 请手动选择</span>'}
+            </div>`;
+        });
+
+        // 预览
+        html += `<table class="preview-table"><thead><tr><th>${headers.slice(0, 8).join('</th><th>')}</th></tr></thead><tbody>`;
+        for (let i = 0; i < Math.min(3, appData.arrivalFile.rawData.rows.length); i++) {
+            html += '<tr>';
+            headers.slice(0, 8).forEach(h => {
+                let val = appData.arrivalFile.rawData.rows[i][h];
+                if (val instanceof Date) val = formatDate(val);
+                html += `<td>${val !== undefined ? String(val).substring(0, 30) : ''}</td>`;
+            });
+            html += '</tr>';
+        }
+        html += '</tbody></table>';
+
+        card.innerHTML = html;
+        container.appendChild(card);
+    }
+
+    // 充值表映射
+    if (appData.rechargeFile) {
+        const card = document.createElement('div');
+        card.className = 'mapping-card';
+        const headers = appData.rechargeFile.rawData.headers;
+
+        let html = `<h4>💳 充值表 <small style="color:#999">(${appData.rechargeFile.file.name})</small></h4>`;
+
+        const mappings = [
+            { label: '到账日期', keys: ['到账日期', '充值日期', '日期'], id: 'recharge_date' },
+            { label: '客户名称', keys: ['客户名称', '到款公司名称', '公司名称'], id: 'recharge_company' },
+            { label: '充值平台', keys: ['充值平台', '平台'], id: 'recharge_platform' },
+            { label: '账户名称', keys: ['帐户名称', '账户名称', '账号名称'], id: 'recharge_account' },
+            { label: '充值金额', keys: ['充值金额（不含税）', '充值金额', '预存金额（不含税）'], id: 'recharge_amount' },
+        ];
+
+        mappings.forEach(m => {
+            const detected = findBestMatch(headers, m.keys);
+            html += `<div class="mapping-row">
+                <label>${m.label}</label>
+                <select id="${m.id}">${buildOptions(headers, detected)}</select>
+                ${detected ? '<span class="auto-detected">✓ 自动识别</span>' : '<span class="manual">⚠ 请手动选择</span>'}
+            </div>`;
+        });
+
+        html += `<table class="preview-table"><thead><tr><th>${headers.slice(0, 8).join('</th><th>')}</th></tr></thead><tbody>`;
+        for (let i = 0; i < Math.min(3, appData.rechargeFile.rawData.rows.length); i++) {
+            html += '<tr>';
+            headers.slice(0, 8).forEach(h => {
+                let val = appData.rechargeFile.rawData.rows[i][h];
+                if (val instanceof Date) val = formatDate(val);
+                html += `<td>${val !== undefined ? String(val).substring(0, 30) : ''}</td>`;
+            });
+            html += '</tr>';
+        }
+        html += '</tbody></table>';
+
+        card.innerHTML = html;
+        container.appendChild(card);
+    }
+
+    // 平台文件映射
+    appData.platformFiles.forEach((item, idx) => {
+        const card = document.createElement('div');
+        card.className = 'mapping-card';
+        const headers = item.rawData.headers;
+        const platConfig = PLATFORM_CONFIGS[item.detectedPlatform] || PLATFORM_CONFIGS['YG'];
+
+        let html = `<h4>🖥️ ${item.file.name} <small style="color:#999">(${item.detectedPlatform})</small></h4>`;
+
+        // 日期列
+        const dateDetected = findBestMatch(headers, platConfig.dateCol);
+        html += `<div class="mapping-row">
+            <label>日期列</label>
+            <select id="plat_date_${idx}">${buildOptions(headers, dateDetected)}</select>
+            ${dateDetected ? '<span class="auto-detected">✓ 自动识别</span>' : '<span class="manual">⚠ 请手动选择</span>'}
+        </div>`;
+
+        // 金额列
+        const amtDetected = findBestMatch(headers, platConfig.amountCol);
+        html += `<div class="mapping-row">
+            <label>金额列</label>
+            <select id="plat_amount_${idx}">${buildOptions(headers, amtDetected)}</select>
+            ${amtDetected ? '<span class="auto-detected">✓ 自动识别</span>' : '<span class="manual">⚠ 请手动选择</span>'}
+        </div>`;
+
+        // 账户列
+        const accDetected = findBestMatch(headers, platConfig.accountCol);
+        if (accDetected || item.detectedPlatform !== 'BING') {
+            html += `<div class="mapping-row">
+                <label>账户列</label>
+                <select id="plat_account_${idx}">${buildOptions(headers, accDetected)}</select>
+                ${accDetected ? '<span class="auto-detected">✓ 自动识别</span>' : '<span class="manual">⚠ 请手动选择</span>'}
+            </div>`;
+        }
+
+        // GG特殊：日期辅助列
+        if (item.detectedPlatform === 'GG') {
+            html += `<div class="mapping-row" style="background:#fff3e0;padding:8px;border-radius:6px;">
+                <label style="color:#e65100;font-weight:600;">📅 月份标识列(U列)</label>
+                <select id="plat_ggdate_${idx}">${buildOptions(headers, null)}</select>
+                <span class="manual">⚠ 支持格式: 2026.01 / 2026.01.31</span>
+            </div>`;
+        }
+
+        html += `<table class="preview-table"><thead><tr><th>${headers.slice(0, 8).join('</th><th>')}</th></tr></thead><tbody>`;
+        for (let i = 0; i < Math.min(3, item.rawData.rows.length); i++) {
+            html += '<tr>';
+            headers.slice(0, 8).forEach(h => {
+                let val = item.rawData.rows[i][h];
+                if (val instanceof Date) val = formatDate(val);
+                html += `<td>${val !== undefined ? String(val).substring(0, 30) : ''}</td>`;
+            });
+            html += '</tr>';
+        }
+        html += '</tbody></table>';
+
+        card.innerHTML = html;
+        container.appendChild(card);
+    });
+}
+
+function findBestMatch(headers, candidates) {
+    if (!candidates || candidates.length === 0) return null;
+    for (const c of candidates) {
+        const found = headers.find(h => String(h).trim() === c);
+        if (found) return found;
+    }
+    // 模糊匹配
+    for (const c of candidates) {
+        const found = headers.find(h => String(h).includes(c));
+        if (found) return found;
+    }
+    return null;
+}
+
+function buildOptions(headers, selected) {
+    let html = '<option value="">-- 请选择 --</option>';
+    headers.forEach(h => {
+        const sel = h === selected ? 'selected' : '';
+        html += `<option value="${h}" ${sel}>${h}</option>`;
+    });
+    return html;
+}
+
+function confirmMapping() {
+    // 收集映射配置
+    appData.mapping = {
+        bank: [],
+        arrival: {},
+        recharge: {},
+        platform: []
+    };
+
+    // 银行映射
+    appData.bankFiles.forEach((item, idx) => {
+        appData.mapping.bank.push({
+            index: idx,
+            dateCol: document.getElementById(`bank_date_${idx}`).value,
+            amountCol: document.getElementById(`bank_amount_${idx}`).value,
+            bankType: item.detectedBank,
+        });
+    });
+
+    // 到账表映射
+    if (appData.arrivalFile) {
+        appData.mapping.arrival = {
+            dateCol: document.getElementById('arrival_date').value,
+            bankCol: document.getElementById('arrival_bank').value,
+            companyCol: document.getElementById('arrival_company').value,
+            amountCol: document.getElementById('arrival_amount').value,
+            platformCol: document.getElementById('arrival_platform').value,
+        };
+    }
+
+    // 充值表映射
+    if (appData.rechargeFile) {
+        appData.mapping.recharge = {
+            dateCol: document.getElementById('recharge_date').value,
+            companyCol: document.getElementById('recharge_company').value,
+            platformCol: document.getElementById('recharge_platform').value,
+            accountCol: document.getElementById('recharge_account').value,
+            amountCol: document.getElementById('recharge_amount').value,
+        };
+    }
+
+    // 平台映射
+    appData.platformFiles.forEach((item, idx) => {
+        const platMap = {
+            index: idx,
+            dateCol: document.getElementById(`plat_date_${idx}`).value,
+            amountCol: document.getElementById(`plat_amount_${idx}`).value,
+            accountCol: document.getElementById(`plat_account_${idx}`)?.value || '',
+            platformType: item.detectedPlatform,
+        };
+        if (item.detectedPlatform === 'GG') {
+            platMap.ggDateCol = document.getElementById(`plat_ggdate_${idx}`)?.value || '';
+        }
+        appData.mapping.platform.push(platMap);
+    });
+
+    goToStep(3);
+}
+
+// ==================== 核对引擎 ====================
+function startAudit() {
+    const progressFill = document.getElementById('progressFill');
+    const progressText = document.getElementById('progressText');
+
+    setTimeout(() => {
+        progressFill.style.width = '10%';
+        progressText.textContent = '正在提取银行到账数据...';
+
+        // 1. 提取银行数据
+        const bankRecords = extractBankRecords();
+        progressFill.style.width = '25%';
+        progressText.textContent = '正在提取到账表数据...';
+
+        // 2. 提取到账表数据
+        const arrivalRecords = extractArrivalRecords();
+        progressFill.style.width = '40%';
+        progressText.textContent = '正在提取充值表数据...';
+
+        // 3. 提取充值表数据
+        const rechargeRecords = extractRechargeRecords();
+        progressFill.style.width = '55%';
+        progressText.textContent = '正在提取平台后台数据...';
+
+        // 4. 提取平台数据
+        const platformRecords = extractPlatformRecords();
+        progressFill.style.width = '70%';
+        progressText.textContent = '正在执行三层核对...';
+
+        // 5. 执行核对
+        const layer1 = compareLayer1(bankRecords, arrivalRecords);
+        const layer2 = compareLayer2(arrivalRecords, rechargeRecords);
+        const layer3 = compareLayer3(rechargeRecords, platformRecords);
+        progressFill.style.width = '90%';
+        progressText.textContent = '正在生成报告...';
+
+        appData.results = { layer1, layer2, layer3 };
+
+        progressFill.style.width = '100%';
+        progressText.textContent = '核对完成！';
+
+        setTimeout(() => {
+            goToStep(4);
+        }, 500);
+    }, 300);
+}
+
+function extractBankRecords() {
+    const records = [];
+    appData.bankFiles.forEach((item, idx) => {
+        const mapping = appData.mapping.bank[idx];
+        const config = BANK_CONFIGS[mapping.bankType] || BANK_CONFIGS['其他'];
+
+        item.rawData.rows.forEach(row => {
+            // 如果用户手动选择了列，用用户的选择；否则用自动配置
+            let dateVal = row[mapping.dateCol];
+            let amountVal = row[mapping.amountCol];
+
+            // 如果手动列名为空，尝试自动列
+            if (!mapping.dateCol) {
+                for (const col of config.dateCol) {
+                    if (row[col] !== undefined) { dateVal = row[col]; break; }
+                }
+            }
+            if (!mapping.amountCol) {
+                for (const col of config.amountCol) {
+                    if (row[col] !== undefined) { amountVal = row[col]; break; }
+                }
+            }
+
+            const amount = parseAmount(amountVal);
+            if (amount <= 0) return;
+
+            // 应用银行特定过滤规则
+            if (config.filter && !config.filter(row)) return;
+
+            const date = parseDate(dateVal);
+            if (!date) return;
+
+            const bankName = config.bankName ? config.bankName(row, item.file.name) : mapping.bankType;
+
+            records.push({
+                date: formatDate(date),
+                bank: bankName,
+                amount: amount,
+                raw: row,
+            });
+        });
+    });
+    return records;
+}
+
+function extractArrivalRecords() {
+    const records = [];
+    if (!appData.arrivalFile) return records;
+
+    const m = appData.mapping.arrival;
+    appData.arrivalFile.rawData.rows.forEach(row => {
+        const date = parseDate(row[m.dateCol]);
+        const amount = parseAmount(row[m.amountCol]);
+        if (!date || amount === 0) return;
+
+        records.push({
+            date: formatDate(date),
+            bank: String(row[m.bankCol] || '').trim(),
+            company: String(row[m.companyCol] || '').trim(),
+            platform: String(row[m.platformCol] || '').trim(),
+            amount: amount,
+            raw: row,
+        });
+    });
+    return records;
+}
+
+function extractRechargeRecords() {
+    const records = [];
+    if (!appData.rechargeFile) return records;
+
+    const m = appData.mapping.recharge;
+    appData.rechargeFile.rawData.rows.forEach(row => {
+        const date = parseDate(row[m.dateCol]);
+        const amount = parseAmount(row[m.amountCol]);
+        if (!date || amount === 0) return;
+
+        records.push({
+            date: formatDate(date),
+            company: String(row[m.companyCol] || '').trim(),
+            platform: String(row[m.platformCol] || '').trim(),
+            account: String(row[m.accountCol] || '').trim(),
+            amount: amount,
+            raw: row,
+        });
+    });
+    return records;
+}
+
+function extractPlatformRecords() {
+    const records = [];
+    const ggData = []; // 特殊处理GG
+
+    appData.platformFiles.forEach((item, idx) => {
+        const mapping = appData.mapping.platform[idx];
+        const config = PLATFORM_CONFIGS[mapping.platformType] || PLATFORM_CONFIGS['YG'];
+
+        if (mapping.platformType === 'GG') {
+            // GG特殊处理：收集所有行的预算金额和日期辅助列日期
+            item.rawData.rows.forEach(row => {
+                const ggDate = parseDate(row[mapping.ggDateCol]);
+                const amount = parseAmount(row[mapping.amountCol]);
+                const account = String(row[mapping.accountCol] || '').trim();
+                if (!ggDate || amount === 0) return;
+
+                ggData.push({
+                    date: formatDate(ggDate),
+                    account: account,
+                    amount: amount,
+                });
+            });
+            return;
+        }
+
+        item.rawData.rows.forEach(row => {
+            let dateVal = row[mapping.dateCol];
+            let amountVal = row[mapping.amountCol];
+            let accountVal = row[mapping.accountCol];
+
+            if (!mapping.dateCol) {
+                for (const col of config.dateCol) {
+                    if (row[col] !== undefined) { dateVal = row[col]; break; }
+                }
+            }
+            if (!mapping.amountCol) {
+                for (const col of config.amountCol) {
+                    if (row[col] !== undefined) { amountVal = row[col]; break; }
+                }
+            }
+            if (!mapping.accountCol && config.accountCol) {
+                for (const col of config.accountCol) {
+                    if (row[col] !== undefined) { accountVal = row[col]; break; }
+                }
+            }
+
+            const date = parseDate(dateVal);
+            const amount = parseAmount(amountVal);
+            if (!date || amount === 0) return;
+
+            if (config.filter && !config.filter(row)) return;
+
+            let platformName = mapping.platformType;
+            if (mapping.platformType === 'TD充值' || mapping.platformType === 'TD减款') {
+                platformName = 'TD';
+            }
+
+            records.push({
+                platform: platformName,
+                date: formatDate(date),
+                account: String(accountVal || '').trim(),
+                amount: amount,
+                raw: row,
+            });
+        });
+    });
+
+    // 处理GG数据：按账号+日期分组，然后计算相邻日期的差额
+    if (ggData.length > 0) {
+        // 按账号分组
+        const byAccount = {};
+        ggData.forEach(r => {
+            if (!byAccount[r.account]) byAccount[r.account] = [];
+            byAccount[r.account].push(r);
+        });
+
+        Object.entries(byAccount).forEach(([account, rows]) => {
+            // 按日期排序
+            rows.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            // 相邻日期相减
+            for (let i = 1; i < rows.length; i++) {
+                const diff = rows[i].amount - rows[i-1].amount;
+                if (diff > 0) {
+                    records.push({
+                        platform: 'GG',
+                        date: rows[i].date,
+                        account: account,
+                        amount: diff,
+                        note: `${rows[i-1].date} -> ${rows[i].date} 差额`,
+                    });
+                }
+            }
+        });
+    }
+
+    return records;
+}
+
+// ==================== 核对逻辑 ====================
+function compareLayer1(bankRecords, arrivalRecords) {
+    // 按 日期+银行 分组汇总
+    const bankGrouped = {};
+    bankRecords.forEach(r => {
+        const key = `${r.date}_${r.bank}`;
+        if (!bankGrouped[key]) bankGrouped[key] = { date: r.date, bank: r.bank, amount: 0, count: 0, details: [] };
+        bankGrouped[key].amount += r.amount;
+        bankGrouped[key].count++;
+        bankGrouped[key].details.push(r);
+    });
+
+    const arrivalGrouped = {};
+    arrivalRecords.forEach(r => {
+        const key = `${r.date}_${r.bank}`;
+        if (!arrivalGrouped[key]) arrivalGrouped[key] = { date: r.date, bank: r.bank, amount: 0, count: 0, details: [] };
+        arrivalGrouped[key].amount += r.amount;
+        arrivalGrouped[key].count++;
+        arrivalGrouped[key].details.push(r);
+    });
+
+    const allKeys = new Set([...Object.keys(bankGrouped), ...Object.keys(arrivalGrouped)]);
+    const results = [];
+
+    allKeys.forEach(key => {
+        const bank = bankGrouped[key];
+        const arrival = arrivalGrouped[key];
+
+        if (bank && arrival) {
+            const diff = Math.abs(bank.amount - arrival.amount);
+            if (diff < 0.01) {
+                results.push({
+                    status: 'match',
+                    date: bank.date,
+                    bank: bank.bank,
+                    bankAmount: bank.amount,
+                    arrivalAmount: arrival.amount,
+                    diff: 0,
+                    bankCount: bank.count,
+                    arrivalCount: arrival.count,
+                });
+            } else {
+                results.push({
+                    status: 'mismatch',
+                    date: bank.date,
+                    bank: bank.bank,
+                    bankAmount: bank.amount,
+                    arrivalAmount: arrival.amount,
+                    diff: bank.amount - arrival.amount,
+                    bankCount: bank.count,
+                    arrivalCount: arrival.count,
+                });
+            }
+        } else if (bank) {
+            results.push({
+                status: 'missing',
+                date: bank.date,
+                bank: bank.bank,
+                bankAmount: bank.amount,
+                arrivalAmount: 0,
+                diff: bank.amount,
+                bankCount: bank.count,
+                arrivalCount: 0,
+                side: '到账表缺失',
+            });
+        } else {
+            results.push({
+                status: 'missing',
+                date: arrival.date,
+                bank: arrival.bank,
+                bankAmount: 0,
+                arrivalAmount: arrival.amount,
+                diff: -arrival.amount,
+                bankCount: 0,
+                arrivalCount: arrival.count,
+                side: '银行缺失',
+            });
+        }
+    });
+
+    return results.sort((a, b) => a.date.localeCompare(b.date));
+}
+
+function compareLayer2(arrivalRecords, rechargeRecords) {
+    // 按 日期+公司名称+平台 分组
+    const arrivalGrouped = {};
+    arrivalRecords.forEach(r => {
+        const key = `${r.date}_${r.company}_${r.platform}`;
+        if (!arrivalGrouped[key]) arrivalGrouped[key] = { date: r.date, company: r.company, platform: r.platform, amount: 0, count: 0 };
+        arrivalGrouped[key].amount += r.amount;
+        arrivalGrouped[key].count++;
+    });
+
+    const rechargeGrouped = {};
+    rechargeRecords.forEach(r => {
+        const key = `${r.date}_${r.company}_${r.platform}`;
+        if (!rechargeGrouped[key]) rechargeGrouped[key] = { date: r.date, company: r.company, platform: r.platform, amount: 0, count: 0 };
+        rechargeGrouped[key].amount += r.amount;
+        rechargeGrouped[key].count++;
+    });
+
+    const allKeys = new Set([...Object.keys(arrivalGrouped), ...Object.keys(rechargeGrouped)]);
+    const results = [];
+
+    allKeys.forEach(key => {
+        const arr = arrivalGrouped[key];
+        const rec = rechargeGrouped[key];
+
+        if (arr && rec) {
+            const diff = Math.abs(arr.amount - rec.amount);
+            if (diff < 0.01) {
+                results.push({ status: 'match', date: arr.date, company: arr.company, platform: arr.platform, arrivalAmount: arr.amount, rechargeAmount: rec.amount, diff: 0 });
+            } else {
+                results.push({ status: 'mismatch', date: arr.date, company: arr.company, platform: arr.platform, arrivalAmount: arr.amount, rechargeAmount: rec.amount, diff: arr.amount - rec.amount });
+            }
+        } else if (arr) {
+            results.push({ status: 'missing', date: arr.date, company: arr.company, platform: arr.platform, arrivalAmount: arr.amount, rechargeAmount: 0, diff: arr.amount, side: '充值表缺失' });
+        } else {
+            results.push({ status: 'missing', date: rec.date, company: rec.company, platform: rec.platform, arrivalAmount: 0, rechargeAmount: rec.amount, diff: -rec.amount, side: '到账表缺失' });
+        }
+    });
+
+    return results.sort((a, b) => a.date.localeCompare(b.date));
+}
+
+function compareLayer3(rechargeRecords, platformRecords) {
+    // 按 平台+日期+账户 分组
+    const rechargeGrouped = {};
+    rechargeRecords.forEach(r => {
+        const key = `${r.platform}_${r.date}_${r.account}`;
+        if (!rechargeGrouped[key]) rechargeGrouped[key] = { platform: r.platform, date: r.date, account: r.account, amount: 0, count: 0 };
+        rechargeGrouped[key].amount += r.amount;
+        rechargeGrouped[key].count++;
+    });
+
+    const platformGrouped = {};
+    platformRecords.forEach(r => {
+        const key = `${r.platform}_${r.date}_${r.account}`;
+        if (!platformGrouped[key]) platformGrouped[key] = { platform: r.platform, date: r.date, account: r.account, amount: 0, count: 0 };
+        platformGrouped[key].amount += r.amount;
+        platformGrouped[key].count++;
+    });
+
+    const allKeys = new Set([...Object.keys(rechargeGrouped), ...Object.keys(platformGrouped)]);
+    const results = [];
+
+    allKeys.forEach(key => {
+        const rec = rechargeGrouped[key];
+        const plat = platformGrouped[key];
+
+        if (rec && plat) {
+            const diff = Math.abs(rec.amount - plat.amount);
+            if (diff < 0.01) {
+                results.push({ status: 'match', platform: rec.platform, date: rec.date, account: rec.account, rechargeAmount: rec.amount, platformAmount: plat.amount, diff: 0 });
+            } else {
+                results.push({ status: 'mismatch', platform: rec.platform, date: rec.date, account: rec.account, rechargeAmount: rec.amount, platformAmount: plat.amount, diff: rec.amount - plat.amount });
+            }
+        } else if (rec) {
+            results.push({ status: 'missing', platform: rec.platform, date: rec.date, account: rec.account, rechargeAmount: rec.amount, platformAmount: 0, diff: rec.amount, side: '平台后台缺失' });
+        } else {
+            results.push({ status: 'missing', platform: plat.platform, date: plat.date, account: plat.account, rechargeAmount: 0, platformAmount: plat.amount, diff: -plat.amount, side: '充值表缺失' });
+        }
+    });
+
+    return results.sort((a, b) => a.date.localeCompare(b.date));
+}
+
+// ==================== 结果展示 ====================
+function showResults() {
+    const { layer1, layer2, layer3 } = appData.results;
+
+    // 汇总看板
+    const bankTotal = layer1.reduce((s, r) => s + (r.bankAmount || 0), 0);
+    const arrivalTotal = layer1.reduce((s, r) => s + (r.arrivalAmount || 0), 0);
+    const rechargeTotal = layer2.reduce((s, r) => s + (r.rechargeAmount || 0), 0);
+    const platformTotal = layer3.reduce((s, r) => s + (r.platformAmount || 0), 0);
+
+    const l1Match = layer1.filter(r => r.status === 'match').length;
+    const l1Mismatch = layer1.filter(r => r.status === 'mismatch').length;
+    const l1Missing = layer1.filter(r => r.status === 'missing').length;
+
+    const l2Match = layer2.filter(r => r.status === 'match').length;
+    const l2Mismatch = layer2.filter(r => r.status === 'mismatch').length;
+    const l2Missing = layer2.filter(r => r.status === 'missing').length;
+
+    const l3Match = layer3.filter(r => r.status === 'match').length;
+    const l3Mismatch = layer3.filter(r => r.status === 'mismatch').length;
+    const l3Missing = layer3.filter(r => r.status === 'missing').length;
+
+    document.getElementById('dashboard').innerHTML = `
+        <div class="dash-card">
+            <div class="label">银行到账总额</div>
+            <div class="value">${formatMoney(bankTotal)}</div>
+        </div>
+        <div class="dash-card" style="border-top-color:#4caf50">
+            <div class="label">到账表登记总额</div>
+            <div class="value">${formatMoney(arrivalTotal)}</div>
+            <div class="diff ${bankTotal === arrivalTotal ? 'positive' : 'negative'}">
+                差异: ${formatMoney(bankTotal - arrivalTotal)}
+            </div>
+        </div>
+        <div class="dash-card" style="border-top-color:#ff9800">
+            <div class="label">充值表总额</div>
+            <div class="value">${formatMoney(rechargeTotal)}</div>
+            <div class="diff ${arrivalTotal === rechargeTotal ? 'positive' : 'negative'}">
+                差异: ${formatMoney(arrivalTotal - rechargeTotal)}
+            </div>
+        </div>
+        <div class="dash-card" style="border-top-color:#f44336">
+            <div class="label">平台后台总额</div>
+            <div class="value">${formatMoney(platformTotal)}</div>
+            <div class="diff ${rechargeTotal === platformTotal ? 'positive' : 'negative'}">
+                差异: ${formatMoney(rechargeTotal - platformTotal)}
+            </div>
+        </div>
+        <div class="dash-card" style="border-top-color:#2196f3">
+            <div class="label">第一层匹配率</div>
+            <div class="value">${layer1.length ? Math.round(l1Match / layer1.length * 100) : 0}%</div>
+            <div class="diff" style="color:#666;font-size:12px;">
+                ✓${l1Match} ⚠${l1Mismatch} ✗${l1Missing}
+            </div>
+        </div>
+        <div class="dash-card" style="border-top-color:#2196f3">
+            <div class="label">第二层匹配率</div>
+            <div class="value">${layer2.length ? Math.round(l2Match / layer2.length * 100) : 0}%</div>
+            <div class="diff" style="color:#666;font-size:12px;">
+                ✓${l2Match} ⚠${l2Mismatch} ✗${l2Missing}
+            </div>
+        </div>
+        <div class="dash-card" style="border-top-color:#2196f3">
+            <div class="label">第三层匹配率</div>
+            <div class="value">${layer3.length ? Math.round(l3Match / layer3.length * 100) : 0}%</div>
+            <div class="diff" style="color:#666;font-size:12px;">
+                ✓${l3Match} ⚠${l3Mismatch} ✗${l3Missing}
+            </div>
+        </div>
+    `;
+
+    // 差异数量徽章
+    document.getElementById('badge1').textContent = layer1.filter(r => r.status !== 'match').length;
+    document.getElementById('badge2').textContent = layer2.filter(r => r.status !== 'match').length;
+    document.getElementById('badge3').textContent = layer3.filter(r => r.status !== 'match').length;
+
+    // 渲染三层表格
+    renderLayer1(layer1);
+    renderLayer2(layer2);
+    renderLayer3(layer3);
+}
+
+function renderLayer1(data) {
+    let html = `<table class="result-table">
+        <thead><tr>
+            <th>状态</th><th>日期</th><th>银行</th>
+            <th>银行到账金额</th><th>到账表金额</th><th>差异</th>
+            <th>银行笔数</th><th>到账笔数</th><th>说明</th>
+        </tr></thead><tbody>`;
+
+    data.forEach(r => {
+        const statusClass = r.status;
+        const statusText = r.status === 'match' ? '✓ 匹配' : r.status === 'mismatch' ? '⚠ 金额不符' : '✗ ' + (r.side || '缺失');
+        const diffClass = r.diff > 0 ? 'positive' : r.diff < 0 ? 'negative' : '';
+
+        html += `<tr class="${statusClass}">
+            <td><span class="status-tag ${statusClass}">${statusText}</span></td>
+            <td>${r.date}</td>
+            <td>${r.bank}</td>
+            <td class="amount">${formatMoney(r.bankAmount)}</td>
+            <td class="amount">${formatMoney(r.arrivalAmount)}</td>
+            <td class="amount ${diffClass}">${r.diff > 0 ? '+' : ''}${formatMoney(r.diff)}</td>
+            <td>${r.bankCount}</td>
+            <td>${r.arrivalCount}</td>
+            <td>${r.status === 'missing' ? (r.side || '') : (r.status === 'mismatch' ? '金额不匹配' : '')}</td>
+        </tr>`;
+    });
+
+    html += '</tbody></table>';
+    document.getElementById('resultLayer1').innerHTML = html;
+}
+
+function renderLayer2(data) {
+    let html = `<table class="result-table">
+        <thead><tr>
+            <th>状态</th><th>日期</th><th>公司名称</th><th>平台</th>
+            <th>到账金额</th><th>充值金额</th><th>差异</th><th>说明</th>
+        </tr></thead><tbody>`;
+
+    data.forEach(r => {
+        const statusClass = r.status;
+        const statusText = r.status === 'match' ? '✓ 匹配' : r.status === 'mismatch' ? '⚠ 金额不符' : '✗ ' + (r.side || '缺失');
+        const diffClass = r.diff > 0 ? 'positive' : r.diff < 0 ? 'negative' : '';
+
+        html += `<tr class="${statusClass}">
+            <td><span class="status-tag ${statusClass}">${statusText}</span></td>
+            <td>${r.date}</td>
+            <td>${r.company}</td>
+            <td>${r.platform}</td>
+            <td class="amount">${formatMoney(r.arrivalAmount)}</td>
+            <td class="amount">${formatMoney(r.rechargeAmount)}</td>
+            <td class="amount ${diffClass}">${r.diff > 0 ? '+' : ''}${formatMoney(r.diff)}</td>
+            <td>${r.status === 'missing' ? (r.side || '') : (r.status === 'mismatch' ? '金额不匹配' : '')}</td>
+        </tr>`;
+    });
+
+    html += '</tbody></table>';
+    document.getElementById('resultLayer2').innerHTML = html;
+}
+
+function renderLayer3(data) {
+    let html = `<table class="result-table">
+        <thead><tr>
+            <th>状态</th><th>平台</th><th>日期</th><th>账户</th>
+            <th>充值表金额</th><th>后台金额</th><th>差异</th><th>说明</th>
+        </tr></thead><tbody>`;
+
+    data.forEach(r => {
+        const statusClass = r.status;
+        const statusText = r.status === 'match' ? '✓ 匹配' : r.status === 'mismatch' ? '⚠ 金额不符' : '✗ ' + (r.side || '缺失');
+        const diffClass = r.diff > 0 ? 'positive' : r.diff < 0 ? 'negative' : '';
+
+        html += `<tr class="${statusClass}">
+            <td><span class="status-tag ${statusClass}">${statusText}</span></td>
+            <td>${r.platform}</td>
+            <td>${r.date}</td>
+            <td>${r.account}</td>
+            <td class="amount">${formatMoney(r.rechargeAmount)}</td>
+            <td class="amount">${formatMoney(r.platformAmount)}</td>
+            <td class="amount ${diffClass}">${r.diff > 0 ? '+' : ''}${formatMoney(r.diff)}</td>
+            <td>${r.status === 'missing' ? (r.side || '') : (r.status === 'mismatch' ? '金额不匹配' : '')}</td>
+        </tr>`;
+    });
+
+    html += '</tbody></table>';
+    document.getElementById('resultLayer3').innerHTML = html;
+}
+
+function showResultTab(layer) {
+    document.querySelectorAll('.result-tab').forEach(t => t.classList.remove('active'));
+    event.target.closest('.result-tab').classList.add('active');
+
+    document.getElementById('resultLayer1').classList.add('hidden');
+    document.getElementById('resultLayer2').classList.add('hidden');
+    document.getElementById('resultLayer3').classList.add('hidden');
+    document.getElementById('resultLayer' + layer.slice(-1)).classList.remove('hidden');
+}
+
+// ==================== 导出Excel ====================
+function exportResults() {
+    const { layer1, layer2, layer3 } = appData.results;
+
+    const wb = XLSX.utils.book_new();
+
+    // Sheet1: 第一层
+    const s1Data = [['状态', '日期', '银行', '银行到账金额', '到账表金额', '差异', '银行笔数', '到账笔数', '说明']];
+    layer1.forEach(r => {
+        s1Data.push([
+            r.status === 'match' ? '匹配' : r.status === 'mismatch' ? '金额不符' : '缺失',
+            r.date, r.bank, r.bankAmount, r.arrivalAmount, r.diff,
+            r.bankCount, r.arrivalCount, r.side || ''
+        ]);
+    });
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(s1Data), '第一层-银行vs到账表');
+
+    // Sheet2: 第二层
+    const s2Data = [['状态', '日期', '公司名称', '平台', '到账金额', '充值金额', '差异', '说明']];
+    layer2.forEach(r => {
+        s2Data.push([
+            r.status === 'match' ? '匹配' : r.status === 'mismatch' ? '金额不符' : '缺失',
+            r.date, r.company, r.platform, r.arrivalAmount, r.rechargeAmount, r.diff,
+            r.side || ''
+        ]);
+    });
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(s2Data), '第二层-到账表vs充值表');
+
+    // Sheet3: 第三层
+    const s3Data = [['状态', '平台', '日期', '账户', '充值表金额', '后台金额', '差异', '说明']];
+    layer3.forEach(r => {
+        s3Data.push([
+            r.status === 'match' ? '匹配' : r.status === 'mismatch' ? '金额不符' : '缺失',
+            r.platform, r.date, r.account, r.rechargeAmount, r.platformAmount, r.diff,
+            r.side || ''
+        ]);
+    });
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(s3Data), '第三层-充值表vs平台后台');
+
+    // Sheet4: 汇总
+    const bankTotal = layer1.reduce((s, r) => s + (r.bankAmount || 0), 0);
+    const arrivalTotal = layer1.reduce((s, r) => s + (r.arrivalAmount || 0), 0);
+    const rechargeTotal = layer2.reduce((s, r) => s + (r.rechargeAmount || 0), 0);
+    const platformTotal = layer3.reduce((s, r) => s + (r.platformAmount || 0), 0);
+
+    const s4Data = [
+        ['核对汇总报告'],
+        ['生成时间', new Date().toLocaleString('zh-CN')],
+        [],
+        ['层级', '银行/到账总额', '到账/充值总额', '充值/平台总额', '差异'],
+        ['第一层（银行 vs 到账表）', bankTotal, arrivalTotal, '-', bankTotal - arrivalTotal],
+        ['第二层（到账表 vs 充值表）', '-', arrivalTotal, rechargeTotal, arrivalTotal - rechargeTotal],
+        ['第三层（充值表 vs 平台后台）', '-', rechargeTotal, platformTotal, rechargeTotal - platformTotal],
+        [],
+        ['匹配情况统计'],
+        ['层级', '匹配', '金额不符', '缺失', '总计'],
+        ['第一层', layer1.filter(r=>r.status==='match').length, layer1.filter(r=>r.status==='mismatch').length, layer1.filter(r=>r.status==='missing').length, layer1.length],
+        ['第二层', layer2.filter(r=>r.status==='match').length, layer2.filter(r=>r.status==='mismatch').length, layer2.filter(r=>r.status==='missing').length, layer2.length],
+        ['第三层', layer3.filter(r=>r.status==='match').length, layer3.filter(r=>r.status==='mismatch').length, layer3.filter(r=>r.status==='missing').length, layer3.length],
+    ];
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(s4Data), '汇总');
+
+    XLSX.writeFile(wb, `数据核查报告_${new Date().toISOString().slice(0,10)}.xlsx`);
+}
+</script>
+</body>
+</html>

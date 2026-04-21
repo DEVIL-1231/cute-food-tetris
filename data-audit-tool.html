@@ -539,10 +539,18 @@ const BANK_CONFIGS = {
         bankName: (row, filename) => '华美银行',
     },
     '汇丰': {
-        keywords: ['详情', '支出(USD 美元)', '存入(USD 美元)', '结余(USD 美元)'],
-        dateCol: ['日期'],
-        amountCol: ['存入(USD 美元)'],
-        filter: (row) => parseAmount(row['存入(USD 美元)']) > 0,
+        keywords: ['详情', '支出', '存入', '结余', 'USD', '美元', '日期', 'Date'],
+        dateCol: ['日期', '日期 Date', 'Date'],
+        amountCol: ['存入(USD 美元)', '存入 (USD 美元)', '存入', '存入金额'],
+        filter: (row) => {
+            // 尝试多个可能的存入列名
+            const amountKeys = ['存入(USD 美元)', '存入 (USD 美元)', '存入', '存入金额'];
+            for (const k of amountKeys) {
+                const amt = parseAmount(row[k]);
+                if (amt > 0) return true;
+            }
+            return false;
+        },
         bankName: (row, filename) => '汇丰银行',
     },
     '中银': {
@@ -700,7 +708,7 @@ function formatMoney(amount) {
     return amount.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-function detectBankType(headers) {
+function detectBankType(headers, filename) {
     const headerStr = headers.join(' ');
     for (const [bank, config] of Object.entries(BANK_CONFIGS)) {
         if (bank === '其他') continue;
@@ -708,6 +716,12 @@ function detectBankType(headers) {
         if (matchCount >= 3) return bank;
     }
     // 尝试根据文件名检测
+    const lower = (filename || '').toLowerCase();
+    if (lower.includes('hsbc') || lower.includes('汇丰') || lower.includes('滙豐')) return '汇丰';
+    if (lower.includes('华美') || lower.includes('huamei')) return '华美';
+    if (lower.includes('中银') || lower.includes('boc') || lower.includes('bank of china')) return '中银';
+    if (lower.includes('连连') || lower.includes('lianlian')) return '连连';
+    if (lower.includes('pingpong') || lower.includes('ping pong')) return 'pingpong';
     return '其他';
 }
 
@@ -778,7 +792,7 @@ function processFiles(files, type) {
             const rawData = { headers, rows, sheetName: workbook.SheetNames[0] };
 
             if (type === 'bank') {
-                const detectedBank = detectBankType(headers);
+                const detectedBank = detectBankType(headers, file.name);
                 appData.bankFiles.push({ file, type: detectedBank, rawData, detectedBank });
                 updateFileList('bankFileList', appData.bankFiles, 'bank');
             } else if (type === 'arrival') {

@@ -954,6 +954,7 @@ function buildMappingUI() {
             { label: '公司名称', keys: ['公司名称（客户名称）', '公司名称', '客户名称'], id: 'arrival_company' },
             { label: '到账金额', keys: ['到账金额', '到款金额', '金额'], id: 'arrival_amount' },
             { label: '服务产品/平台', keys: ['服务产品', '产品', '平台'], id: 'arrival_platform' },
+            { label: '费用用途', keys: ['费用用途', '用途'], id: 'arrival_feePurpose' },
         ];
 
         mappings.forEach(m => {
@@ -1140,6 +1141,7 @@ function confirmMapping() {
             companyCol: document.getElementById('arrival_company')?.value || '',
             amountCol: document.getElementById('arrival_amount')?.value || '',
             platformCol: document.getElementById('arrival_platform')?.value || '',
+            feePurposeCol: document.getElementById('arrival_feePurpose')?.value || '',
         };
     }
 
@@ -1302,12 +1304,15 @@ function extractArrivalRecords() {
         const amount = parseAmount(row[m.amountCol]);
         if (!date || amount === 0) return;
 
+        const feePurpose = m.feePurposeCol ? String(row[m.feePurposeCol] || '').trim() : '';
+
         records.push({
             date: formatDate(date),
             bank: String(row[m.bankCol] || '').trim(),
             company: String(row[m.companyCol] || '').trim(),
             platform: String(row[m.platformCol] || '').trim(),
             amount: amount,
+            feePurpose: feePurpose,
             raw: row,
         });
     });
@@ -1519,9 +1524,16 @@ function compareLayer1(bankRecords, arrivalRecords) {
 }
 
 function compareLayer2(arrivalRecords, rechargeRecords) {
+    // 过滤到账表：只保留费用用途为"广告预存费"的记录（如已映射费用用途列）
+    const filteredArrival = arrivalRecords.filter(r => {
+        // 如果未映射费用用途列，或费用用途为空，则全部保留
+        if (!r.feePurpose) return true;
+        return r.feePurpose.includes('广告预存费');
+    });
+
     // 按 日期+公司名称+平台 分组
     const arrivalGrouped = {};
-    arrivalRecords.forEach(r => {
+    filteredArrival.forEach(r => {
         const key = `${r.date}_${r.company}_${r.platform}`;
         if (!arrivalGrouped[key]) arrivalGrouped[key] = { date: r.date, company: r.company, platform: r.platform, amount: 0, count: 0 };
         arrivalGrouped[key].amount += r.amount;

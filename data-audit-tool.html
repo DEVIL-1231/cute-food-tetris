@@ -566,14 +566,14 @@ const BANK_CONFIGS = {
         bankName: (row, filename) => '华美银行',
     },
     '汇丰': {
-        keywords: ['详情', '支出', '存入', '结余', 'USD', '美元', '日期', 'Date'],
-        dateCol: ['日期', '日期 Date', 'Date'],
-        amountCol: ['存入(USD 美元)', '存入 (USD 美元)', '存入', '存入金额'],
+        keywords: ['详情', '支出', '存入', '结余', 'USD', '美元', '日期', 'Date', 'Details', 'Deposit', 'Withdrawal', 'Balance'],
+        dateCol: ['日期', '日期 Date', 'Date', 'Transaction Date'],
+        amountCol: ['存入(USD 美元)', '存入 (USD 美元)', '存入', '存入金额', 'Deposit', 'Deposits', 'Credit'],
         currencyCol: [], // 从表头推断 USD
         defaultCurrency: 'USD',
         filter: (row) => {
-            // 尝试多个可能的存入列名
-            const amountKeys = ['存入(USD 美元)', '存入 (USD 美元)', '存入', '存入金额'];
+            // 尝试多个可能的存入列名（中英文）
+            const amountKeys = ['存入(USD 美元)', '存入 (USD 美元)', '存入', '存入金额', 'Deposit', 'Deposits', 'Credit'];
             for (const k of amountKeys) {
                 const amt = parseAmount(row[k]);
                 if (amt > 0) return true;
@@ -583,14 +583,22 @@ const BANK_CONFIGS = {
         bankName: (row, filename) => '汇丰银行',
     },
     '中银': {
-        keywords: ['賬戶名稱Account Name', '交易日期Transaction Date', '扣賬/入賬Debit/Credit', '金額Amount'],
-        dateCol: ['交易日期Transaction Date'],
-        amountCol: ['金額Amount'],
-        currencyCol: [],
+        keywords: [
+            '賬戶名稱', 'Account Name', '賬戶號碼', 'Account No', '交易日期', 'Transaction Date',
+            '扣賬/入賬', 'Debit/Credit', '扣賬', '入賬', 'Debit', 'Credit', '金額', '金額Amount', 'Amount',
+            'Country', 'Region', 'Currency', '交易類別', 'Transaction Type', '賬戶結餘', 'Ledger Balance'
+        ],
+        dateCol: ['交易日期 Transaction Date', '交易日期Transaction Date', '交易日期', 'Transaction Date'],
+        amountCol: ['金額Amount', '金額 Amount', '金額', 'Amount'],
+        currencyCol: ['貨幣', '幣種', 'Currency'],
         defaultCurrency: 'HKD',
         filter: (row) => {
-            const dc = String(row['扣賬/入賬Debit/Credit'] || '').trim().toUpperCase();
-            return dc === 'CR' || dc === 'CREDIT' || dc === '入賬';
+            const dcKeys = ['扣賬/入賬Debit/Credit', '扣賬/入賬 Debit/Credit', '扣賬/入賬', 'Debit/Credit', 'Debit/Cr edit', '入賬'];
+            for (const k of dcKeys) {
+                const dc = String(row[k] || '').trim().toUpperCase();
+                if (dc === 'CR' || dc === 'CREDIT' || dc === '入賬') return true;
+            }
+            return false;
         },
         bankName: (row, filename) => '中银银行',
     },

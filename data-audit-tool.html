@@ -1150,7 +1150,8 @@ function processFiles(files, type) {
                 return;
             }
 
-            const headers = jsonData[0];
+            // 规范化表头：去除换行符和多余空格（中银CSV的表头是"交易日期\nTransaction Date"格式）
+            const headers = jsonData[0].map(h => String(h || '').replace(/\r?\n/g, ' ').replace(/\s+/g, ' ').trim());
             const rows = [];
             for (let i = 1; i < jsonData.length; i++) {
                 const row = {};

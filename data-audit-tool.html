@@ -937,11 +937,41 @@ function processFiles(files, type) {
         const reader = new FileReader();
         reader.onload = function(e) {
             const data = new Uint8Array(e.target.result);
-            const workbook = XLSX.read(data, { type: 'array', codepage: 936 });
-            const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-            const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
 
-            if (jsonData.length < 2) {
+            // 先检测是否是HTML伪装的Excel文件（很多银行导出是HTML保存为.xls）
+            const textPreview = new TextDecoder('utf-8').decode(data.slice(0, 512));
+            const isHtml = /\s*<\s*(html|table|!DOCTYPE)/i.test(textPreview);
+
+            let jsonData, sheetName;
+            if (isHtml) {
+                // HTML文件：先用gbk解码再解析
+                const htmlText = new TextDecoder('gb18030').decode(data);
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(htmlText, 'text/html');
+                const table = doc.querySelector('table');
+                if (!table) {
+                    showNotification('无法解析HTML表格：' + file.name);
+                    return;
+                }
+                jsonData = [];
+                const trs = table.querySelectorAll('tr');
+                trs.forEach(tr => {
+                    const row = [];
+                    tr.querySelectorAll('td, th').forEach(cell => {
+                        row.push(cell.textContent.trim());
+                    });
+                    jsonData.push(row);
+                });
+                sheetName = 'Sheet1';
+            } else {
+                // 真正的Excel文件
+                const workbook = XLSX.read(data, { type: 'array' });
+                sheetName = workbook.SheetNames[0];
+                const firstSheet = workbook.Sheets[sheetName];
+                jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+            }
+
+            if (!jsonData || jsonData.length < 2) {
                 showNotification('文件数据为空：' + file.name);
                 return;
             }
@@ -956,7 +986,7 @@ function processFiles(files, type) {
                 rows.push(row);
             }
 
-            const rawData = { headers, rows, sheetName: workbook.SheetNames[0] };
+            const rawData = { headers, rows, sheetName: sheetName || 'Sheet1' };
 
             if (type === 'bank') {
                 const detectedBank = detectBankType(headers, file.name);

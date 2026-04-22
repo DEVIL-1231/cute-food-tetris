@@ -2,474 +2,531 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>梦幻农场</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>乡村农场生活</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body {
-            font-family: 'Microsoft YaHei', sans-serif;
-            background-color: #1a1a2e;
-            color: #eee;
+            font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+            background-color: #2d5a27;
+            color: #333;
             min-height: 100vh;
             overflow-x: hidden;
+            touch-action: manipulation;
         }
+        .game-wrapper { max-width: 800px; margin: 0 auto; padding: 10px; padding-bottom: 80px; }
 
-        .stars {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none; z-index: 0;
-        }
-        .star { position: absolute; background: white; border-radius: 50%; animation: twinkle 2s infinite alternate; }
-        @keyframes twinkle { 0% { opacity: 0.3; } 100% { opacity: 1; } }
-
-        .game-container { position: relative; z-index: 1; max-width: 960px; margin: 0 auto; padding: 10px; }
-
+        /* 顶部栏 */
         .top-bar {
-            display: flex; justify-content: space-between; align-items: center;
-            background: rgba(255,255,255,0.08); border-radius: 15px; padding: 12px 20px;
-            margin-bottom: 10px; backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.1);
-            flex-wrap: wrap; gap: 8px;
+            background: rgba(255,255,255,0.95);
+            border-radius: 15px;
+            padding: 10px 12px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 6px;
         }
-        .player-info { display: flex; align-items: center; gap: 10px; }
-        .player-avatar {
-            width: 42px; height: 42px; border-radius: 50%;
-            background: rgba(224,170,255,0.2); border: 2px solid rgba(224,170,255,0.4);
-            display: flex; align-items: center; justify-content: center;
-            font-size: 22px; cursor: pointer; transition: all 0.2s;
+        .top-item { display: flex; align-items: center; gap: 4px; font-size: 13px; font-weight: bold; }
+        .top-item .icon { font-size: 18px; }
+        .coins { color: #e6a817; }
+        .level { color: #4a7c59; }
+        .season { color: #5a7d9a; }
+        .day { color: #8b5a2b; }
+        .pause-btn {
+            background: none; border: none; font-size: 20px; cursor: pointer; padding: 4px;
         }
-        .player-avatar:hover { transform: scale(1.1); }
-        .player-level { font-size: 12px; color: #e0aaff; }
-        .season-badge {
-            font-size: 20px; background: rgba(255,255,255,0.15); border-radius: 12px;
-            padding: 5px 15px; font-weight: bold;
+        .paused-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.4); z-index: 500;
+            display: flex; justify-content: center; align-items: center;
+            backdrop-filter: blur(3px);
         }
-        .coins, .exp-display {
-            font-size: 16px; font-weight: bold;
+        .paused-overlay.hidden { display: none; }
+        .paused-box {
+            background: white; padding: 30px 40px; border-radius: 20px;
+            text-align: center; font-size: 24px; font-weight: bold; color: #4a7c59;
         }
-        .coins { color: #FFD700; }
-        .exp-display { color: #81c784; }
+        .paused-box .sub { font-size: 14px; color: #888; margin-top: 8px; font-weight: normal; }
 
+        /* 主区域 */
         .main-area {
-            background: rgba(255,255,255,0.05); border-radius: 20px; padding: 15px;
-            min-height: 520px; border: 1px solid rgba(255,255,255,0.1);
-            position: relative; overflow: hidden;
+            background: rgba(255,255,255,0.95);
+            border-radius: 15px;
+            padding: 15px;
+            min-height: 400px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+            position: relative;
+        }
+        .page-title {
+            font-size: 20px; font-weight: bold; color: #4a7c59;
+            margin-bottom: 15px; text-align: center;
+            padding-bottom: 10px; border-bottom: 2px dashed #c8e6c9;
+        }
+        .page-subtitle {
+            text-align: center; font-size: 13px; color: #888; margin-bottom: 12px;
         }
 
-        /* ========== 角色选择界面 ========== */
-        .character-select {
-            text-align: center; padding: 40px 20px;
+        /* ====== 区域卡片网格 ====== */
+        .zone-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            padding: 5px;
         }
-        .character-select h2 { font-size: 28px; color: #e0aaff; margin-bottom: 10px; }
-        .character-select .subtitle { color: #aaa; margin-bottom: 30px; }
-        .gender-select {
-            display: flex; justify-content: center; gap: 30px; margin-bottom: 30px;
-        }
-        .gender-option {
-            background: rgba(255,255,255,0.08); border: 2px solid rgba(255,255,255,0.15);
-            border-radius: 20px; padding: 25px 40px; cursor: pointer; transition: all 0.3s;
+        .zone-card {
+            background: #f1f8e9;
+            border-radius: 15px;
+            padding: 15px 10px;
             text-align: center;
+            border: 2px solid #c8e6c9;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
         }
-        .gender-option:hover, .gender-option.selected {
-            border-color: #e0aaff; background: rgba(224,170,255,0.12);
-            transform: translateY(-5px);
+        .zone-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            border-color: #81c784;
         }
-        .gender-option .big-emoji { font-size: 60px; display: block; margin-bottom: 10px; }
-        .gender-option .label { font-size: 16px; font-weight: bold; }
+        .zone-card .zone-emoji {
+            font-size: 40px; display: block; margin-bottom: 5px;
+            filter: drop-shadow(1px 2px 2px rgba(0,0,0,0.15));
+        }
+        .zone-card .zone-name {
+            font-size: 15px; font-weight: bold; color: #33691e;
+        }
+        .zone-card .zone-count {
+            font-size: 12px; color: #689f38; margin-top: 3px;
+        }
+        .zone-card .zone-lock {
+            position: absolute; top: 5px; right: 8px;
+            font-size: 16px;
+        }
+        .zone-card.locked {
+            opacity: 0.6; cursor: not-allowed;
+            background: #f5f5f5; border-color: #e0e0e0;
+        }
+        .zone-card.locked .zone-name { color: #999; }
 
-        .outfit-preview {
-            margin: 20px auto; padding: 20px;
-            background: rgba(255,255,255,0.05); border-radius: 15px;
-            max-width: 300px;
+        /* ====== 区域场景 ====== */
+        .zone-scene {
+            position: relative;
+            width: 100%;
+            height: 380px;
+            border-radius: 15px;
+            border: 3px solid #66bb6a;
+            overflow: hidden;
         }
-        .outfit-preview .preview-avatar { font-size: 80px; display: block; margin-bottom: 10px; }
-        .outfit-grid {
-            display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 15px;
+        .zone-bg-chicken_coop {
+            background: linear-gradient(180deg, #fff8e1 0%, #ffecb3 100%);
         }
-        .outfit-item {
-            aspect-ratio: 1; background: rgba(255,255,255,0.08);
-            border-radius: 10px; display: flex; align-items: center; justify-content: center;
-            font-size: 24px; cursor: pointer; border: 2px solid transparent;
-            transition: all 0.2s; position: relative;
+        .zone-bg-pet_house {
+            background: linear-gradient(180deg, #fce4ec 0%, #f8bbd0 100%);
         }
-        .outfit-item:hover { border-color: rgba(224,170,255,0.4); }
-        .outfit-item.locked { opacity: 0.3; cursor: not-allowed; }
-        .outfit-item.equipped { border-color: #e0aaff; background: rgba(224,170,255,0.15); }
-        .outfit-item .lock-icon {
-            position: absolute; bottom: 2px; right: 2px; font-size: 10px;
+        .zone-bg-cowshed {
+            background: linear-gradient(180deg, #e8f5e9 0%, #c8e6c9 100%);
         }
+        .zone-bg-sheepfold {
+            background: linear-gradient(180deg, #f3e5f5 0%, #e1bee7 100%);
+        }
+        .zone-bg-pigpen {
+            background: linear-gradient(180deg, #efebe9 0%, #d7ccc8 100%);
+        }
+        .zone-bg-beehive {
+            background: linear-gradient(180deg, #fffde7 0%, #fff9c4 100%);
+        }
+        .fence-top, .fence-bottom, .fence-left, .fence-right {
+            position: absolute; background: #8d6e63; z-index: 5;
+        }
+        .fence-top { top: 0; left: 0; right: 0; height: 8px; background: repeating-linear-gradient(90deg, #8d6e63 0px, #8d6e63 15px, #6d4c41 15px, #6d4c41 18px); }
+        .fence-bottom { bottom: 0; left: 0; right: 0; height: 8px; background: repeating-linear-gradient(90deg, #8d6e63 0px, #8d6e63 15px, #6d4c41 15px, #6d4c41 18px); }
+        .fence-left { top: 0; left: 0; bottom: 0; width: 8px; background: repeating-linear-gradient(0deg, #8d6e63 0px, #8d6e63 15px, #6d4c41 15px, #6d4c41 18px); }
+        .fence-right { top: 0; right: 0; bottom: 0; width: 8px; background: repeating-linear-gradient(0deg, #8d6e63 0px, #8d6e63 15px, #6d4c41 15px, #6d4c41 18px); }
 
-        /* ========== 农场地图 ========== */
-        .farm-map {
-            position: relative; width: 100%; height: 480px;
-            background:
-                radial-gradient(ellipse 60% 40% at 75% 70%, rgba(100,149,237,0.15) 0%, transparent 70%),
-                radial-gradient(ellipse 30% 25% at 20% 25%, rgba(34,139,34,0.2) 0%, transparent 70%),
-                linear-gradient(135deg, #1e3a1e 0%, #2d5a3a 30%, #1a3a2e 60%, #1e2a1e 100%);
-            border-radius: 20px; overflow: hidden; border: 3px solid rgba(139,115,85,0.5);
-        }
-
-        /* 地图装饰 */
-        .map-decoration {
-            position: absolute; pointer-events: none; user-select: none;
-        }
-        .tree-1 { font-size: 50px; }
-        .tree-2 { font-size: 40px; }
-        .tree-3 { font-size: 55px; }
-        .pond {
-            position: absolute; border-radius: 50%;
-            background: radial-gradient(ellipse at 35% 35%, rgba(135,206,235,0.5), rgba(70,130,180,0.4));
-            border: 2px solid rgba(135,206,235,0.3);
-        }
-        .pond::after {
-            content: '〰️'; position: absolute; top: 30%; left: 20%;
-            font-size: 14px; opacity: 0.5; animation: wave 2s infinite alternate;
-        }
-        .pond::before {
-            content: '〰️'; position: absolute; bottom: 30%; right: 25%;
-            font-size: 12px; opacity: 0.4; animation: wave 2.5s infinite alternate-reverse;
-        }
-        @keyframes wave { 0% { transform: translateX(-3px); } 100% { transform: translateX(3px); } }
-
-        .fence-h {
-            position: absolute; height: 8px;
-            background: repeating-linear-gradient(90deg, #8b7355 0px, #8b7355 6px, #a08060 6px, #a08060 12px);
-            border-radius: 3px;
-        }
-        .fence-v {
-            position: absolute; width: 8px;
-            background: repeating-linear-gradient(0deg, #8b7355 0px, #8b7355 6px, #a08060 6px, #a08060 12px);
-            border-radius: 3px;
-        }
-        .fence-post {
-            position: absolute; width: 12px; height: 12px;
-            background: #6b5344; border-radius: 2px;
+        .zone-decoration {
+            position: absolute; font-size: 30px; z-index: 3;
+            pointer-events: none; filter: drop-shadow(1px 2px 2px rgba(0,0,0,0.15));
         }
 
-        .path-dot {
-            position: absolute; width: 6px; height: 6px;
-            background: rgba(194,178,128,0.4); border-radius: 50%;
+        /* 动物在场景中 */
+        .scene-animal {
+            position: absolute; cursor: pointer; z-index: 10;
+            transition: left 0.6s linear, top 0.6s linear;
+            user-select: none;
         }
+        .scene-animal:hover { z-index: 20; }
+        .scene-animal .animal-emoji {
+            font-size: 36px; display: block;
+            filter: drop-shadow(1px 2px 2px rgba(0,0,0,0.2));
+            transition: transform 0.2s;
+        }
+        .scene-animal:hover .animal-emoji { transform: scale(1.2); }
+        .scene-animal .animal-gender {
+            position: absolute; top: -5px; right: -5px; font-size: 12px;
+            background: rgba(255,255,255,0.9); border-radius: 50%;
+            width: 16px; height: 16px; display: flex; align-items: center; justify-content: center;
+        }
+        .scene-animal .animal-name-tag {
+            position: absolute; bottom: -5px; left: 50%; transform: translateX(-50%);
+            background: rgba(255,255,255,0.9); padding: 1px 6px; border-radius: 8px;
+            font-size: 10px; font-weight: bold; color: #33691e;
+            white-space: nowrap; box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            opacity: 0; transition: opacity 0.2s;
+        }
+        .scene-animal:hover .animal-name-tag { opacity: 1; }
+        .scene-animal .product-badge {
+            position: absolute; top: -8px; left: -8px;
+            font-size: 16px; animation: productPulse 1s ease-in-out infinite;
+        }
+        .scene-animal .pregnant-badge {
+            position: absolute; top: -8px; right: -8px; font-size: 14px;
+        }
+        .scene-animal .mood-indicator {
+            position: absolute; top: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 14px; opacity: 0.9;
+        }
+        .walking .animal-emoji { animation: walkBounce 0.4s ease-in-out infinite; }
+        @keyframes walkBounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+        .eating .animal-emoji { animation: eatNibble 0.6s ease-in-out infinite; }
+        @keyframes eatNibble { 0%, 100% { transform: rotate(0deg); } 25% { transform: rotate(-10deg) translateY(2px); } 75% { transform: rotate(10deg) translateY(2px); } }
+        .sleeping .animal-emoji { animation: sleepZzz 2s ease-in-out infinite; opacity: 0.7; }
+        @keyframes sleepZzz { 0%, 100% { transform: scale(1); } 50% { transform: scale(0.95); } }
+        .sleeping .zzz { position: absolute; top: -15px; right: -5px; font-size: 12px; animation: zzzFloat 2s ease-out infinite; }
+        @keyframes zzzFloat { 0% { transform: translateY(0) translateX(0); opacity: 1; } 100% { transform: translateY(-20px) translateX(5px); opacity: 0; } }
+        .playing .animal-emoji { animation: playJump 0.5s ease-in-out infinite; }
+        @keyframes playJump { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-10px) rotate(-5deg); } }
+        @keyframes productPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.3); } }
 
-        .zone-label {
-            position: absolute; font-size: 12px; font-weight: bold;
-            color: rgba(255,255,255,0.6); background: rgba(0,0,0,0.3);
-            padding: 3px 10px; border-radius: 10px; pointer-events: none;
-            letter-spacing: 1px;
+        .add-animal-btn {
+            position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%);
+            background: rgba(76,175,80,0.9); color: white; border: none;
+            padding: 10px 25px; border-radius: 20px; font-size: 14px;
+            cursor: pointer; font-weight: bold; z-index: 15;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
         }
+        .add-animal-btn:hover { background: #43a047; }
+        .back-btn {
+            position: absolute; top: 10px; left: 10px;
+            background: rgba(255,255,255,0.9); border: 2px solid #81c784;
+            padding: 6px 15px; border-radius: 12px; font-size: 13px;
+            cursor: pointer; font-weight: bold; color: #4a7c59; z-index: 15;
+        }
+        .back-btn:hover { background: #e8f5e9; }
 
-        /* 养殖区 */
-        .farm-zone {
-            position: absolute; border-radius: 15px;
-            border: 2px dashed rgba(139,115,85,0.5);
-            background: rgba(34,100,34,0.15);
+        .empty-zone-msg {
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center; color: rgba(0,0,0,0.25); z-index: 4;
         }
+        .empty-zone-msg .big { font-size: 50px; }
 
-        /* 动物 */
-        .animal {
-            position: absolute; font-size: 36px; cursor: pointer;
-            transition: transform 0.3s ease-out; user-select: none;
-            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
-            z-index: 10;
+        /* 田地页面 */
+        .field-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 10px; padding: 5px;
         }
-        .animal:hover { transform: scale(1.2); filter: drop-shadow(0 0 8px rgba(224,170,255,0.5)); }
-        .animal.moving { transition: transform 0.3s ease-out, left 2s linear, top 2s linear; }
-        .animal-name-tag {
-            position: absolute; bottom: -14px; left: 50%; transform: translateX(-50%);
-            font-size: 10px; white-space: nowrap; background: rgba(0,0,0,0.6);
-            padding: 1px 6px; border-radius: 6px; color: #fff; pointer-events: none;
+        .plot {
+            background: #d7ccc8; border-radius: 12px; padding: 10px;
+            text-align: center; min-height: 110px; cursor: pointer;
+            transition: all 0.2s; border: 2px solid transparent; position: relative;
         }
-        .animal-hunger {
-            position: absolute; top: -8px; left: 50%; transform: translateX(-50%);
-            width: 30px; height: 4px; background: rgba(0,0,0,0.5); border-radius: 2px; overflow: hidden;
-        }
-        .animal-hunger-fill { height: 100%; border-radius: 2px; transition: width 0.5s; }
+        .plot.planted { background: #e8f5e9; border-color: #c8e6c9; }
+        .plot:hover { transform: scale(1.03); box-shadow: 0 3px 10px rgba(0,0,0,0.1); }
+        .plot .plot-emoji { font-size: 36px; display: block; margin-bottom: 5px; }
+        .plot .plot-name { font-size: 12px; font-weight: bold; color: #33691e; }
+        .plot .plot-progress { font-size: 10px; color: #666; margin-top: 3px; }
+        .plot .plot-water { font-size: 10px; color: #2196f3; margin-top: 2px; }
+        .plot .harvest-ready { position: absolute; top: -5px; right: -5px; font-size: 18px; animation: productPulse 1s ease-in-out infinite; }
+        .plot .plot-num { position: absolute; top: 3px; left: 6px; font-size: 10px; color: #999; }
 
-        /* 种植地 */
-        .farm-plot {
-            position: absolute; width: 56px; height: 56px;
-            background: linear-gradient(145deg, #5d4037, #4e342e);
-            border-radius: 8px; border: 2px solid #3e2723;
-            cursor: pointer; transition: all 0.2s; overflow: hidden;
+        /* 商店 */
+        .shop-section { margin-bottom: 20px; }
+        .shop-section-title {
+            font-size: 16px; font-weight: bold; color: #4a7c59;
+            margin-bottom: 10px; padding-left: 5px;
+            border-left: 4px solid #81c784;
+        }
+        .shop-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+        .shop-item {
+            background: #f5f5f5; border-radius: 12px; padding: 12px;
+            text-align: center; border: 2px solid #e0e0e0; transition: all 0.2s;
+        }
+        .shop-item:hover { border-color: #81c784; box-shadow: 0 3px 10px rgba(0,0,0,0.08); }
+        .shop-item .shop-emoji { font-size: 36px; display: block; margin-bottom: 5px; }
+        .shop-item .shop-name { font-size: 13px; font-weight: bold; }
+        .shop-item .shop-desc { font-size: 11px; color: #888; margin: 3px 0; }
+        .shop-item .shop-price { font-size: 14px; color: #e6a817; font-weight: bold; }
+        .shop-item .buy-btn {
+            margin-top: 8px; background: #4caf50; color: white; border: none;
+            padding: 6px 15px; border-radius: 15px; font-size: 12px; cursor: pointer; font-family: inherit;
+        }
+        .buy-btn:hover { background: #43a047; }
+        .buy-btn:disabled { background: #bdbdbd; cursor: not-allowed; }
+        .buy-btn.locked { background: #9e9e9e; cursor: not-allowed; }
+
+        /* 仓库 */
+        .inventory-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; padding: 5px; }
+        .inv-item {
+            background: #fff8e1; border-radius: 12px; padding: 12px 8px;
+            text-align: center; border: 2px solid #ffe0b2; position: relative;
+        }
+        .inv-item .inv-emoji { font-size: 32px; display: block; margin-bottom: 3px; }
+        .inv-item .inv-name { font-size: 12px; font-weight: bold; }
+        .inv-item .inv-count { position: absolute; top: 5px; right: 8px; background: #ff9800; color: white; font-size: 11px; font-weight: bold; padding: 2px 6px; border-radius: 10px; }
+        .inv-item .sell-btn { margin-top: 6px; background: #ff9800; color: white; border: none; padding: 4px 12px; border-radius: 12px; font-size: 11px; cursor: pointer; font-family: inherit; }
+        .sell-btn:hover { background: #f57c00; }
+
+        /* 升级 */
+        .upgrade-card { background: #e3f2fd; border-radius: 15px; padding: 20px; margin-bottom: 15px; border: 2px solid #bbdefb; }
+        .upgrade-card .up-title { font-size: 16px; font-weight: bold; color: #1565c0; margin-bottom: 8px; }
+        .upgrade-card .up-desc { font-size: 13px; color: #666; margin-bottom: 10px; }
+        .upgrade-card .up-cost { font-size: 14px; color: #e6a817; font-weight: bold; }
+        .upgrade-card .up-btn { margin-top: 10px; background: #2196f3; color: white; border: none; padding: 8px 20px; border-radius: 15px; font-size: 13px; cursor: pointer; font-family: inherit; }
+        .up-btn:hover { background: #1976d2; }
+        .up-btn:disabled { background: #bdbdbd; cursor: not-allowed; }
+        .up-btn.maxed { background: #4caf50; cursor: default; }
+
+        /* 成就 */
+        .ach-list { display: flex; flex-direction: column; gap: 10px; }
+        .ach-item { display: flex; align-items: center; gap: 12px; padding: 12px 15px; background: #f5f5f5; border-radius: 12px; border: 2px solid #e0e0e0; }
+        .ach-item.completed { background: #e8f5e9; border-color: #a5d6a7; }
+        .ach-item .ach-emoji { font-size: 32px; }
+        .ach-item .ach-info { flex: 1; }
+        .ach-item .ach-name { font-size: 14px; font-weight: bold; }
+        .ach-item .ach-desc { font-size: 12px; color: #888; }
+        .ach-item .ach-reward { font-size: 12px; color: #e6a817; }
+        .ach-item .ach-status { font-size: 20px; }
+
+        /* 设置 */
+        .settings-list { display: flex; flex-direction: column; gap: 12px; }
+        .settings-item {
+            background: #f5f5f5; border-radius: 12px; padding: 15px;
+            display: flex; justify-content: space-between; align-items: center;
+            border: 2px solid #e0e0e0;
+        }
+        .settings-item .set-label { font-size: 14px; font-weight: bold; }
+        .settings-item .set-desc { font-size: 12px; color: #888; }
+        .danger-btn {
+            background: #f44336; color: white; border: none;
+            padding: 8px 20px; border-radius: 15px; font-size: 13px;
+            cursor: pointer; font-family: inherit; font-weight: bold;
+        }
+        .danger-btn:hover { background: #d32f2f; }
+
+        /* 底部导航 */
+        .bottom-nav {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            display: flex; justify-content: space-around; padding: 8px 5px;
+            background: rgba(255,255,255,0.98); box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            z-index: 400; max-width: 800px; margin: 0 auto;
+        }
+        .nav-btn {
+            background: none; border: none; color: #888; cursor: pointer;
+            font-size: 11px; padding: 5px 10px; border-radius: 10px;
+            transition: all 0.2s; font-family: inherit; text-align: center;
+            flex: 1;
+        }
+        .nav-btn.active { color: #4a7c59; background: #e8f5e9; }
+        .nav-btn .nav-emoji { font-size: 20px; display: block; margin-bottom: 1px; }
+
+        /* 弹窗 */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); display: flex;
+            justify-content: center; align-items: center; z-index: 100;
+        }
+        .modal-overlay.hidden { display: none; }
+        .modal-content {
+            background: white; border-radius: 20px; padding: 25px;
+            max-width: 380px; width: 90%; max-height: 85vh;
+            overflow-y: auto; box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        .modal-title { font-size: 18px; font-weight: bold; text-align: center; margin-bottom: 15px; color: #4a7c59; }
+        .modal-close { text-align: center; margin-top: 15px; }
+        .btn {
+            background: #4caf50; color: white; border: none;
+            padding: 10px 25px; border-radius: 20px; font-size: 14px;
+            cursor: pointer; font-family: inherit; font-weight: bold;
+        }
+        .btn:hover { background: #43a047; }
+        .btn-secondary { background: #9e9e9e; }
+        .btn-secondary:hover { background: #757575; }
+        .btn-warning { background: #ff9800; }
+        .btn-warning:hover { background: #f57c00; }
+
+        .hidden { display: none !important; }
+
+        .progress-bar { height: 8px; background: #e0e0e0; border-radius: 4px; overflow: hidden; margin-top: 4px; }
+        .progress-fill { height: 100%; border-radius: 4px; transition: width 0.3s; }
+        .fill-green { background: #4caf50; }
+        .fill-blue { background: #2196f3; }
+        .fill-orange { background: #ff9800; }
+
+        /* 通知 */
+        .notification {
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+            background: #4caf50; color: white; padding: 10px 25px;
+            border-radius: 20px; font-size: 14px; z-index: 300;
+            animation: notifIn 0.3s ease-out; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        @keyframes notifIn { 0% { transform: translateX(-50%) translateY(-20px); opacity: 0; } 100% { transform: translateX(-50%) translateY(0); opacity: 1; } }
+
+        /* 人物形象 */
+        .player-avatar {
+            width: 36px; height: 36px; border-radius: 50%;
+            background: #e8f5e9; border: 2px solid #81c784;
             display: flex; align-items: center; justify-content: center;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.3), 0 2px 4px rgba(0,0,0,0.2);
+            font-size: 20px; cursor: pointer; transition: all 0.2s;
         }
-        .farm-plot:hover { transform: scale(1.08); border-color: #e0aaff; }
-        .farm-plot.empty::after {
-            content: '➕'; font-size: 16px; color: rgba(255,255,255,0.3);
-        }
-        .farm-plot .crop-emoji { font-size: 32px; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3)); }
-        .farm-plot .plot-level {
-            position: absolute; top: 2px; right: 2px; font-size: 9px;
-            background: rgba(0,0,0,0.5); color: #ffd700; padding: 0 4px; border-radius: 4px;
-        }
-        .farm-plot .crop-progress {
-            position: absolute; bottom: 0; left: 0; right: 0; height: 4px;
-            background: rgba(0,0,0,0.4);
-        }
-        .farm-plot .crop-progress-fill {
-            height: 100%; background: #81c784; transition: width 0.5s;
-        }
-        .farm-plot.ready {
-            animation: plotReady 1s ease-in-out infinite alternate;
-        }
-        @keyframes plotReady {
-            0% { box-shadow: 0 0 0px rgba(129,199,132,0); }
-            100% { box-shadow: 0 0 12px rgba(129,199,132,0.5); border-color: #81c784; }
-        }
+        .player-avatar:hover { transform: scale(1.1); box-shadow: 0 0 8px rgba(129,199,132,0.5); }
 
-        /* 玩家角色 */
-        .player-char {
-            position: absolute; font-size: 40px; cursor: pointer;
-            transition: left 0.5s linear, top 0.5s linear;
-            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
-            z-index: 20;
-        }
-        .player-char:hover { transform: scale(1.1); }
-        .player-name-tag {
-            position: absolute; bottom: -12px; left: 50%; transform: translateX(-50%);
-            font-size: 10px; white-space: nowrap; background: rgba(224,170,255,0.3);
-            padding: 1px 8px; border-radius: 8px; color: #e0aaff; font-weight: bold;
-            border: 1px solid rgba(224,170,255,0.3);
-        }
-
-        /* ========== 操作面板 ========== */
+        /* 侧边操作面板 */
         .side-panel {
-            position: fixed; right: -340px; top: 50%; transform: translateY(-50%);
-            width: 320px; max-height: 85vh; overflow-y: auto;
-            background: #2a2a4a; border-radius: 20px 0 0 20px;
-            border: 2px solid rgba(224,170,255,0.3); border-right: none;
+            position: fixed; right: -360px; top: 50%; transform: translateY(-50%);
+            width: 340px; max-height: 90vh; overflow-y: auto;
+            background: white; border-radius: 20px 0 0 20px;
+            border: 3px solid #c8e6c9; border-right: none;
             padding: 20px; z-index: 200;
             transition: right 0.3s ease-out;
-            box-shadow: -5px 0 25px rgba(0,0,0,0.5);
+            box-shadow: -5px 0 25px rgba(0,0,0,0.15);
         }
         .side-panel.open { right: 0; }
         .side-panel-header {
             display: flex; justify-content: space-between; align-items: center;
             margin-bottom: 15px; padding-bottom: 10px;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
+            border-bottom: 2px solid #e8f5e9;
         }
-        .side-panel-title { font-size: 18px; font-weight: bold; color: #e0aaff; }
+        .side-panel-title { font-size: 18px; font-weight: bold; color: #4a7c59; }
         .panel-close-btn {
-            background: rgba(255,255,255,0.1); border: none; color: #fff;
+            background: #f5f5f5; border: none; color: #666;
             width: 32px; height: 32px; border-radius: 50%; cursor: pointer;
             font-size: 16px; transition: all 0.2s;
         }
-        .panel-close-btn:hover { background: rgba(244,67,54,0.5); }
+        .panel-close-btn:hover { background: #ef5350; color: white; }
 
-        .stat-bar { margin: 10px 0; }
-        .stat-bar label {
-            display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px;
+        /* 角色选择 */
+        .character-select { text-align: center; padding: 40px 20px; }
+        .character-select h2 { font-size: 26px; color: #4a7c59; margin-bottom: 10px; }
+        .gender-select { display: flex; justify-content: center; gap: 25px; margin: 25px 0; }
+        .gender-option {
+            background: #f1f8e9; border: 3px solid #c8e6c9; border-radius: 20px;
+            padding: 25px 35px; cursor: pointer; transition: all 0.3s; text-align: center;
         }
-        .stat-bar .bar {
-            height: 10px; background: rgba(255,255,255,0.1); border-radius: 5px; overflow: hidden;
+        .gender-option:hover, .gender-option.selected {
+            border-color: #4caf50; background: #e8f5e9;
+            transform: translateY(-5px); box-shadow: 0 5px 20px rgba(76,175,80,0.2);
         }
-        .stat-bar .bar-fill {
-            height: 100%; border-radius: 5px; transition: width 0.5s;
-        }
-        .bar-hunger { background: #ff8a65; }
-        .bar-happy { background: #81c784; }
-        .bar-growth { background: #64b5f6; }
+        .gender-option .big-emoji { font-size: 55px; display: block; margin-bottom: 8px; }
+        .gender-option .label { font-size: 16px; font-weight: bold; color: #33691e; }
 
-        .action-buttons {
-            display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 15px;
+        .outfit-grid {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 15px;
         }
-        .action-btn {
-            background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
-            border-radius: 12px; padding: 10px; color: white; cursor: pointer;
-            font-size: 13px; transition: all 0.2s; font-family: inherit;
+        .outfit-item {
+            aspect-ratio: 1; background: #f5f5f5; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 28px; cursor: pointer; border: 3px solid transparent;
+            transition: all 0.2s; position: relative;
         }
-        .action-btn:hover { background: rgba(224,170,255,0.2); transform: translateY(-2px); }
-        .action-btn:active { transform: translateY(0); }
-        .action-btn .btn-emoji { font-size: 20px; display: block; margin-bottom: 3px; }
-        .action-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+        .outfit-item:hover { border-color: #81c784; }
+        .outfit-item.locked { opacity: 0.3; cursor: not-allowed; }
+        .outfit-item.equipped { border-color: #4caf50; background: #e8f5e9; }
+        .outfit-item .lock-icon { position: absolute; bottom: 2px; right: 2px; font-size: 10px; }
 
-        /* 种植面板 */
-        .crop-shop {
-            display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px;
+        /* 土地升级 */
+        .plot-upgrade-badge {
+            position: absolute; bottom: 2px; left: 2px;
+            font-size: 9px; background: #ff9800; color: white;
+            padding: 1px 5px; border-radius: 5px; font-weight: bold;
         }
-        .crop-item {
-            background: rgba(255,255,255,0.08); border-radius: 10px; padding: 10px 5px;
-            text-align: center; cursor: pointer; border: 2px solid transparent;
-            transition: all 0.2s;
+        .plot.upgrade-ready {
+            animation: plotGlow 1s ease-in-out infinite alternate;
         }
-        .crop-item:hover { border-color: rgba(224,170,255,0.4); background: rgba(224,170,255,0.1); }
-        .crop-item .crop-icon { font-size: 28px; display: block; }
-        .crop-item .crop-name { font-size: 11px; margin-top: 3px; }
-        .crop-item .crop-price { font-size: 11px; color: #ffd700; }
-        .crop-item .crop-time { font-size: 10px; color: #aaa; }
-
-        .upgrade-section {
-            margin-top: 15px; padding-top: 15px;
-            border-top: 1px solid rgba(255,255,255,0.1);
-        }
-        .upgrade-btn {
-            width: 100%; background: linear-gradient(135deg, #7c3aed, #5b21b6);
-            border: none; color: white; padding: 12px; border-radius: 12px;
-            cursor: pointer; font-size: 14px; font-weight: bold; transition: all 0.2s;
-            font-family: inherit;
-        }
-        .upgrade-btn:hover { background: linear-gradient(135deg, #8b5cf6, #7c3aed); transform: scale(1.02); }
-        .upgrade-btn:disabled { background: #555; cursor: not-allowed; transform: none; }
-
-        /* ========== 底部导航 ========== */
-        .bottom-nav {
-            display: flex; justify-content: space-around; padding: 12px;
-            background: rgba(255,255,255,0.08); border-radius: 15px;
-            margin-top: 10px; backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-        .nav-btn {
-            background: none; border: none; color: #888; cursor: pointer;
-            font-size: 13px; padding: 8px 15px; border-radius: 12px;
-            transition: all 0.2s; font-family: inherit;
-        }
-        .nav-btn.active {
-            color: #e0aaff; background: rgba(224,170,255,0.15);
-        }
-        .nav-btn .nav-emoji { font-size: 22px; display: block; margin-bottom: 2px; }
-
-        .hidden { display: none !important; }
-
-        .btn {
-            background: #7c3aed; color: white; border: none;
-            padding: 10px 25px; border-radius: 20px; cursor: pointer;
-            font-size: 14px; font-family: inherit; font-weight: bold;
-            transition: all 0.2s;
-        }
-        .btn:hover { background: #8b5cf6; }
-
-        /* 粒子效果 */
-        .particle {
-            position: fixed; font-size: 20px; pointer-events: none;
-            animation: particleFly 1s ease-out forwards; z-index: 300;
-        }
-        @keyframes particleFly {
-            0% { transform: translateY(0) scale(1); opacity: 1; }
-            100% { transform: translateY(-80px) scale(0.5); opacity: 0; }
+        @keyframes plotGlow {
+            0% { box-shadow: 0 0 0px rgba(76,175,80,0); }
+            100% { box-shadow: 0 0 15px rgba(76,175,80,0.4); border-color: #4caf50; }
         }
 
-        .notification {
-            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
-            background: rgba(46,125,50,0.9); color: white;
-            padding: 10px 25px; border-radius: 20px; font-size: 14px;
-            z-index: 300; animation: notifSlide 0.3s ease-out;
-            backdrop-filter: blur(10px);
+        /* 地图更多装饰 */
+        .scene-grass-patch {
+            position: absolute; font-size: 18px; opacity: 0.25; z-index: 2;
+            pointer-events: none;
         }
-        @keyframes notifSlide {
-            0% { transform: translateX(-50%) translateY(-20px); opacity: 0; }
-            100% { transform: translateX(-50%) translateY(0); opacity: 1; }
+        .scene-food-bowl {
+            position: absolute; font-size: 16px; z-index: 4; opacity: 0.5;
         }
-
-        /* 图鉴 */
-        .encyclopedia-grid {
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-            gap: 12px; padding: 10px;
+        .scene-water-trough {
+            position: absolute; font-size: 18px; z-index: 4; opacity: 0.4;
         }
-        .ency-entry {
-            background: rgba(255,255,255,0.05); border-radius: 12px; padding: 12px 8px;
-            text-align: center; border: 2px solid rgba(255,255,255,0.1);
-            transition: all 0.2s;
-        }
-        .ency-entry.unlocked {
-            background: rgba(255,255,255,0.1);
-            border-color: rgba(224,170,255,0.3);
-        }
-        .ency-entry .ency-emoji {
-            font-size: 36px; filter: grayscale(100%); opacity: 0.3;
-            transition: all 0.3s;
-        }
-        .ency-entry.unlocked .ency-emoji {
-            filter: grayscale(0%); opacity: 1;
-        }
-        .ency-entry .ency-name { font-size: 12px; margin-top: 5px; }
-
-        /* 探索 */
-        .explore-zones {
-            display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;
-        }
-        .zone-card {
-            background: rgba(255,255,255,0.08); border-radius: 15px; padding: 20px;
-            text-align: center; cursor: pointer; transition: all 0.3s;
-            border: 2px solid rgba(255,255,255,0.1);
-        }
-        .zone-card:hover {
-            transform: scale(1.03);
-            border-color: rgba(224,170,255,0.5);
-            background: rgba(255,255,255,0.12);
-        }
-        .zone-card .zone-emoji { font-size: 40px; margin-bottom: 8px; }
-        .zone-card .zone-name { font-size: 16px; font-weight: bold; margin-bottom: 5px; }
-        .zone-card .zone-desc { font-size: 12px; color: #aaa; }
-
-        .explore-animation { text-align: center; padding: 60px 20px; }
-        .explore-animation .search-emoji {
-            font-size: 60px; animation: searchPulse 1s ease-in-out infinite;
-        }
-        @keyframes searchPulse {
-            0%, 100% { transform: scale(1); opacity: 0.7; }
-            50% { transform: scale(1.2); opacity: 1; }
-        }
-
-        .found-creature {
-            text-align: center; padding: 40px;
-            animation: foundPop 0.5s ease-out;
-        }
-        @keyframes foundPop {
-            0% { transform: scale(0); opacity: 0; }
-            60% { transform: scale(1.2); }
-            100% { transform: scale(1); opacity: 1; }
-        }
-        .found-creature .found-emoji { font-size: 80px; margin-bottom: 15px; }
-        .found-creature .found-name { font-size: 24px; font-weight: bold; color: #e0aaff; margin-bottom: 5px; }
-        .rarity-common { color: #aaa; }
-        .rarity-rare { color: #4fc3f7; }
-        .rarity-legendary { color: #ffd700; }
 
         @media (max-width: 600px) {
-            .side-panel { width: 280px; right: -300px; }
-            .farm-map { height: 400px; }
-            .animal { font-size: 28px; }
-            .explore-zones { grid-template-columns: 1fr; }
+            .zone-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+            .zone-scene { height: 320px; }
+            .scene-animal .animal-emoji { font-size: 30px; }
+            .field-grid { grid-template-columns: repeat(3, 1fr); }
+            .shop-grid { grid-template-columns: repeat(2, 1fr); }
+            .game-wrapper { padding-bottom: 70px; }
         }
     </style>
 </head>
 <body>
-    <div class="stars" id="stars"></div>
-
-    <div class="game-container">
-        <div class="top-bar" id="topBar" style="display:none;">
-            <div class="player-info">
-                <div class="player-avatar" id="playerAvatarBtn" onclick="openCharacterPanel()" title="点击查看角色"></div>
+    <div class="game-wrapper">
+        <div class="top-bar">
+            <div style="display:flex; align-items:center; gap:8px;"
+            >
+                <div class="player-avatar" id="playerAvatarBtn" onclick="openCharacterPanel()" title="我的角色">👤</div>
                 <div>
-                    <div id="playerNameDisplay" style="font-size:14px; font-weight:bold;">农夫</div>
-                    <div class="player-level">Lv.<span id="playerLevel">1</span></div>
+                    <div id="playerNameDisplay" style="font-size:13px; font-weight:bold;">小农夫</div>
+                    <div style="font-size:11px; color:#4a7c59;">Lv.<span id="level">1</span></div>
                 </div>
             </div>
-            <div style="display:flex; gap:15px; align-items:center;">
-                <div class="season-badge" id="seasonDisplay">🌸 春季</div>
-                <div class="exp-display">⭐ <span id="expDisplay">0</span></div>
-                <div class="coins">💰 <span id="coinsDisplay">100</span></div>
+            <div style="display:flex; gap:10px; align-items:center;"
+            >
+                <div class="top-item coins"><span class="icon">🪙</span><span id="coins">500</span></div>
+                <div class="top-item season"><span class="icon" id="seasonIcon">🌸</span><span id="season">春季</span></div>
+                <div class="top-item day"><span class="icon">📅</span>第<span id="day">1</span>天</div>
+                <button class="pause-btn" id="pauseBtn" onclick="togglePause()">⏸️</button>
             </div>
         </div>
 
-        <div class="main-area" id="mainArea">
-            <!-- 动态内容 -->
-        </div>
+        <div class="main-area" id="mainArea"></div>
+    </div>
 
-        <div class="bottom-nav" id="bottomNav" style="display:none;">
-            <button class="nav-btn active" data-page="farm" onclick="switchPage('farm')">
-                <span class="nav-emoji">🌾</span>农场
-            </button>
-            <button class="nav-btn" data-page="explore" onclick="switchPage('explore')">
-                <span class="nav-emoji">🗺️</span>探索
-            </button>
-            <button class="nav-btn" data-page="encyclopedia" onclick="switchPage('encyclopedia')">
-                <span class="nav-emoji">📖</span>图鉴
-            </button>
+    <div class="bottom-nav">
+        <button class="nav-btn active" data-page="farm" onclick="switchPage('farm')">
+            <span class="nav-emoji">🏠</span>农场
+        </button>
+        <button class="nav-btn" data-page="field" onclick="switchPage('field')">
+            <span class="nav-emoji">🌾</span>田地
+        </button>
+        <button class="nav-btn" data-page="shop" onclick="switchPage('shop')">
+            <span class="nav-emoji">🏪</span>商店
+        </button>
+        <button class="nav-btn" data-page="inventory" onclick="switchPage('inventory')">
+            <span class="nav-emoji">📦</span>仓库
+        </button>
+        <button class="nav-btn" data-page="achievements" onclick="switchPage('achievements')">
+            <span class="nav-emoji">🏆</span>成就
+        </button>
+        <button class="nav-btn" data-page="settings" onclick="switchPage('settings')">
+            <span class="nav-emoji">⚙️</span>设置
+        </button>
+    </div>
+
+    <div class="paused-overlay hidden" id="pausedOverlay" onclick="togglePause()">
+        <div class="paused-box">
+            ⏸️ 游戏已暂停
+            <div class="sub">点击任意处继续</div>
         </div>
     </div>
 
-    <!-- 侧边操作面板 -->
+    <!-- 通用侧边面板 -->
     <div class="side-panel" id="sidePanel">
         <div class="side-panel-header">
             <div class="side-panel-title" id="panelTitle">详情</div>
@@ -478,1059 +535,1192 @@
         <div id="panelContent"></div>
     </div>
 
+    <!-- 动物操作侧边面板 -->
+    <div class="side-panel" id="animalSidePanel">
+        <div class="side-panel-header">
+            <div class="side-panel-title" id="animalPanelTitle"></div>
+            <button class="panel-close-btn" onclick="closeAnimalPanel()">✕</button>
+        </div>
+        <div id="animalPanelBody"></div>
+    </div>
+
     <!-- 角色面板 -->
     <div class="side-panel" id="charPanel">
         <div class="side-panel-header">
             <div class="side-panel-title">我的角色</div>
-            <button class="panel-close-btn" onclick="closeCharPanel()">✕</button>
+            <button class="panel-close-btn" onclick="closeCharacterPanel()">✕</button>
         </div>
-        <div id="charPanelContent"></div>
+        <div id="charPanelBody"></div>
     </div>
 
-    <script>
-        // ============ 游戏数据 ============
-        const CREATURE_TYPES = {
-            firefly: { name: '星萤', emoji: '🦋', desc: '会发光的夜行生物', rarity: 'common' },
-            singing_flower: { name: '歌花', emoji: '🌺', desc: '会唱歌的神奇花朵', rarity: 'common' },
-            moon_rabbit: { name: '月兔', emoji: '🐰', desc: '居住在月光下的兔子', rarity: 'common' },
-            crystal_deer: { name: '晶鹿', emoji: '🦌', desc: '鹿角由水晶构成的鹿', rarity: 'rare' },
-            bubble_fish: { name: '泡泡鱼', emoji: '🐠', desc: '吐出彩色泡泡的鱼', rarity: 'common' },
-            pearl_turtle: { name: '珍珠龟', emoji: '🐢', desc: '背壳镶嵌珍珠的乌龟', rarity: 'rare' },
-            flame_fox: { name: '焰狐', emoji: '🦊', desc: '尾巴燃烧着火焰的狐狸', rarity: 'rare' },
-            snow_owl: { name: '雪鸮', emoji: '🦉', desc: '只在雪夜出现的猫头鹰', rarity: 'rare' },
-            star_dragon: { name: '星龙', emoji: '🐉', desc: '传说级生物，极难遇见', rarity: 'legendary' },
-            cloud_sheep: { name: '云羊', emoji: '🐑', desc: '毛茸茸像云朵的羊', rarity: 'common' },
-            thunder_wolf: { name: '雷狼', emoji: '🐺', desc: '奔跑时带闪电的狼', rarity: 'rare' },
-            golden_bird: { name: '金羽雀', emoji: '🐦', desc: '羽毛闪耀金光的鸟', rarity: 'legendary' },
-        };
+    <div class="modal-overlay hidden" id="plantModal">
+        <div class="modal-content">
+            <div class="modal-title">选择种子</div>
+            <div id="plantModalBody"></div>
+            <div class="modal-close">
+                <button class="btn btn-secondary" onclick="closeModal('plantModal')">取消</button>
+            </div>
+        </div>
+    </div>
 
-        const CROPS = {
-            carrot: { name: '胡萝卜', emoji: '🥕', seedCost: 5, sellPrice: 12, growTime: 30, unlockLevel: 1 },
-            tomato: { name: '番茄', emoji: '🍅', seedCost: 10, sellPrice: 25, growTime: 60, unlockLevel: 2 },
-            corn: { name: '玉米', emoji: '🌽', seedCost: 15, sellPrice: 40, growTime: 90, unlockLevel: 3 },
-            eggplant: { name: '茄子', emoji: '🍆', seedCost: 20, sellPrice: 55, growTime: 120, unlockLevel: 4 },
-            pumpkin: { name: '南瓜', emoji: '🎃', seedCost: 30, sellPrice: 85, growTime: 180, unlockLevel: 5 },
-            strawberry: { name: '草莓', emoji: '🍓', seedCost: 25, sellPrice: 70, growTime: 150, unlockLevel: 6 },
-        };
+<script>
+const ANIMAL_TYPES = {
+    chick: { name: '小鸡', zone: 'chicken_coop', babyEmoji: '🐤', adultEmoji: '🐔', growthNeeded: 120, product: 'egg', productEmoji: '🥚', productName: '鸡蛋', productPrice: 15, femaleProduct: true, buyPrice: 50 },
+    duck: { name: '小鸭', zone: 'chicken_coop', babyEmoji: '🐥', adultEmoji: '🦆', growthNeeded: 140, product: 'duck_egg', productEmoji: '🥚', productName: '鸭蛋', productPrice: 18, femaleProduct: true, buyPrice: 60 },
+    goose: { name: '小鹅', zone: 'chicken_coop', babyEmoji: '🐣', adultEmoji: '🪿', growthNeeded: 180, product: 'goose_egg', productEmoji: '🥚', productName: '鹅蛋', productPrice: 25, femaleProduct: true, buyPrice: 80 },
+    cat: { name: '小猫', zone: 'pet_house', babyEmoji: '🐱', adultEmoji: '🐈', growthNeeded: 150, product: 'fur', productEmoji: '🧶', productName: '猫毛球', productPrice: 22, buyPrice: 80 },
+    dog: { name: '小狗', zone: 'pet_house', babyEmoji: '🐶', adultEmoji: '🐕', growthNeeded: 180, product: 'bone', productEmoji: '🦴', productName: '骨头玩具', productPrice: 25, buyPrice: 100 },
+    rabbit: { name: '小兔', zone: 'pet_house', babyEmoji: '🐰', adultEmoji: '🐇', growthNeeded: 120, product: 'rabbit_fur', productEmoji: '🧶', productName: '兔毛', productPrice: 30, buyPrice: 70 },
+    cow: { name: '小牛', zone: 'cowshed', babyEmoji: '🐮', adultEmoji: '🐄', growthNeeded: 250, product: 'milk', productEmoji: '🥛', productName: '牛奶', productPrice: 45, femaleProduct: true, buyPrice: 200 },
+    horse: { name: '小马', zone: 'cowshed', babyEmoji: '🐴', adultEmoji: '🐎', growthNeeded: 300, product: 'horse_hair', productEmoji: '🧵', productName: '马鬃', productPrice: 55, buyPrice: 250 },
+    sheep: { name: '小羊', zone: 'sheepfold', babyEmoji: '🐑', adultEmoji: '🐏', growthNeeded: 200, product: 'wool', productEmoji: '🧵', productName: '羊毛', productPrice: 40, buyPrice: 150 },
+    deer: { name: '小鹿', zone: 'sheepfold', babyEmoji: '🦌', adultEmoji: '🦌', growthNeeded: 350, product: 'antler', productEmoji: '🌿', productName: '鹿茸', productPrice: 80, buyPrice: 300 },
+    pig: { name: '小猪', zone: 'pigpen', babyEmoji: '🐷', adultEmoji: '🐖', growthNeeded: 220, product: 'truffle', productEmoji: '🍄', productName: '松露', productPrice: 60, buyPrice: 180 },
+    bee: { name: '蜜蜂', zone: 'beehive', babyEmoji: '🐝', adultEmoji: '🐝', growthNeeded: 100, product: 'honey', productEmoji: '🍯', productName: '蜂蜜', productPrice: 50, buyPrice: 100 },
+};
 
-        const ZONES = {
-            forest: { name: '迷雾森林', emoji: '🌲', desc: '栖息着各种森林生物' },
-            lake: { name: '月光湖', emoji: '🌙', desc: '湖水清澈，鱼类繁多' },
-            grassland: { name: '翡翠草原', emoji: '🌿', desc: '广阔的绿色平原' },
-            mountain: { name: '星落山脉', emoji: '⛰️', desc: '高耸入云的山峰' },
-        };
+const CROP_TYPES = {
+    wheat: { name: '小麦', emojis: ['🌱', '🌿', '🌾'], seedPrice: 10, sellPrice: 25, growTime: 30, season: ['spring', 'summer', 'autumn'] },
+    carrot: { name: '胡萝卜', emojis: ['🌱', '🥬', '🥕'], seedPrice: 15, sellPrice: 40, growTime: 60, season: ['spring', 'autumn', 'winter'] },
+    tomato: { name: '番茄', emojis: ['🌱', '🌿', '🍅'], seedPrice: 20, sellPrice: 55, growTime: 90, season: ['summer', 'autumn'] },
+    corn: { name: '玉米', emojis: ['🌱', '🌽', '🌽'], seedPrice: 25, sellPrice: 70, growTime: 120, season: ['summer'] },
+    strawberry: { name: '草莓', emojis: ['🌱', '🌸', '🍓'], seedPrice: 30, sellPrice: 90, growTime: 150, season: ['spring'] },
+    pumpkin: { name: '南瓜', emojis: ['🌱', '🌿', '🎃'], seedPrice: 40, sellPrice: 120, growTime: 180, season: ['autumn'] },
+    potato: { name: '土豆', emojis: ['🌱', '🌿', '🥔'], seedPrice: 18, sellPrice: 45, growTime: 75, season: ['spring', 'autumn', 'winter'] },
+    eggplant: { name: '茄子', emojis: ['🌱', '🌿', '🍆'], seedPrice: 22, sellPrice: 50, growTime: 100, season: ['summer', 'autumn'] },
+    watermelon: { name: '西瓜', emojis: ['🌱', '🌿', '🍉'], seedPrice: 35, sellPrice: 85, growTime: 140, season: ['summer'] },
+    grape: { name: '葡萄', emojis: ['🌱', '🌿', '🍇'], seedPrice: 28, sellPrice: 65, growTime: 110, season: ['summer', 'autumn'] },
+    sunflower: { name: '向日葵', emojis: ['🌱', '🌿', '🌻'], seedPrice: 20, sellPrice: 45, growTime: 80, season: ['spring', 'summer'] },
+    mushroom: { name: '蘑菇', emojis: ['🌱', '🍄', '🍄'], seedPrice: 15, sellPrice: 35, growTime: 50, season: ['autumn', 'winter'] },
+};
 
-        const SEASONS = {
-            spring: { name: '春季', emoji: '🌸' },
-            summer: { name: '夏季', emoji: '☀️' },
-            autumn: { name: '秋季', emoji: '🍂' },
-            winter: { name: '冬季', emoji: '❄️' },
-        };
+const SEASONS = {
+    spring: { name: '春季', emoji: '🌸', cropBonus: 1.2 },
+    summer: { name: '夏季', emoji: '☀️', cropBonus: 1.0 },
+    autumn: { name: '秋季', emoji: '🍂', cropBonus: 1.1 },
+    winter: { name: '冬季', emoji: '❄️', cropBonus: 0.8 },
+};
+const SEASON_ORDER = ['spring', 'summer', 'autumn', 'winter'];
 
-        const OUTFITS = {
-            default_male: { emoji: '👦', name: '默认男装', unlockLevel: 1, gender: 'male' },
-            default_female: { emoji: '👧', name: '默认女装', unlockLevel: 1, gender: 'female' },
-            farmer_male: { emoji: '👨‍🌾', name: '农夫装', unlockLevel: 3, gender: 'male' },
-            farmer_female: { emoji: '👩‍🌾', name: '农妇装', unlockLevel: 3, gender: 'female' },
-            knight_male: { emoji: '👨‍🎤', name: '骑士装', unlockLevel: 5, gender: 'male' },
-            princess_female: { emoji: '👸', name: '公主装', unlockLevel: 5, gender: 'female' },
-            wizard_male: { emoji: '🧙‍♂️', name: '法师装', unlockLevel: 8, gender: 'male' },
-            witch_female: { emoji: '🧙‍♀️', name: '女巫装', unlockLevel: 8, gender: 'female' },
-            king_male: { emoji: '🤴', name: '国王装', unlockLevel: 12, gender: 'male' },
-            queen_female: { emoji: '👸✨', name: '女王装', unlockLevel: 12, gender: 'female' },
-            angel_male: { emoji: '👼', name: '天使装', unlockLevel: 15, gender: 'male' },
-            fairy_female: { emoji: '🧚‍♀️', name: '仙子装', unlockLevel: 15, gender: 'female' },
-        };
+const ZONES = {
+    chicken_coop: { name: '鸡窝', emoji: '🏠', max: 8, unlockLevel: 1, unlockCost: 0, desc: '鸡、鸭、鹅的家' },
+    pet_house: { name: '宠物屋', emoji: '🏡', max: 6, unlockLevel: 1, unlockCost: 0, desc: '猫、狗、兔的家' },
+    cowshed: { name: '牛棚', emoji: '🐄', max: 4, unlockLevel: 2, unlockCost: 500, desc: '牛、马的家' },
+    sheepfold: { name: '羊圈', emoji: '🐑', max: 5, unlockLevel: 3, unlockCost: 400, desc: '羊、鹿的家' },
+    pigpen: { name: '猪圈', emoji: '🐷', max: 5, unlockLevel: 2, unlockCost: 350, desc: '猪的家' },
+    beehive: { name: '蜂箱区', emoji: '🍯', max: 8, unlockLevel: 4, unlockCost: 800, desc: '蜜蜂的家' },
+};
 
-        // ============ 游戏状态 ============
-        let gameState = loadGame();
-        let currentPage = 'farm';
-        let selectedAnimalId = null;
-        let selectedPlotIdx = null;
-        let animalMovementInterval = null;
-        let playerMovementInterval = null;
+const UPGRADES = {
+    field: { name: '扩建田地', desc: '增加一块种植土地', baseCost: 200, costScale: 1.5, max: 20, icon: '🌱' },
+    well: { name: '升级水井', desc: '浇水效果提升，作物生长加速', baseCost: 500, costScale: 2.0, max: 5, icon: '🌊' },
+};
 
-        function getInitialState() {
-            const now = new Date();
-            const month = now.getMonth() + 1;
-            let season = 'spring';
-            if (month >= 6 && month <= 8) season = 'summer';
-            else if (month >= 9 && month <= 11) season = 'autumn';
-            else if (month === 12 || month <= 2) season = 'winter';
+const ACHIEVEMENTS = [
+    { id: 'first_animal', name: '初次饲养', desc: '拥有第一只动物', emoji: '🐤', reward: 50, check: (s) => s.animals.length >= 1 },
+    { id: 'five_animals', name: '动物爱好者', desc: '拥有5只动物', emoji: '🐾', reward: 100, check: (s) => s.animals.length >= 5 },
+    { id: 'ten_animals', name: '动物园长', desc: '拥有10只动物', emoji: '🏡', reward: 200, check: (s) => s.animals.length >= 10 },
+    { id: 'first_crop', name: '初次收获', desc: '收获第一茬作物', emoji: '🌾', reward: 50, check: (s) => s.stats.cropsHarvested >= 1 },
+    { id: 'rich', name: '小有积蓄', desc: '拥有500月见币', emoji: '💰', reward: 100, check: (s) => s.coins >= 500 },
+    { id: 'wealthy', name: '农场大亨', desc: '拥有2000月见币', emoji: '🪙', reward: 300, check: (s) => s.coins >= 2000 },
+    { id: 'harvest_10', name: '丰收季节', desc: '累计收获10次作物', emoji: '🌻', reward: 100, check: (s) => s.stats.cropsHarvested >= 10 },
+    { id: 'harvest_50', name: '大丰收', desc: '累计收获50次作物', emoji: '🌽', reward: 300, check: (s) => s.stats.cropsHarvested >= 50 },
+    { id: 'level_5', name: '农场升级', desc: '农场达到5级', emoji: '⭐', reward: 200, check: (s) => s.level >= 5 },
+    { id: 'breed_first', name: '生命奇迹', desc: '第一次动物繁殖', emoji: '💕', reward: 100, check: (s) => s.stats.bred >= 1 },
+    { id: 'sell_100', name: '交易达人', desc: '累计出售获得100月见币', emoji: '📈', reward: 150, check: (s) => s.stats.sold >= 100 },
+    { id: 'unlock_all_zones', name: '农场扩张', desc: '解锁所有区域', emoji: '🏗️', reward: 500, check: (s) => s.unlockedZones.length >= Object.keys(ZONES).length },
+];
 
-            return {
-                coins: 100,
-                exp: 0,
-                playerLevel: 1,
-                season: season,
-                playerName: '农夫',
-                playerGender: null,
-                playerOutfit: null,
-                creatures: [],
-                plots: [],
-                discovered: [],
-                nextCreatureId: 1,
-                firstTime: true,
-            };
-        }
+const OUTFITS = {
+    default_male: { emoji: '👦', name: '默认男装', unlockLevel: 1, gender: 'male' },
+    default_female: { emoji: '👧', name: '默认女装', unlockLevel: 1, gender: 'female' },
+    farmer_male: { emoji: '👨‍🌾', name: '农夫装', unlockLevel: 3, gender: 'male' },
+    farmer_female: { emoji: '👩‍🌾', name: '农妇装', unlockLevel: 3, gender: 'female' },
+    cowboy_male: { emoji: '🤠', name: '牛仔装', unlockLevel: 5, gender: 'male' },
+    girl_bow: { emoji: '👧🎀', name: '蝴蝶结装', unlockLevel: 5, gender: 'female' },
+    prince_male: { emoji: '🤴', name: '王子装', unlockLevel: 8, gender: 'male' },
+    princess_female: { emoji: '👸', name: '公主装', unlockLevel: 8, gender: 'female' },
+    wizard_male: { emoji: '🧙‍♂️', name: '法师装', unlockLevel: 12, gender: 'male' },
+    fairy_female: { emoji: '🧚‍♀️', name: '仙子装', unlockLevel: 12, gender: 'female' },
+    king_male: { emoji: '👑', name: '国王装', unlockLevel: 15, gender: 'male' },
+    queen_female: { emoji: '👸✨', name: '女王装', unlockLevel: 15, gender: 'female' },
+};
 
-        function loadGame() {
-            try {
-                const saved = localStorage.getItem('fantasyCreaturePark_v2');
-                if (saved) return JSON.parse(saved);
-            } catch (e) {}
-            return getInitialState();
-        }
+let gameState = loadGame();
 
-        function saveGame() {
-            localStorage.setItem('fantasyCreaturePark_v2', JSON.stringify(gameState));
-        }
+function getInitialState() {
+    const now = new Date();
+    const month = now.getMonth() + 1;
+    let season = 'spring';
+    if (month >= 6 && month <= 8) season = 'summer';
+    else if (month >= 9 && month <= 11) season = 'autumn';
+    else if (month === 12 || month <= 2) season = 'winter';
+    return {
+        coins: 300, level: 1, xp: 0, xpNeeded: 100,
+        season: season, day: 1, gameTime: 0, paused: false,
+        animals: [],
+        plots: Array(4).fill(null).map((_, i) => ({ id: i, crop: null, level: 1 })),
+        playerGender: null,
+        playerName: '小农夫',
+        playerOutfit: null,
+        playerAvatar: '👤',
+        inventory: {}, upgrades: { field: 4, well: 1 },
+        achievements: [], unlockedZones: ['chicken_coop', 'pet_house'],
+        stats: { cropsHarvested: 0, sold: 0, bred: 0, fed: 0 },
+        nextAnimalId: 1, lastTick: Date.now(),
+    };
+}
 
-        // ============ 工具函数 ============
-        function showNotification(text) {
-            const el = document.createElement('div');
-            el.className = 'notification';
-            el.textContent = text;
-            document.body.appendChild(el);
-            setTimeout(() => el.remove(), 2000);
-        }
-
-        function createParticles(x, y, emojis) {
-            for (let i = 0; i < 6; i++) {
-                const p = document.createElement('div');
-                p.className = 'particle';
-                p.textContent = emojis[Math.floor(Math.random() * emojis.length)];
-                p.style.left = (x + Math.random() * 60 - 30) + 'px';
-                p.style.top = (y + Math.random() * 30) + 'px';
-                document.body.appendChild(p);
-                setTimeout(() => p.remove(), 1000);
+function loadGame() {
+    try {
+        const saved = localStorage.getItem('farmLifeGameV2');
+        if (saved) {
+            const data = JSON.parse(saved);
+            if (!data.unlockedZones) data.unlockedZones = ['chicken_coop', 'pet_house'];
+            if (data.paused === undefined) data.paused = false;
+            if (!data.plots[0] || data.plots[0].level === undefined) {
+                data.plots.forEach(p => p.level = 1);
             }
+            if (!data.playerGender) data.playerGender = null;
+            if (!data.playerName) data.playerName = '小农夫';
+            if (!data.playerOutfit) data.playerOutfit = null;
+            if (!data.playerAvatar) data.playerAvatar = '👤';
+            data.animals.forEach(a => {
+                if (!a.zone) a.zone = ANIMAL_TYPES[a.typeId]?.zone || 'chicken_coop';
+                if (!a.gender) a.gender = Math.random() > 0.5 ? 'male' : 'female';
+                if (a.x === undefined) { a.x = 10 + Math.random() * 70; a.y = 10 + Math.random() * 70; }
+                if (a.behavior === undefined) a.behavior = 'idle';
+                if (a.behaviorTimer === undefined) a.behaviorTimer = 0;
+                if (a.targetX === undefined) a.targetX = a.x;
+                if (a.targetY === undefined) a.targetY = a.y;
+                if (a.facing === undefined) a.facing = 1;
+                if (a.speed === undefined) a.speed = 0.3 + Math.random() * 0.4;
+            });
+            return data;
         }
+    } catch (e) {}
+    return getInitialState();
+}
 
-        function getRarityLabel(rarity) {
-            return { common: '普通', rare: '稀有', legendary: '传说' }[rarity] || rarity;
-        }
+function saveGame() { localStorage.setItem('farmLifeGameV2', JSON.stringify(gameState)); }
 
-        function addExp(amount) {
-            gameState.exp += amount;
-            const needed = gameState.playerLevel * 50;
-            if (gameState.exp >= needed) {
-                gameState.exp -= needed;
-                gameState.playerLevel++;
-                showNotification(`🎉 升级到 Lv.${gameState.playerLevel}！解锁新服装！`);
-                createParticles(window.innerWidth / 2, window.innerHeight / 2, ['🎉', '🎊', '✨', '⭐']);
-                if (document.getElementById('charPanel').classList.contains('open')) {
-                    renderCharacterPanel();
+function showNotification(text) {
+    const el = document.createElement('div');
+    el.className = 'notification';
+    el.textContent = text;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 2000);
+}
+
+function getUpgradeCost(type) {
+    const up = UPGRADES[type];
+    const current = gameState.upgrades[type];
+    if (current >= up.max) return null;
+    return Math.floor(up.baseCost * Math.pow(up.costScale, current - 1));
+}
+
+function isAdult(animal) {
+    const type = ANIMAL_TYPES[animal.typeId];
+    return animal.growth >= type.growthNeeded;
+}
+
+function getAnimalEmoji(animal) {
+    const type = ANIMAL_TYPES[animal.typeId];
+    return isAdult(animal) ? type.adultEmoji : type.babyEmoji;
+}
+
+function getAnimalSellPrice(animal) {
+    const type = ANIMAL_TYPES[animal.typeId];
+    const base = type.buyPrice;
+    if (isAdult(animal)) return Math.floor(base * 0.8);
+    return Math.floor(base * 0.5);
+}
+
+function addXp(amount) {
+    gameState.xp += amount;
+    if (gameState.xp >= gameState.xpNeeded) {
+        gameState.level++;
+        gameState.xp -= gameState.xpNeeded;
+        gameState.xpNeeded = Math.floor(gameState.xpNeeded * 1.5);
+        showNotification(`🎉 农场升到 ${gameState.level} 级！`);
+    }
+    saveGame(); updateDisplay();
+}
+
+function togglePause() {
+    gameState.paused = !gameState.paused;
+    const btn = document.getElementById('pauseBtn');
+    const overlay = document.getElementById('pausedOverlay');
+    if (gameState.paused) {
+        btn.textContent = '▶️'; overlay.classList.remove('hidden');
+        showNotification('⏸️ 游戏已暂停');
+    } else {
+        btn.textContent = '⏸️'; overlay.classList.add('hidden');
+        gameState.lastTick = Date.now();
+        showNotification('▶️ 游戏继续');
+    }
+    saveGame();
+}
+
+function restartGame() {
+    if (!confirm('确定要重新开始吗？所有进度将被清除！')) return;
+    localStorage.removeItem('farmLifeGameV2');
+    gameState = getInitialState(); saveGame(); location.reload();
+}
+
+let currentPage = 'farm';
+let currentZone = null;
+
+function switchPage(page, zoneId) {
+    currentPage = page;
+    if (zoneId) currentZone = zoneId;
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.page === page);
+    });
+    renderPage();
+}
+
+function renderPage() {
+    const area = document.getElementById('mainArea');
+    area.innerHTML = '';
+    switch (currentPage) {
+        case 'farm': renderFarm(area); break;
+        case 'zone': renderZone(area); break;
+        case 'field': renderField(area); break;
+        case 'shop': renderShop(area); break;
+        case 'inventory': renderInventory(area); break;
+        case 'achievements': renderAchievements(area); break;
+        case 'settings': renderSettings(area); break;
+    }
+}
+
+// ========== 农场首页 ==========
+function renderFarm(area) {
+    const title = document.createElement('div');
+    title.className = 'page-title'; title.textContent = '🏠 我的农场';
+    area.appendChild(title);
+
+    const grid = document.createElement('div');
+    grid.className = 'zone-grid';
+
+    Object.entries(ZONES).forEach(([zoneId, zone]) => {
+        const isUnlocked = gameState.unlockedZones.includes(zoneId);
+        const zoneAnimals = gameState.animals.filter(a => a.zone === zoneId);
+        const card = document.createElement('div');
+        card.className = 'zone-card' + (isUnlocked ? '' : ' locked');
+        card.innerHTML = `
+            ${!isUnlocked ? '<span class="zone-lock">🔒</span>' : ''}
+            <span class="zone-emoji">${zone.emoji}</span>
+            <div class="zone-name">${zone.name}</div>
+            <div class="zone-count">${isUnlocked ? `${zoneAnimals.length}/${zone.max} 只` : `需 Lv.${zone.unlockLevel} + 🪙${zone.unlockCost}`}</div>
+        `;
+        if (isUnlocked) card.onclick = () => switchPage('zone', zoneId);
+        else card.onclick = () => tryUnlockZone(zoneId);
+        grid.appendChild(card);
+    });
+    area.appendChild(grid);
+}
+
+function tryUnlockZone(zoneId) {
+    const zone = ZONES[zoneId];
+    if (gameState.level < zone.unlockLevel) { showNotification(`⚠️ 需要农场达到 Lv.${zone.unlockLevel}`); return; }
+    if (gameState.coins < zone.unlockCost) { showNotification(`🪙 月见币不足！需要 ${zone.unlockCost}`); return; }
+    if (!confirm(`确定花费 🪙${zone.unlockCost} 解锁 ${zone.name} 吗？`)) return;
+    gameState.coins -= zone.unlockCost;
+    gameState.unlockedZones.push(zoneId);
+    showNotification(`🔓 解锁了 ${zone.name}！`);
+    saveGame(); updateDisplay(); renderPage();
+}
+
+// ========== 区域场景 ==========
+function renderZone(area) {
+    const zone = ZONES[currentZone];
+    const zoneAnimals = gameState.animals.filter(a => a.zone === currentZone);
+
+    const title = document.createElement('div');
+    title.className = 'page-title'; title.textContent = `${zone.emoji} ${zone.name}`;
+    area.appendChild(title);
+
+    const scene = document.createElement('div');
+    scene.className = `zone-scene zone-bg-${currentZone}`;
+    scene.id = 'zoneScene';
+    scene.innerHTML = `
+        <div class="fence-top"></div><div class="fence-bottom"></div>
+        <div class="fence-left"></div><div class="fence-right"></div>
+        <button class="back-btn" onclick="switchPage('farm')">← 返回农场</button>
+    `;
+
+    const decorations = {
+        chicken_coop: ['🌾', '🌾', '🐓', '🥚', '🌻', '🌿', '🌽', '🪹'],
+        pet_house: ['🧶', '🦴', '🏠', '💕', '🌸', '🌿', '🎀', '🧸'],
+        cowshed: ['🌿', '🪣', '🥛', '🌾', '🌳', '🍀', '🌲', '🌻'],
+        sheepfold: ['🌿', '🌿', '🌸', '🌳', '🍃', '🌾', '🪵', '🌼'],
+        pigpen: ['🍄', '🌾', '🍂', '🪵', '🌿', '🥔', '🍎', '🌽'],
+        beehive: ['🌻', '🌸', '🌺', '🍯', '🌷', '🌼', '🍯', '🌾'],
+    };
+    (decorations[currentZone] || []).forEach((emoji, i) => {
+        const dec = document.createElement('div');
+        dec.className = 'zone-decoration'; dec.textContent = emoji;
+        dec.style.left = (8 + i * 12 + Math.random() * 8) + '%';
+        dec.style.top = (8 + (i % 4) * 22 + Math.random() * 5) + '%';
+        dec.style.opacity = '0.35';
+        dec.style.fontSize = (20 + Math.random() * 15) + 'px';
+        scene.appendChild(dec);
+    });
+
+    // 场景固定装饰（食物碗、水槽等）
+    const fixedDeco = {
+        chicken_coop: [{ emoji: '🥣', x: 15, y: 75 }, { emoji: '💧', x: 80, y: 70 }],
+        pet_house: [{ emoji: '🥣', x: 20, y: 80 }, { emoji: '🧸', x: 75, y: 75 }],
+        cowshed: [{ emoji: '🪣', x: 12, y: 72 }, { emoji: '💧', x: 85, y: 68 }],
+        sheepfold: [{ emoji: '🥣', x: 18, y: 78 }, { emoji: '🪵', x: 82, y: 72 }],
+        pigpen: [{ emoji: '🥣', x: 15, y: 80 }, { emoji: '💧', x: 78, y: 76 }, { emoji: '🍎', x: 50, y: 82 }],
+        beehive: [{ emoji: '🍯', x: 20, y: 75 }, { emoji: '🌻', x: 80, y: 70 }],
+    };
+    (fixedDeco[currentZone] || []).forEach(d => {
+        const el = document.createElement('div');
+        el.className = 'zone-decoration';
+        el.textContent = d.emoji;
+        el.style.left = d.x + '%';
+        el.style.top = d.y + '%';
+        el.style.opacity = '0.6';
+        el.style.fontSize = '22px';
+        el.style.zIndex = '4';
+        scene.appendChild(el);
+    });
+
+    // 草堆装饰
+    for (let i = 0; i < 6; i++) {
+        const grass = document.createElement('div');
+        grass.className = 'scene-grass-patch';
+        grass.textContent = ['🌿', '🍀', '🌱', '🌾'][Math.floor(Math.random() * 4)];
+        grass.style.left = (5 + Math.random() * 90) + '%';
+        grass.style.top = (5 + Math.random() * 90) + '%';
+        scene.appendChild(grass);
+    }
+
+    if (zoneAnimals.length === 0) {
+        scene.innerHTML += `<div class="empty-zone-msg"><div class="big">🏠</div><div style="font-size:14px;">${zone.name}还是空的</div></div>`;
+    } else {
+        zoneAnimals.forEach(animal => { scene.appendChild(createAnimalElement(animal)); });
+    }
+
+    if (zoneAnimals.length < zone.max) {
+        const addBtn = document.createElement('button');
+        addBtn.className = 'add-animal-btn';
+        addBtn.textContent = `➕ 添加动物 (${zoneAnimals.length}/${zone.max})`;
+        addBtn.onclick = () => switchPage('shop');
+        scene.appendChild(addBtn);
+    }
+    area.appendChild(scene);
+}
+
+function createAnimalElement(animal) {
+    const type = ANIMAL_TYPES[animal.typeId];
+    const el = document.createElement('div');
+    el.className = 'scene-animal';
+    el.id = `animal-${animal.id}`;
+    el.style.left = animal.x + '%';
+    el.style.top = animal.y + '%';
+
+    if (animal.behavior === 'walking') el.classList.add('walking');
+    else if (animal.behavior === 'eating') el.classList.add('eating');
+    else if (animal.behavior === 'sleeping') el.classList.add('sleeping');
+    else if (animal.behavior === 'playing') el.classList.add('playing');
+
+    let moodEmoji = '';
+    if (animal.hunger < 20) moodEmoji = '😫';
+    else if (animal.happy < 20) moodEmoji = '😢';
+    else if (animal.hunger > 80 && animal.happy > 80) moodEmoji = '😊';
+
+    const canProduce = isAdult(animal) && animal.productReady && (!type.femaleProduct || animal.gender === 'female');
+
+    el.innerHTML = `
+        ${moodEmoji ? `<span class="mood-indicator">${moodEmoji}</span>` : ''}
+        ${canProduce ? `<span class="product-badge">${type.productEmoji}</span>` : ''}
+        ${animal.pregnant ? `<span class="pregnant-badge">🤰</span>` : ''}
+        <span class="animal-gender">${animal.gender === 'male' ? '♂️' : '♀️'}</span>
+        <span class="animal-emoji">${getAnimalEmoji(animal)}</span>
+        ${animal.behavior === 'sleeping' ? '<span class="zzz">💤</span>' : ''}
+        <span class="animal-name-tag">${animal.name || type.name}</span>
+    `;
+    el.onclick = (e) => { e.stopPropagation(); openAnimalPanel(animal); };
+    return el;
+}
+
+function updateAnimalPositions() {
+    if (currentPage !== 'zone') return;
+    gameState.animals.filter(a => a.zone === currentZone).forEach(animal => {
+        const el = document.getElementById(`animal-${animal.id}`);
+        if (!el) return;
+        el.style.left = animal.x + '%';
+        el.style.top = animal.y + '%';
+        el.classList.remove('walking', 'eating', 'sleeping', 'playing');
+        if (animal.behavior === 'walking') el.classList.add('walking');
+        else if (animal.behavior === 'eating') el.classList.add('eating');
+        else if (animal.behavior === 'sleeping') el.classList.add('sleeping');
+        else if (animal.behavior === 'playing') el.classList.add('playing');
+
+        const zzz = el.querySelector('.zzz');
+        if (animal.behavior === 'sleeping' && !zzz) { const span = document.createElement('span'); span.className = 'zzz'; span.textContent = '💤'; el.appendChild(span); }
+        else if (animal.behavior !== 'sleeping' && zzz) zzz.remove();
+
+        const type = ANIMAL_TYPES[animal.typeId];
+        const canProduce = isAdult(animal) && animal.productReady && (!type.femaleProduct || animal.gender === 'female');
+        const badge = el.querySelector('.product-badge');
+        if (canProduce && !badge) { const b = document.createElement('span'); b.className = 'product-badge'; b.textContent = type.productEmoji; el.insertBefore(b, el.children[1] || el.firstChild); }
+        else if (!canProduce && badge) badge.remove();
+
+        const mood = el.querySelector('.mood-indicator');
+        let moodEmoji = '';
+        if (animal.hunger < 20) moodEmoji = '😫';
+        else if (animal.happy < 20) moodEmoji = '😢';
+        else if (animal.hunger > 80 && animal.happy > 80) moodEmoji = '😊';
+        if (moodEmoji) { if (mood) mood.textContent = moodEmoji; else { const m = document.createElement('span'); m.className = 'mood-indicator'; m.textContent = moodEmoji; el.insertBefore(m, el.firstChild); } }
+        else if (mood) mood.remove();
+    });
+}
+
+function updateAnimalBehavior() {
+    if (gameState.paused) return;
+    gameState.animals.forEach(animal => {
+        animal.behaviorTimer -= 1;
+        if (animal.behaviorTimer <= 0) {
+            const behaviors = ['idle', 'walking', 'eating', 'sleeping', 'playing'];
+            const weights = [10, 55, 15, 10, 10];
+            if (animal.hunger < 50) weights[2] = 45;
+            if (animal.happy < 40) weights[3] = 30;
+            if (animal.happy > 70) weights[4] = 20;
+            let total = weights.reduce((a, b) => a + b, 0);
+            let r = Math.random() * total, chosen = 0;
+            for (let i = 0; i < weights.length; i++) { r -= weights[i]; if (r <= 0) { chosen = i; break; } }
+            animal.behavior = behaviors[chosen];
+            animal.behaviorTimer = 2 + Math.floor(Math.random() * 4);
+            if (animal.behavior === 'walking') {
+                // 分散目标：尽量远离其他动物
+                let bestX = 8 + Math.random() * 82;
+                let bestY = 8 + Math.random() * 78;
+                let bestMinDist = 0;
+                const others = gameState.animals.filter(a => a.id !== animal.id && a.zone === animal.zone);
+                for (let attempt = 0; attempt < 5; attempt++) {
+                    const tx = 8 + Math.random() * 82;
+                    const ty = 8 + Math.random() * 78;
+                    let minDist = 999;
+                    others.forEach(o => {
+                        const d = Math.sqrt((tx - o.x) ** 2 + (ty - o.y) ** 2);
+                        if (d < minDist) minDist = d;
+                    });
+                    if (minDist > bestMinDist) { bestMinDist = minDist; bestX = tx; bestY = ty; }
                 }
+                animal.targetX = bestX; animal.targetY = bestY;
+                animal.facing = animal.targetX > animal.x ? 1 : -1;
             }
-            updateDisplay();
-            saveGame();
         }
+        if (animal.behavior === 'walking') {
+            const dx = animal.targetX - animal.x, dy = animal.targetY - animal.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist > 1) { animal.x += (dx / dist) * animal.speed * 1.5; animal.y += (dy / dist) * animal.speed * 1.5; }
+            else { animal.behavior = 'idle'; animal.behaviorTimer = 1; }
+        } else if (animal.behavior === 'eating') {
+            animal.hunger = Math.min(100, animal.hunger + 0.5);
+        } else if (animal.behavior === 'sleeping') {
+            animal.happy = Math.min(100, animal.happy + 0.3);
+        } else if (animal.behavior === 'playing') {
+            animal.happy = Math.min(100, animal.happy + 0.5);
+            animal.hunger = Math.max(0, animal.hunger - 0.2);
+        }
+    });
+}
 
-        // ============ 角色选择 ============
-        function renderCharacterSelect() {
-            const area = document.getElementById('mainArea');
-            area.innerHTML = `
-                <div class="character-select">
-                    <h2>🌾 欢迎来到梦幻农场</h2>
-                    <div class="subtitle">选择你的角色开始冒险吧！</div>
-                    <div class="gender-select">
-                        <div class="gender-option" id="genderMale" onclick="selectGender('male')">
-                            <span class="big-emoji">👦</span>
-                            <span class="label">男生</span>
-                        </div>
-                        <div class="gender-option" id="genderFemale" onclick="selectGender('female')">
-                            <span class="big-emoji">👧</span>
-                            <span class="label">女生</span>
-                        </div>
-                    </div>
-                    <div id="nameInputArea" style="display:none; margin-bottom:20px;">
-                        <div style="margin-bottom:10px; color:#aaa;">给你的角色起个名字：</div>
-                        <input type="text" id="playerNameInput" maxlength="8" value="小农夫"
-                            style="padding:10px 20px; border-radius:12px; border:2px solid rgba(224,170,255,0.3);
-                            background:rgba(255,255,255,0.1); color:#fff; font-size:16px; text-align:center;
-                            outline:none; width:200px;">
-                    </div>
-                    <button class="btn" id="startBtn" style="display:none;" onclick="startGame()">开始游戏</button>
+let currentPanelAnimalId = null;
+
+// ========== 动物操作侧边面板 ==========
+function openAnimalPanel(animal) {
+    currentPanelAnimalId = animal.id;
+    renderAnimalPanel(animal);
+    document.getElementById('animalSidePanel').classList.add('open');
+}
+
+function closeAnimalPanel() {
+    document.getElementById('animalSidePanel').classList.remove('open');
+    currentPanelAnimalId = null;
+}
+
+function renderAnimalPanel(animal) {
+    const type = ANIMAL_TYPES[animal.typeId];
+    const adult = isAdult(animal);
+    document.getElementById('animalPanelTitle').textContent = `${animal.name || type.name}`;
+    const body = document.getElementById('animalPanelBody');
+    body.innerHTML = `
+        <div style="text-align:center; margin-bottom:15px;">
+            <div style="font-size:70px;">${getAnimalEmoji(animal)}</div>
+            <div style="font-size:14px; color:#888; margin-top:5px;">${adult ? '成年期' : '幼崽期'} | ${animal.gender === 'male' ? '雄性 ♂️' : '雌性 ♀️'}</div>
+            <div style="margin-top:5px;"><span style="background:#e8f5e9; color:#4a7c59; padding:2px 10px; border-radius:10px; font-size:12px; font-weight:bold;">Lv.${animal.level || 1}</span></div>
+        </div>
+        <div style="margin-bottom:10px;">
+            <div style="font-size:12px; display:flex; justify-content:space-between;"><span>饱食度</span><span>${Math.round(animal.hunger)}%</span></div>
+            <div class="progress-bar"><div class="progress-fill fill-green" style="width:${animal.hunger}%"></div></div>
+        </div>
+        <div style="margin-bottom:10px;">
+            <div style="font-size:12px; display:flex; justify-content:space-between;"><span>幸福度</span><span>${Math.round(animal.happy)}%</span></div>
+            <div class="progress-bar"><div class="progress-fill fill-orange" style="width:${animal.happy}%"></div></div>
+        </div>
+        <div style="margin-bottom:15px;">
+            <div style="font-size:12px; display:flex; justify-content:space-between;"><span>成长值</span><span>${Math.round(animal.growth)}/${type.growthNeeded}</span></div>
+            <div class="progress-bar"><div class="progress-fill fill-blue" style="width:${Math.min(100, animal.growth / type.growthNeeded * 100)}%"></div></div>
+        </div>
+        <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:8px;">
+            <button class="btn" style="padding:8px; font-size:12px;" onclick="interactAnimal(${animal.id}, 'feed')">🍎 喂食</button>
+            <button class="btn" style="padding:8px; font-size:12px;" onclick="interactAnimal(${animal.id}, 'pet')">💕 抚摸</button>
+            <button class="btn" style="padding:8px; font-size:12px;" onclick="interactAnimal(${animal.id}, 'play')">🎾 玩耍</button>
+            ${adult && animal.productReady && (!type.femaleProduct || animal.gender === 'female') ? `<button class="btn" style="padding:8px; font-size:12px; grid-column: span 3;" onclick="collectProduct(${animal.id})">🧺 收取${type.productName}</button>` : ''}
+            ${adult && !animal.pregnant ? `<button class="btn" style="padding:8px; font-size:12px; grid-column: span 3; background:#e91e63;" onclick="breedAnimal(${animal.id})">💕 寻找伴侣繁殖</button>` : ''}
+            ${animal.pregnant ? `<button class="btn" style="padding:8px; font-size:12px; grid-column: span 3; background:#9c27b0;" disabled>🤰 怀孕中... 还剩${Math.ceil(animal.pregnantTime / 60)}分钟</button>` : ''}
+            <button class="btn btn-warning" style="padding:8px; font-size:12px; grid-column: span 3;" onclick="sellAnimal(${animal.id})">💰 出售 (🪙${getAnimalSellPrice(animal)})</button>
+        </div>
+    `;
+}
+
+function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+function closeSidePanel() { document.getElementById('sidePanel').classList.remove('open'); }
+function closeAnimalPanel() { document.getElementById('animalSidePanel').classList.remove('open'); currentPanelAnimalId = null; }
+
+// ========== 人物形象系统 ==========
+function renderCharacterSelect() {
+    const area = document.getElementById('mainArea');
+    area.innerHTML = `
+        <div class="character-select">
+            <h2>🌾 欢迎来到乡村农场</h2>
+            <div style="color:#888; margin-bottom:25px;">选择你的角色开始农场生活吧！</div>
+            <div class="gender-select">
+                <div class="gender-option" id="genderMale" onclick="selectGender('male')">
+                    <span class="big-emoji">👦</span>
+                    <span class="label">男生</span>
                 </div>
-            `;
-        }
-
-        function selectGender(gender) {
-            gameState.playerGender = gender;
-            document.querySelectorAll('.gender-option').forEach(el => el.classList.remove('selected'));
-            document.getElementById(gender === 'male' ? 'genderMale' : 'genderFemale').classList.add('selected');
-            document.getElementById('nameInputArea').style.display = 'block';
-            document.getElementById('startBtn').style.display = 'inline-block';
-        }
-
-        function startGame() {
-            const name = document.getElementById('playerNameInput').value.trim();
-            if (name) gameState.playerName = name;
-            gameState.firstTime = false;
-            gameState.playerOutfit = gameState.playerGender === 'male' ? 'default_male' : 'default_female';
-
-            // 初始化土地
-            for (let i = 0; i < 6; i++) {
-                gameState.plots.push({ level: 1, crop: null, plantTime: null, harvestReady: false });
-            }
-
-            // 送一只初始动物
-            const starterTypes = ['moon_rabbit', 'cloud_sheep', 'bubble_fish'];
-            const starterId = starterTypes[Math.floor(Math.random() * starterTypes.length)];
-            const starterType = CREATURE_TYPES[starterId];
-            gameState.creatures.push({
-                id: gameState.nextCreatureId++,
-                typeId: starterId,
-                name: starterType.name,
-                hunger: 80,
-                happy: 70,
-                growth: 0,
-                level: 1,
-            });
-            gameState.discovered.push(starterId);
-
-            saveGame();
-            document.getElementById('topBar').style.display = 'flex';
-            document.getElementById('bottomNav').style.display = 'flex';
-            updateDisplay();
-            switchPage('farm');
-            showNotification(`🎁 送你一只 ${starterType.name} 作为初始伙伴！`);
-        }
-
-        // ============ 页面切换 ============
-        function switchPage(page) {
-            currentPage = page;
-            document.querySelectorAll('.nav-btn').forEach(btn => {
-                btn.classList.toggle('active', btn.dataset.page === page);
-            });
-            closeSidePanel();
-            renderPage();
-        }
-
-        function renderPage() {
-            const area = document.getElementById('mainArea');
-            area.innerHTML = '';
-
-            switch (currentPage) {
-                case 'farm': renderFarm(area); break;
-                case 'explore': renderExplore(area); break;
-                case 'encyclopedia': renderEncyclopedia(area); break;
-            }
-        }
-
-        // ============ 农场地图 ============
-        function renderFarm(area) {
-            // 地图容器
-            const map = document.createElement('div');
-            map.className = 'farm-map';
-            map.id = 'farmMap';
-
-            // 装饰：池塘
-            const pond = document.createElement('div');
-            pond.className = 'pond';
-            pond.style.cssText = 'width:90px; height:70px; left:68%; top:55%;';
-            map.appendChild(pond);
-
-            // 装饰：树木
-            const trees = [
-                { emoji: '🌳', cls: 'tree-1', x: 5, y: 5 },
-                { emoji: '🌲', cls: 'tree-2', x: 15, y: 2 },
-                { emoji: '🌳', cls: 'tree-3', x: 2, y: 25 },
-                { emoji: '🌴', cls: 'tree-1', x: 85, y: 8 },
-                { emoji: '🌲', cls: 'tree-2', x: 92, y: 20 },
-                { emoji: '🌳', cls: 'tree-1', x: 88, y: 75 },
-                { emoji: '🌲', cls: 'tree-2', x: 3, y: 70 },
-                { emoji: '🌻', cls: 'tree-2', x: 50, y: 3 },
-                { emoji: '🌻', cls: 'tree-2', x: 55, y: 5 },
-                { emoji: '🪨', cls: 'tree-2', x: 45, y: 85 },
-                { emoji: '🍄', cls: 'tree-2', x: 60, y: 88 },
-            ];
-            trees.forEach(t => {
-                const el = document.createElement('div');
-                el.className = `map-decoration ${t.cls}`;
-                el.textContent = t.emoji;
-                el.style.left = t.x + '%';
-                el.style.top = t.y + '%';
-                map.appendChild(el);
-            });
-
-            // 小路点
-            for (let i = 0; i < 15; i++) {
-                const dot = document.createElement('div');
-                dot.className = 'path-dot';
-                dot.style.left = (25 + i * 3.5) + '%';
-                dot.style.top = (45 + Math.sin(i) * 5) + '%';
-                map.appendChild(dot);
-            }
-
-            // 区域标签
-            const label1 = document.createElement('div');
-            label1.className = 'zone-label';
-            label1.textContent = '🏠 养殖区';
-            label1.style.cssText = 'left:15%; top:18%;';
-            map.appendChild(label1);
-
-            const label2 = document.createElement('div');
-            label2.className = 'zone-label';
-            label2.textContent = '🌱 种植区';
-            label2.style.cssText = 'left:60%; top:18%;';
-            map.appendChild(label2);
-
-            // 养殖区围栏
-            const ranchZone = document.createElement('div');
-            ranchZone.className = 'farm-zone';
-            ranchZone.style.cssText = 'left:5%; top:25%; width:40%; height:55%;';
-            map.appendChild(ranchZone);
-
-            // 围栏线
-            const fences = [
-                { type: 'h', x: 5, y: 25, w: 40, h: 8 },
-                { type: 'h', x: 5, y: 78, w: 40, h: 8 },
-                { type: 'v', x: 5, y: 25, w: 8, h: 55 },
-                { type: 'v', x: 44, y: 25, w: 8, h: 55 },
-            ];
-            fences.forEach(f => {
-                const el = document.createElement('div');
-                el.className = f.type === 'h' ? 'fence-h' : 'fence-v';
-                el.style.left = f.x + '%';
-                el.style.top = f.y + '%';
-                if (f.type === 'h') { el.style.width = f.w + '%'; el.style.height = f.h + 'px'; }
-                else { el.style.width = f.w + 'px'; el.style.height = f.h + '%'; }
-                map.appendChild(el);
-            });
-            // 围栏柱子
-            const posts = [
-                [5,25], [25,25], [44,25],
-                [5,78], [25,78], [44,78],
-            ];
-            posts.forEach(([x,y]) => {
-                const p = document.createElement('div');
-                p.className = 'fence-post';
-                p.style.left = x + '%';
-                p.style.top = y + '%';
-                map.appendChild(p);
-            });
-
-            // 种植区
-            const farmZone = document.createElement('div');
-            farmZone.className = 'farm-zone';
-            farmZone.style.cssText = 'left:55%; top:25%; width:38%; height:55%; background:rgba(101,67,33,0.15);';
-            map.appendChild(farmZone);
-
-            // 种植地块
-            const plotPositions = [
-                [58, 30], [72, 30], [84, 30],
-                [58, 50], [72, 50], [84, 50],
-            ];
-            gameState.plots.forEach((plot, idx) => {
-                const pos = plotPositions[idx];
-                const plotEl = document.createElement('div');
-                plotEl.className = 'farm-plot' + (plot.crop ? '' : ' empty') + (plot.harvestReady ? ' ready' : '');
-                plotEl.style.left = pos[0] + '%';
-                plotEl.style.top = pos[1] + '%';
-                plotEl.id = `plot-${idx}`;
-
-                let inner = `<div class="plot-level">Lv.${plot.level}</div>`;
-                if (plot.crop) {
-                    const crop = CROPS[plot.crop];
-                    inner += `<div class="crop-emoji">${crop.emoji}</div>`;
-                    if (!plot.harvestReady) {
-                        const elapsed = (Date.now() - plot.plantTime) / 1000;
-                        const timeNeeded = crop.growTime / plot.level;
-                        const progress = Math.min(1, elapsed / timeNeeded);
-                        inner += `<div class="crop-progress"><div class="crop-progress-fill" style="width:${progress * 100}%"></div></div>`;
-                    } else {
-                        inner += `<div style="position:absolute; top:2px; left:2px; font-size:10px;">✨</div>`;
-                    }
-                }
-                plotEl.innerHTML = inner;
-                plotEl.onclick = () => onPlotClick(idx);
-                map.appendChild(plotEl);
-            });
-
-            // 动物
-            gameState.creatures.forEach(creature => {
-                const type = CREATURE_TYPES[creature.typeId];
-                const animal = document.createElement('div');
-                animal.className = 'animal';
-                animal.id = `animal-${creature.id}`;
-                animal.innerHTML = `
-                    ${type.emoji}
-                    <div class="animal-name-tag">${creature.name}</div>
-                    <div class="animal-hunger"><div class="animal-hunger-fill" style="width:${creature.hunger}%; background:${creature.hunger > 50 ? '#81c784' : creature.hunger > 20 ? '#ffd54f' : '#ef5350'}"></div></div>
-                `;
-                // 随机初始位置在养殖区内
-                const rx = 8 + Math.random() * 32;
-                const ry = 30 + Math.random() * 45;
-                animal.style.left = rx + '%';
-                animal.style.top = ry + '%';
-                animal.onclick = (e) => { e.stopPropagation(); onAnimalClick(creature.id); };
-                map.appendChild(animal);
-            });
-
-            // 玩家角色
-            if (gameState.playerOutfit) {
-                const outfit = OUTFITS[gameState.playerOutfit];
-                const player = document.createElement('div');
-                player.className = 'player-char';
-                player.id = 'playerChar';
-                player.innerHTML = `
-                    ${outfit.emoji}
-                    <div class="player-name-tag">${gameState.playerName}</div>
-                `;
-                player.style.left = '48%';
-                player.style.top = '70%';
-                map.appendChild(player);
-            }
-
-            area.appendChild(map);
-
-            // 启动动物移动
-            startAnimalMovement();
-            startPlayerMovement();
-        }
-
-        // 动物移动逻辑
-        function startAnimalMovement() {
-            if (animalMovementInterval) clearInterval(animalMovementInterval);
-            animalMovementInterval = setInterval(() => {
-                gameState.creatures.forEach(creature => {
-                    const el = document.getElementById(`animal-${creature.id}`);
-                    if (!el) return;
-
-                    // 在养殖区内随机移动
-                    const newX = 8 + Math.random() * 32;
-                    const newY = 30 + Math.random() * 45;
-                    el.style.transition = 'left 2s linear, top 2s linear';
-                    el.style.left = newX + '%';
-                    el.style.top = newY + '%';
-
-                    // 面向方向
-                    const currentLeft = parseFloat(el.style.left) || 0;
-                    if (newX > currentLeft) {
-                        el.style.transform = 'scaleX(-1)';
-                    } else {
-                        el.style.transform = 'scaleX(1)';
-                    }
-                });
-            }, 2500 + Math.random() * 1000);
-        }
-
-        // 玩家角色移动
-        function startPlayerMovement() {
-            if (playerMovementInterval) clearInterval(playerMovementInterval);
-            playerMovementInterval = setInterval(() => {
-                const player = document.getElementById('playerChar');
-                if (!player) return;
-                const targets = [
-                    [48, 70], [20, 60], [75, 45], [60, 70], [35, 50], [80, 65]
-                ];
-                const target = targets[Math.floor(Math.random() * targets.length)];
-                player.style.transition = 'left 3s linear, top 3s linear';
-                player.style.left = target[0] + '%';
-                player.style.top = target[1] + '%';
-            }, 4000 + Math.random() * 2000);
-        }
-
-        // ============ 动物交互面板 ============
-        function onAnimalClick(creatureId) {
-            selectedAnimalId = creatureId;
-            selectedPlotIdx = null;
-            const creature = gameState.creatures.find(c => c.id === creatureId);
-            if (!creature) return;
-            const type = CREATURE_TYPES[creature.typeId];
-
-            document.getElementById('panelTitle').textContent = creature.name || type.name;
-
-            let moodClass = 'mood-neutral';
-            let moodText = '一般';
-            if (creature.happy >= 70 && creature.hunger >= 50) {
-                moodClass = 'mood-happy'; moodText = '开心';
-            } else if (creature.happy < 30 || creature.hunger < 20) {
-                moodClass = 'mood-sad'; moodText = '难过';
-            }
-
-            const hungerColor = creature.hunger > 50 ? '#81c784' : creature.hunger > 20 ? '#ffd54f' : '#ef5350';
-
-            document.getElementById('panelContent').innerHTML = `
-                <div style="text-align:center; margin-bottom:15px;">
-                    <div style="font-size:60px;">${type.emoji}</div>
-                    <div style="font-size:13px; color:#aaa;">${type.desc}</div>
-                    <div style="margin-top:5px;"><span style="background:rgba(224,170,255,0.2); padding:2px 10px; border-radius:10px; font-size:12px;">Lv.${creature.level}</span></div>
+                <div class="gender-option" id="genderFemale" onclick="selectGender('female')">
+                    <span class="big-emoji">👧</span>
+                    <span class="label">女生</span>
                 </div>
-                <div class="stat-bar">
-                    <label><span>饱食度</span><span>${Math.round(creature.hunger)}%</span></label>
-                    <div class="bar"><div class="bar-fill" style="width:${creature.hunger}%; background:${hungerColor};"></div></div>
-                </div>
-                <div class="stat-bar">
-                    <label><span>幸福度</span><span>${Math.round(creature.happy)}%</span></label>
-                    <div class="bar"><div class="bar-fill bar-happy" style="width:${creature.happy}%"></div></div>
-                </div>
-                <div class="stat-bar">
-                    <label><span>成长值</span><span>${Math.round(creature.growth)}%</span></label>
-                    <div class="bar"><div class="bar-fill bar-growth" style="width:${creature.growth}%"></div></div>
-                </div>
-                <div style="text-align:center; margin-top:10px; font-size:13px; color:${moodClass === 'mood-happy' ? '#81c784' : moodClass === 'mood-sad' ? '#ef5350' : '#ffd54f'};">
-                    心情：${moodText}
-                </div>
-                <div class="action-buttons" style="margin-top:15px;">
-                    <button class="action-btn" onclick="interactCreature(${creature.id}, 'feed')">
-                        <span class="btn-emoji">🍎</span>喂食
-                    </button>
-                    <button class="action-btn" onclick="interactCreature(${creature.id}, 'play')">
-                        <span class="btn-emoji">🎾</span>玩耍
-                    </button>
-                    <button class="action-btn" onclick="interactCreature(${creature.id}, 'clean')">
-                        <span class="btn-emoji">🧹</span>清洁
-                    </button>
-                    <button class="action-btn" onclick="interactCreature(${creature.id}, 'pet')">
-                        <span class="btn-emoji">💕</span>抚摸
-                    </button>
-                    <button class="action-btn" onclick="interactCreature(${creature.id}, 'train')">
-                        <span class="btn-emoji">📚</span>训练
-                    </button>
-                    <button class="action-btn" onclick="releaseCreature(${creature.id})" style="color:#ef5350;">
-                        <span class="btn-emoji">🚪</span>放生
-                    </button>
-                </div>
-            `;
+            </div>
+            <div id="nameInputArea" style="display:none; margin-bottom:20px;">
+                <div style="margin-bottom:10px; color:#888;">给你的角色起个名字：</div>
+                <input type="text" id="playerNameInput" maxlength="8" value="小农夫"
+                    style="padding:10px 20px; border-radius:12px; border:2px solid #c8e6c9;
+                    background:#f1f8e9; color:#333; font-size:16px; text-align:center;
+                    outline:none; width:200px;">
+            </div>
+            <button class="btn" id="startBtn" style="display:none;" onclick="startGame()">开始游戏</button>
+        </div>
+    `;
+}
 
-            document.getElementById('sidePanel').classList.add('open');
+function selectGender(gender) {
+    gameState.playerGender = gender;
+    document.querySelectorAll('.gender-option').forEach(el => el.classList.remove('selected'));
+    document.getElementById(gender === 'male' ? 'genderMale' : 'genderFemale').classList.add('selected');
+    document.getElementById('nameInputArea').style.display = 'block';
+    document.getElementById('startBtn').style.display = 'inline-block';
+}
+
+function startGame() {
+    const name = document.getElementById('playerNameInput').value.trim();
+    if (name) gameState.playerName = name;
+    gameState.playerOutfit = gameState.playerGender === 'male' ? 'default_male' : 'default_female';
+    const outfit = OUTFITS[gameState.playerOutfit];
+    gameState.playerAvatar = outfit.emoji;
+    saveGame();
+    updateDisplay();
+    switchPage('farm');
+    showNotification(`🎉 欢迎 ${gameState.playerName} 来到农场！`);
+}
+
+function openCharacterPanel() {
+    renderCharacterPanel();
+    document.getElementById('charPanel').classList.add('open');
+}
+
+function closeCharacterPanel() {
+    document.getElementById('charPanel').classList.remove('open');
+}
+
+function renderCharacterPanel() {
+    const outfit = OUTFITS[gameState.playerOutfit] || OUTFITS.default_male;
+    const needed = gameState.xpNeeded;
+
+    let outfitsHtml = '';
+    Object.entries(OUTFITS).forEach(([key, o]) => {
+        if (o.gender !== gameState.playerGender) return;
+        const locked = gameState.level < o.unlockLevel;
+        const equipped = gameState.playerOutfit === key;
+        outfitsHtml += `
+            <div class="outfit-item ${locked ? 'locked' : ''} ${equipped ? 'equipped' : ''}"
+                ${locked ? '' : `onclick="equipOutfit('${key}')"`}
+                title="${o.name}${locked ? ` (Lv.${o.unlockLevel} 解锁)` : ''}"
+            >
+                ${o.emoji}
+                ${locked ? '<span class="lock-icon">🔒</span>' : ''}
+            </div>
+        `;
+    });
+
+    document.getElementById('charPanelBody').innerHTML = `
+        <div style="text-align:center; padding:10px 0;">
+            <div style="font-size:70px;">${outfit.emoji}</div>
+            <div style="font-size:18px; font-weight:bold; margin-top:5px;">${gameState.playerName}</div>
+            <div style="font-size:14px; color:#4a7c59;">Lv.${gameState.level} ${outfit.name}</div>
+        </div>
+        <div class="progress-bar" style="margin:15px 0;">
+            <div style="font-size:12px; display:flex; justify-content:space-between; margin-bottom:4px;">
+                <span>经验值</span><span>${gameState.xp} / ${needed}</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill fill-green" style="width:${(gameState.xp / needed) * 100}%"></div></div>
+        </div>
+        <div style="font-size:12px; color:#888; margin-bottom:10px; text-align:center;">
+            种植、养殖、收获可获得经验值
+        </div>
+        <div style="margin-top:15px;">
+            <div style="font-size:14px; font-weight:bold; color:#4a7c59; margin-bottom:10px; text-align:center;">👕 服装仓库</div>
+            <div class="outfit-grid">${outfitsHtml}</div>
+        </div>
+    `;
+}
+
+function equipOutfit(key) {
+    gameState.playerOutfit = key;
+    gameState.playerAvatar = OUTFITS[key].emoji;
+    saveGame();
+    renderCharacterPanel();
+    updateDisplay();
+    showNotification(`👕 换上了 ${OUTFITS[key].name}！`);
+}
+
+function interactAnimal(animalId, action) {
+    const animal = gameState.animals.find(a => a.id === animalId);
+    if (!animal) return;
+    const type = ANIMAL_TYPES[animal.typeId];
+    switch (action) {
+        case 'feed':
+            if (gameState.coins < 5) { showNotification('🪙 月见币不足！'); return; }
+            gameState.coins -= 5; animal.hunger = Math.min(100, animal.hunger + 30);
+            animal.growth += 5; animal.happy = Math.min(100, animal.happy + 5);
+            gameState.stats.fed++; animal.behavior = 'eating'; animal.behaviorTimer = 3;
+            showNotification(`🍎 ${type.name} 吃得很开心！`); break;
+        case 'pet':
+            animal.happy = Math.min(100, animal.happy + 20);
+            animal.behavior = 'playing'; animal.behaviorTimer = 2;
+            showNotification(`💕 ${type.name} 蹭了蹭你！`); break;
+        case 'play':
+            if (animal.hunger < 20) { showNotification('⚠️ 它太饿了，先喂食吧！'); return; }
+            animal.happy = Math.min(100, animal.happy + 15);
+            animal.hunger = Math.max(0, animal.hunger - 10); animal.growth += 3;
+            animal.behavior = 'playing'; animal.behaviorTimer = 4;
+            showNotification(`🎾 ${type.name} 玩得很开心！`); break;
+    }
+    if (!isAdult(animal) && animal.growth >= type.growthNeeded) {
+        showNotification(`🎉 ${type.name} 长大成${type.adultEmoji}了！`); addXp(20);
+    }
+    if (isAdult(animal) && !animal.productReady && animal.hunger > 50 && animal.happy > 50) {
+        animal.productTimer = (animal.productTimer || 0) + 1;
+        if (animal.productTimer >= 3) { animal.productReady = true; animal.productTimer = 0; }
+    }
+    saveGame(); updateDisplay();
+    const updatedAnimal = gameState.animals.find(a => a.id === animalId);
+    if (updatedAnimal) renderAnimalPanel(updatedAnimal);
+    renderPage();
+}
+
+function collectProduct(animalId) {
+    const animal = gameState.animals.find(a => a.id === animalId);
+    if (!animal || !animal.productReady) return;
+    const type = ANIMAL_TYPES[animal.typeId];
+    animal.productReady = false; animal.productTimer = 0;
+    gameState.inventory[type.product] = (gameState.inventory[type.product] || 0) + 1;
+    showNotification(`🧺 获得 ${type.productName} x1！`); addXp(5);
+    saveGame(); renderPage();
+}
+
+function breedAnimal(animalId) {
+    const animal = gameState.animals.find(a => a.id === animalId);
+    if (!animal) return;
+    if (!isAdult(animal)) { showNotification('⚠️ 动物需要成年后才能繁殖！'); return; }
+    const mate = gameState.animals.find(a =>
+        a.id !== animalId && a.typeId === animal.typeId &&
+        a.gender !== animal.gender && isAdult(a) && !a.pregnant
+    );
+    if (!mate) { showNotification('⚠️ 需要另一只成年的异性动物！'); return; }
+    const female = animal.gender === 'female' ? animal : mate;
+    female.pregnant = true; female.pregnantTime = 300;
+    gameState.stats.bred++;
+    showNotification(`💕 ${ANIMAL_TYPES[female.typeId].name} 怀孕了！`);
+    saveGame(); renderPage();
+}
+
+function sellAnimal(animalId) {
+    const animal = gameState.animals.find(a => a.id === animalId);
+    if (!animal) return;
+    const type = ANIMAL_TYPES[animal.typeId];
+    const price = getAnimalSellPrice(animal);
+    if (!confirm(`确定以 🪙${price} 出售 ${animal.name || type.name} 吗？`)) return;
+    gameState.coins += price;
+    gameState.animals = gameState.animals.filter(a => a.id !== animalId);
+    gameState.stats.sold += price;
+    showNotification(`💰 出售获得 ${price} 月见币！`);
+    addXp(2); saveGame(); updateDisplay(); closeAnimalPanel(); renderPage();
+}
+
+// ========== 田地 ==========
+function renderField(area) {
+    const title = document.createElement('div');
+    title.className = 'page-title'; title.textContent = '🌾 我的田地';
+    area.appendChild(title);
+
+    const subtitle = document.createElement('div');
+    subtitle.className = 'page-subtitle';
+    subtitle.textContent = `点击土地种植、浇水或升级（土地等级越高，生长越快！）`;
+    area.appendChild(subtitle);
+
+    const grid = document.createElement('div'); grid.className = 'field-grid';
+
+    gameState.plots.forEach((plot, idx) => {
+        const div = document.createElement('div');
+        div.className = 'plot' + (plot.crop ? ' planted' : '');
+        div.innerHTML = `<span class="plot-num">#${idx + 1}</span><span class="plot-upgrade-badge">Lv.${plot.level}</span>`;
+        if (!plot.crop) {
+            div.innerHTML += `
+                <span class="plot-emoji" style="opacity:0.3; font-size:28px;">🌱</span>
+                <div class="plot-name" style="color:#888;">空地</div>
+                <div class="plot-progress">点击种植</div>`;
+            div.onclick = () => openPlotPanel(idx);
+        } else {
+            const cropType = CROP_TYPES[plot.crop.type];
+            const timeNeeded = cropType.growTime / plot.level;
+            const progress = plot.crop.progress / timeNeeded;
+            const stage = progress < 0.33 ? 0 : progress < 0.66 ? 1 : 2;
+            const isReady = plot.crop.progress >= timeNeeded;
+            const emoji = isReady ? cropType.emojis[2] : cropType.emojis[stage];
+            div.innerHTML += `
+                ${isReady ? '<span class="harvest-ready">✨</span>' : ''}
+                <span class="plot-emoji">${emoji}</span>
+                <div class="plot-name">${cropType.name}</div>
+                <div class="plot-progress">${isReady ? '可收获!' : (stage === 0 ? '种子期' : stage === 1 ? '生长期' : '快成熟')}</div>
+                ${!isReady ? `<div class="plot-water">💧 ${Math.round(plot.crop.water)}%</div>` : ''}`;
+            div.onclick = () => openPlotPanel(idx);
         }
+        grid.appendChild(div);
+    });
+    area.appendChild(grid);
+}
 
-        function interactCreature(creatureId, action) {
-            const creature = gameState.creatures.find(c => c.id === creatureId);
-            if (!creature) return;
-
-            const panel = document.getElementById('sidePanel');
-            const rect = panel.getBoundingClientRect();
-            const centerX = rect.left + rect.width / 2;
-            const centerY = rect.top + 80;
-
-            switch (action) {
-                case 'feed':
-                    if (gameState.coins < 5) { showNotification('💰 金币不足！'); return; }
-                    gameState.coins -= 5;
-                    creature.hunger = Math.min(100, creature.hunger + 30);
-                    creature.growth = Math.min(100, creature.growth + 5);
-                    showNotification('🍎 喂食成功！饱食度 +30');
-                    createParticles(centerX, centerY, ['🍎', '🍊', '🍇', '🥕']);
-                    addExp(3);
-                    break;
-                case 'play':
-                    creature.happy = Math.min(100, creature.happy + 25);
-                    creature.hunger = Math.max(0, creature.hunger - 10);
-                    creature.growth = Math.min(100, creature.growth + 3);
-                    showNotification('🎾 玩得很开心！幸福度 +25');
-                    createParticles(centerX, centerY, ['🎾', '🎮', '🎪', '🎨']);
-                    addExp(2);
-                    break;
-                case 'clean':
-                    creature.happy = Math.min(100, creature.happy + 10);
-                    creature.growth = Math.min(100, creature.growth + 2);
-                    showNotification('🧹 环境变干净了！幸福度 +10');
-                    addExp(1);
-                    break;
-                case 'pet':
-                    creature.happy = Math.min(100, creature.happy + 15);
-                    showNotification('💕 它看起来很开心！幸福度 +15');
-                    createParticles(centerX, centerY, ['💕', '💖', '💗', '💓']);
-                    addExp(1);
-                    break;
-                case 'train':
-                    if (gameState.coins < 10) { showNotification('💰 金币不足！'); return; }
-                    gameState.coins -= 10;
-                    creature.growth = Math.min(100, creature.growth + 20);
-                    creature.hunger = Math.max(0, creature.hunger - 15);
-                    showNotification('📚 训练成功！成长值 +20');
-                    addExp(5);
-                    break;
-            }
-
-            if (creature.growth >= 100) {
-                creature.growth = 0;
-                creature.level++;
-                showNotification(`🎉 ${creature.name} 升到了 Lv.${creature.level}！`);
-                createParticles(centerX, centerY, ['🎉', '🎊', '✨', '🌟']);
-            }
-
-            saveGame();
-            updateDisplay();
-            onAnimalClick(creatureId);
-            // 更新农场显示
-            updateFarmDisplay();
-        }
-
-        function releaseCreature(creatureId) {
-            if (!confirm('确定要放生这只生物吗？')) return;
-            gameState.creatures = gameState.creatures.filter(c => c.id !== creatureId);
-            saveGame();
-            closeSidePanel();
-            renderPage();
-            showNotification('🚪 已放生');
-        }
-
-        // ============ 种植地交互 ============
-        function onPlotClick(idx) {
-            selectedPlotIdx = idx;
-            selectedAnimalId = null;
-            const plot = gameState.plots[idx];
-
-            document.getElementById('panelTitle').textContent = `土地 #${idx + 1}`;
-
-            let content = `
-                <div style="text-align:center; margin-bottom:15px;">
-                    <div style="font-size:14px; color:#e0aaff; margin-bottom:5px;">土地等级：Lv.${plot.level}</div>
-                    <div style="font-size:12px; color:#aaa;">生长速度 x${plot.level} | 收获加成 +${(plot.level - 1) * 20}%</div>
-                </div>
-            `;
-
-            if (plot.crop) {
-                const crop = CROPS[plot.crop];
-                if (plot.harvestReady) {
-                    content += `
-                        <div style="text-align:center; padding:20px;">
-                            <div style="font-size:60px; animation:foundPop 0.5s ease-out;">${crop.emoji}</div>
-                            <div style="font-size:18px; font-weight:bold; color:#81c784; margin-top:10px;">${crop.name} 成熟了！</div>
-                            <div style="font-size:14px; color:#ffd700; margin-top:5px;">可出售 💰${Math.floor(crop.sellPrice * (1 + (plot.level - 1) * 0.2))}</div>
-                            <button class="btn" style="margin-top:15px; width:100%;" onclick="harvestCrop(${idx})">🌾 收获</button>
-                        </div>
-                    `;
-                } else {
-                    const elapsed = (Date.now() - plot.plantTime) / 1000;
-                    const timeNeeded = crop.growTime / plot.level;
-                    const remaining = Math.max(0, Math.ceil(timeNeeded - elapsed));
-                    const progress = Math.min(1, elapsed / timeNeeded);
-                    content += `
-                        <div style="text-align:center; padding:15px;">
-                            <div style="font-size:50px;">${crop.emoji}</div>
-                            <div style="font-size:16px; margin-top:5px;">${crop.name} 生长中...</div>
-                            <div style="margin-top:10px;">
-                                <div class="bar"><div class="bar-fill bar-growth" style="width:${progress * 100}%"></div></div>
-                            </div>
-                            <div style="font-size:13px; color:#aaa; margin-top:5px;">剩余约 ${remaining} 秒</div>
-                        </div>
-                    `;
-                }
-            } else {
-                content += `
-                    <div style="font-size:13px; color:#aaa; margin-bottom:10px; text-align:center;">选择要种植的作物：</div>
-                    <div class="crop-shop">
-                        ${Object.entries(CROPS).map(([key, crop]) => {
-                            const locked = gameState.playerLevel < crop.unlockLevel;
-                            return `
-                                <div class="crop-item ${locked ? 'locked' : ''}" ${locked ? '' : `onclick="plantCrop(${idx}, '${key}')"`} title="${locked ? `需要 Lv.${crop.unlockLevel}` : ''}">
-                                    <span class="crop-icon">${crop.emoji}</span>
-                                    <div class="crop-name">${crop.name}</div>
-                                    <div class="crop-price">💰${crop.seedCost}</div>
-                                    <div class="crop-time">⏱️${crop.growTime}s</div>
-                                </div>
-                            `;
-                        }).join('')}
-                    </div>
-                `;
-            }
-
-            // 升级按钮
-            const upgradeCost = plot.level * 50;
-            const canUpgrade = gameState.coins >= upgradeCost;
+function openPlotPanel(idx) {
+    const plot = gameState.plots[idx];
+    const upgradeCost = plot.level * 30;
+    document.getElementById('panelTitle').textContent = `土地 #${idx + 1}`;
+    let content = `
+        <div style="text-align:center; margin-bottom:10px;">
+            <div style="font-size:14px; color:#4a7c59; font-weight:bold;">土地等级：Lv.${plot.level}</div>
+            <div style="font-size:11px; color:#888;">生长速度 x${plot.level} | 收获加成 +${(plot.level - 1) * 25}%</div>
+        </div>
+    `;
+    if (!plot.crop) {
+        content += `<div style="font-size:13px; color:#888; margin-bottom:10px; text-align:center;">选择种子种植：</div>
+        <div style="display:flex; flex-direction:column; gap:6px;">`;
+        Object.entries(CROP_TYPES).forEach(([key, crop]) => {
+            const seasonOk = crop.season.includes(gameState.season);
             content += `
-                <div class="upgrade-section">
-                    <div style="font-size:13px; color:#aaa; margin-bottom:8px; text-align:center;">
-                        升级土地（花费 💰${upgradeCost}）
+                <div style="display:flex; align-items:center; gap:8px; padding:8px; background:#f5f5f5; border-radius:10px;">
+                    <span style="font-size:30px;">${crop.emojis[2]}</span>
+                    <div style="flex:1;">
+                        <div style="font-weight:bold; font-size:13px;">${crop.name}</div>
+                        <div style="font-size:11px; color:#888;">🪙${crop.seedPrice} | 卖${crop.sellPrice} | ${Math.ceil(crop.growTime / 60)}分成熟</div>
+                        <div style="font-size:10px; color:${seasonOk ? '#4caf50' : '#f44336'};">季节: ${crop.season.map(s => SEASONS[s].name).join('、')}</div>
                     </div>
-                    <button class="upgrade-btn" ${canUpgrade ? '' : 'disabled'} onclick="upgradePlot(${idx})">
-                        ${canUpgrade ? '⬆️ 升级土地' : `💰 金币不足（需要${upgradeCost}）`}
-                    </button>
-                    <div style="font-size:11px; color:#888; text-align:center; margin-top:5px;">
-                        升级后：生长速度提升、收获金币增加
-                    </div>
+                    <button class="btn" style="padding:5px 12px; font-size:11px;" ${!seasonOk || gameState.coins < crop.seedPrice ? 'disabled' : ''} onclick="plantCrop('${key}', ${idx})">种植</button>
+                </div>`;
+        });
+        content += `</div>`;
+    } else {
+        const cropType = CROP_TYPES[plot.crop.type];
+        const timeNeeded = cropType.growTime / plot.level;
+        const progress = Math.min(1, plot.crop.progress / timeNeeded);
+        const isReady = plot.crop.progress >= timeNeeded;
+        content += `
+            <div style="text-align:center; padding:10px;">
+                <div style="font-size:50px;">${isReady ? cropType.emojis[2] : cropType.emojis[progress < 0.33 ? 0 : progress < 0.66 ? 1 : 2]}</div>
+                <div style="font-size:16px; font-weight:bold; margin-top:5px;">${cropType.name} ${isReady ? '（可收获！）' : '生长中...'}</div>
+                <div style="margin-top:10px;">
+                    <div class="progress-bar"><div class="progress-fill fill-green" style="width:${progress * 100}%"></div></div>
                 </div>
-            `;
-
-            document.getElementById('panelContent').innerHTML = content;
-            document.getElementById('sidePanel').classList.add('open');
+                <div style="font-size:12px; color:#888; margin-top:5px;">💧 水分 ${Math.round(plot.crop.water)}%</div>
+            </div>
+        `;
+        if (isReady) {
+            content += `<button class="btn" style="width:100%; margin-top:10px;" onclick="harvestCrop(${idx})">🌾 收获（可获得 💰${Math.floor(cropType.sellPrice * (1 + (plot.level - 1) * 0.25))}）</button>`;
+        } else {
+            content += `<button class="btn" style="width:100%; margin-top:10px;" onclick="waterCrop(${idx})">💧 浇水</button>`;
         }
+    }
+    // 升级按钮
+    const canUpgrade = gameState.coins >= upgradeCost;
+    content += `
+        <div style="margin-top:15px; padding-top:15px; border-top:2px solid #e8f5e9;">
+            <div style="font-size:13px; color:#888; margin-bottom:8px; text-align:center;">升级土地（花费 🪙${upgradeCost}）</div>
+            <button class="btn" style="width:100%; background:linear-gradient(135deg, #2196f3, #1976d2);" ${canUpgrade ? '' : 'disabled'} onclick="upgradePlot(${idx})">${canUpgrade ? '⬆️ 升级土地' : '🪙 金币不足（需要' + upgradeCost + '）'}</button>
+            <div style="font-size:11px; color:#aaa; text-align:center; margin-top:5px;">升级后：生长更快、收获更多</div>
+        </div>
+    `;
+    document.getElementById('panelContent').innerHTML = content;
+    document.getElementById('sidePanel').classList.add('open');
+}
 
-        function plantCrop(idx, cropKey) {
-            const crop = CROPS[cropKey];
-            if (gameState.coins < crop.seedCost) {
-                showNotification('💰 金币不足！');
-                return;
-            }
-            gameState.coins -= crop.seedCost;
-            gameState.plots[idx].crop = cropKey;
-            gameState.plots[idx].plantTime = Date.now();
-            gameState.plots[idx].harvestReady = false;
-            saveGame();
-            updateDisplay();
-            showNotification(`🌱 种下 ${crop.name}！`);
-            onPlotClick(idx);
-            updateFarmDisplay();
+function openPlantModal(plotIdx) {
+    const body = document.getElementById('plantModalBody'); body.innerHTML = '';
+    Object.entries(CROP_TYPES).forEach(([key, crop]) => {
+        const seasonOk = crop.season.includes(gameState.season);
+        const div = document.createElement('div');
+        div.style = 'display:flex; align-items:center; gap:10px; padding:10px; margin:5px 0; background:#f5f5f5; border-radius:10px;';
+        div.innerHTML = `
+            <span style="font-size:36px;">${crop.emojis[2]}</span>
+            <div style="flex:1;">
+                <div style="font-weight:bold;">${crop.name}</div>
+                <div style="font-size:12px; color:#888;">🪙${crop.seedPrice} | 卖${crop.sellPrice} | ${Math.ceil(crop.growTime / 60)}分成熟</div>
+                <div style="font-size:11px; color:${seasonOk ? '#4caf50' : '#f44336'};">季节: ${crop.season.map(s => SEASONS[s].name).join('、')}</div>
+            </div>
+            <button class="btn" style="padding:6px 15px; font-size:12px;" ${!seasonOk || gameState.coins < crop.seedPrice ? 'disabled' : ''} onclick="plantCrop('${key}', ${plotIdx})">种植</button>`;
+        body.appendChild(div);
+    });
+    document.getElementById('plantModal').classList.remove('hidden');
+}
+
+function plantCrop(cropKey, plotIdx) {
+    const crop = CROP_TYPES[cropKey];
+    if (gameState.coins < crop.seedPrice) { showNotification('🪙 月见币不足！'); return; }
+    if (!crop.season.includes(gameState.season)) { showNotification('⚠️ 当前季节不适合种植！'); return; }
+    gameState.coins -= crop.seedPrice;
+    gameState.plots[plotIdx].crop = { type: cropKey, progress: 0, water: 100 };
+    showNotification(`🌱 种下了 ${crop.name}！`);
+    saveGame(); updateDisplay(); renderPage();
+    openPlotPanel(plotIdx);
+}
+
+function waterCrop(plotIdx) {
+    const plot = gameState.plots[plotIdx];
+    if (!plot.crop) return;
+    plot.crop.water = Math.min(100, plot.crop.water + 40);
+    showNotification(`💧 浇水成功！`); saveGame(); renderPage();
+    openPlotPanel(plotIdx);
+}
+
+function harvestCrop(plotIdx) {
+    const plot = gameState.plots[plotIdx];
+    if (!plot.crop) return;
+    const cropType = CROP_TYPES[plot.crop.type];
+    const bonus = 1 + (plot.level - 1) * 0.25;
+    const key = plot.crop.type + '_crop';
+    const amount = 1;
+    gameState.inventory[key] = (gameState.inventory[key] || 0) + amount;
+    gameState.stats.cropsHarvested++;
+    plot.crop = null;
+    showNotification(`🌾 收获了 ${cropType.name}！（Lv.${plot.level} 加成）`); addXp(10); saveGame(); renderPage();
+    closeSidePanel();
+}
+
+function upgradePlot(plotIdx) {
+    const plot = gameState.plots[plotIdx];
+    const cost = plot.level * 30;
+    if (gameState.coins < cost) { showNotification('🪙 月见币不足！'); return; }
+    gameState.coins -= cost;
+    gameState.plots[plotIdx].level++;
+    showNotification(`⬆️ 土地 #${plotIdx + 1} 升到 Lv.${plot.level}！`); addXp(8); saveGame(); updateDisplay(); renderPage();
+    openPlotPanel(plotIdx);
+}
+
+// ========== 商店 ==========
+function renderShop(area) {
+    const title = document.createElement('div');
+    title.className = 'page-title'; title.textContent = '🏪 商店';
+    area.appendChild(title);
+
+    Object.entries(ZONES).forEach(([zoneId, zone]) => {
+        const isUnlocked = gameState.unlockedZones.includes(zoneId);
+        const zoneAnimals = Object.entries(ANIMAL_TYPES).filter(([_, t]) => t.zone === zoneId);
+        if (zoneAnimals.length === 0) return;
+        const section = document.createElement('div');
+        section.className = 'shop-section';
+        section.innerHTML = `<div class="shop-section-title">${zone.emoji} ${zone.name} ${!isUnlocked ? '(未解锁)' : ''}</div>`;
+        const grid = document.createElement('div'); grid.className = 'shop-grid';
+        zoneAnimals.forEach(([key, type]) => {
+            const zoneAnimalCount = gameState.animals.filter(a => a.zone === zoneId).length;
+            const atMax = zoneAnimalCount >= zone.max;
+            const item = document.createElement('div');
+            item.className = 'shop-item';
+            item.innerHTML = `
+                <span class="shop-emoji">${type.babyEmoji}</span>
+                <div class="shop-name">${type.name}</div>
+                <div class="shop-desc">${isUnlocked ? '成年产' + type.productName : '需解锁' + zone.name}</div>
+                <div class="shop-price">🪙 ${type.buyPrice}</div>
+                <button class="buy-btn ${!isUnlocked || atMax ? 'locked' : ''}" ${!isUnlocked || atMax ? 'disabled' : ''} onclick="buyAnimal('${key}', '${zoneId}')">${!isUnlocked ? '区域未解锁' : (atMax ? '栏位已满' : '购买')}</button>`;
+            grid.appendChild(item);
+        });
+        section.appendChild(grid); area.appendChild(section);
+    });
+}
+
+function buyAnimal(typeId, zoneId) {
+    const type = ANIMAL_TYPES[typeId];
+    if (gameState.coins < type.buyPrice) { showNotification('🪙 月见币不足！'); return; }
+    const zone = ZONES[zoneId];
+    const zoneAnimalCount = gameState.animals.filter(a => a.zone === zoneId).length;
+    if (zoneAnimalCount >= zone.max) { showNotification('⚠️ 该区域已满！'); return; }
+    gameState.coins -= type.buyPrice;
+    gameState.animals.push({
+        id: gameState.nextAnimalId++, typeId: typeId, zone: zoneId,
+        name: null, gender: Math.random() > 0.5 ? 'male' : 'female',
+        hunger: 80, happy: 60, growth: 0, level: 1,
+        productReady: false, productTimer: 0,
+        pregnant: false, pregnantTime: 0,
+        x: 10 + Math.random() * 70, y: 10 + Math.random() * 70,
+        targetX: 0, targetY: 0, behavior: 'idle', behaviorTimer: 0,
+        facing: 1, speed: 0.3 + Math.random() * 0.4,
+    });
+    showNotification(`🐾 购买了 ${type.name}！`); addXp(10); saveGame(); updateDisplay(); renderPage();
+}
+
+// ========== 仓库 ==========
+function renderInventory(area) {
+    const title = document.createElement('div');
+    title.className = 'page-title'; title.textContent = '📦 仓库';
+    area.appendChild(title);
+    const entries = Object.entries(gameState.inventory).filter(([_, count]) => count > 0);
+    if (entries.length === 0) {
+        area.innerHTML += `<div style="text-align:center;padding:50px;color:#888;"><div style="font-size:50px;">📦</div><div>仓库是空的</div></div>`;
+        return;
+    }
+    const grid = document.createElement('div'); grid.className = 'inventory-grid';
+    entries.forEach(([key, count]) => {
+        let emoji, name, price;
+        if (key.endsWith('_crop')) {
+            const cropKey = key.replace('_crop', '');
+            const crop = CROP_TYPES[cropKey];
+            if (!crop) return;
+            emoji = crop.emojis[2]; name = crop.name;
+            price = Math.floor(crop.sellPrice * SEASONS[gameState.season].cropBonus);
+        } else {
+            const animal = Object.values(ANIMAL_TYPES).find(a => a.product === key);
+            if (!animal) return;
+            emoji = animal.productEmoji; name = animal.productName; price = animal.productPrice;
         }
+        const item = document.createElement('div');
+        item.className = 'inv-item';
+        item.innerHTML = `
+            <span class="inv-count">${count}</span>
+            <span class="inv-emoji">${emoji}</span>
+            <div class="inv-name">${name}</div>
+            <div style="font-size:11px; color:#e6a817; margin-top:3px;">🪙 ${price}</div>
+            <button class="sell-btn" onclick="sellItem('${key}', ${price})">出售</button>`;
+        grid.appendChild(item);
+    });
+    area.appendChild(grid);
+    const sellAll = document.createElement('div'); sellAll.style = 'text-align:center; margin-top:15px;';
+    sellAll.innerHTML = `<button class="btn" onclick="sellAllItems()">💰 全部出售</button>`;
+    area.appendChild(sellAll);
+}
 
-        function harvestCrop(idx) {
-            const plot = gameState.plots[idx];
-            const crop = CROPS[plot.crop];
-            const bonus = 1 + (plot.level - 1) * 0.2;
-            const earn = Math.floor(crop.sellPrice * bonus);
-            gameState.coins += earn;
-            gameState.plots[idx].crop = null;
-            gameState.plots[idx].plantTime = null;
-            gameState.plots[idx].harvestReady = false;
-            saveGame();
-            updateDisplay();
-            showNotification(`🌾 收获 ${crop.name}！获得 💰${earn}`);
-            addExp(4);
-            closeSidePanel();
-            updateFarmDisplay();
+function sellItem(key, price) {
+    if (!gameState.inventory[key] || gameState.inventory[key] <= 0) return;
+    const count = gameState.inventory[key];
+    const total = price * count;
+    gameState.coins += total; gameState.stats.sold += total;
+    gameState.inventory[key] = 0;
+    showNotification(`💰 出售获得 ${total} 月见币！`); addXp(2); saveGame(); updateDisplay(); renderPage();
+}
 
-            const plotEl = document.getElementById(`plot-${idx}`);
-            if (plotEl) {
-                const rect = plotEl.getBoundingClientRect();
-                createParticles(rect.left + rect.width / 2, rect.top, ['🌾', '💰', '✨', '⭐']);
-            }
+function sellAllItems() {
+    let total = 0;
+    Object.entries(gameState.inventory).forEach(([key, count]) => {
+        if (count <= 0) return;
+        let price;
+        if (key.endsWith('_crop')) {
+            const cropKey = key.replace('_crop', '');
+            price = Math.floor(CROP_TYPES[cropKey].sellPrice * SEASONS[gameState.season].cropBonus);
+        } else {
+            const animal = Object.values(ANIMAL_TYPES).find(a => a.product === key);
+            price = animal ? animal.productPrice : 0;
         }
+        total += price * count; gameState.inventory[key] = 0;
+    });
+    if (total === 0) { showNotification('📦 没有可出售的物品！'); return; }
+    gameState.coins += total; gameState.stats.sold += total;
+    showNotification(`💰 全部出售获得 ${total} 月见币！`); addXp(5); saveGame(); updateDisplay(); renderPage();
+}
 
-        function upgradePlot(idx) {
-            const plot = gameState.plots[idx];
-            const cost = plot.level * 50;
-            if (gameState.coins < cost) {
-                showNotification('💰 金币不足！');
-                return;
-            }
-            gameState.coins -= cost;
-            gameState.plots[idx].level++;
-            saveGame();
-            updateDisplay();
-            showNotification(`⬆️ 土地 #${idx + 1} 升级到 Lv.${plot.level}！`);
-            addExp(8);
-            onPlotClick(idx);
-            updateFarmDisplay();
+// ========== 升级 ==========
+function renderUpgrade(area) {
+    const title = document.createElement('div');
+    title.className = 'page-title'; title.textContent = '🔨 扩建';
+    area.appendChild(title);
+    Object.entries(UPGRADES).forEach(([key, up]) => {
+        const current = gameState.upgrades[key];
+        const cost = getUpgradeCost(key);
+        const isMax = current >= up.max;
+        const card = document.createElement('div');
+        card.className = 'upgrade-card';
+        card.innerHTML = `
+            <div class="up-title">${up.icon} ${up.name} (Lv.${current}/${up.max})</div>
+            <div class="up-desc">${up.desc}</div>
+            ${!isMax ? `<div class="up-cost">🪙 ${cost}</div>` : '<div style="color:#4caf50;font-weight:bold;">✅ 已满级</div>'}
+            <button class="up-btn ${isMax ? 'maxed' : ''}" ${isMax || gameState.coins < cost ? 'disabled' : ''} onclick="doUpgrade('${key}')">${isMax ? '已满级' : '升级'}</button>`;
+        area.appendChild(card);
+    });
+}
+
+function doUpgrade(type) {
+    const cost = getUpgradeCost(type);
+    if (cost === null || gameState.coins < cost) return;
+    gameState.coins -= cost; gameState.upgrades[type]++;
+    if (type === 'field') gameState.plots.push({ id: gameState.plots.length, crop: null });
+    showNotification(`🔨 ${UPGRADES[type].name} 升级成功！`); addXp(15); saveGame(); updateDisplay(); renderPage();
+}
+
+// ========== 成就 ==========
+function renderAchievements(area) {
+    const title = document.createElement('div');
+    title.className = 'page-title'; title.textContent = '🏆 成就';
+    area.appendChild(title);
+    const list = document.createElement('div'); list.className = 'ach-list';
+    ACHIEVEMENTS.forEach(ach => {
+        const completed = gameState.achievements.includes(ach.id);
+        const canComplete = !completed && ach.check(gameState);
+        if (canComplete) {
+            gameState.achievements.push(ach.id); gameState.coins += ach.reward;
+            showNotification(`🏆 解锁成就：${ach.name}！奖励 ${ach.reward} 月见币`); saveGame(); updateDisplay();
         }
+        const item = document.createElement('div');
+        item.className = 'ach-item' + (completed ? ' completed' : '');
+        item.innerHTML = `
+            <span class="ach-emoji">${ach.emoji}</span>
+            <div class="ach-info">
+                <div class="ach-name">${ach.name}</div>
+                <div class="ach-desc">${ach.desc}</div>
+                <div class="ach-reward">奖励: 🪙 ${ach.reward}</div>
+            </div>
+            <span class="ach-status">${completed ? '✅' : '⬜'}</span>`;
+        list.appendChild(item);
+    });
+    area.appendChild(list);
+}
 
-        function updateFarmDisplay() {
-            if (currentPage !== 'farm') return;
-            gameState.plots.forEach((plot, idx) => {
-                const el = document.getElementById(`plot-${idx}`);
-                if (!el) return;
-                el.className = 'farm-plot' + (plot.crop ? '' : ' empty') + (plot.harvestReady ? ' ready' : '');
+// ========== 设置 ==========
+function renderSettings(area) {
+    const title = document.createElement('div');
+    title.className = 'page-title'; title.textContent = '⚙️ 设置';
+    area.appendChild(title);
+    const list = document.createElement('div'); list.className = 'settings-list';
+    list.innerHTML = `
+        <div class="settings-item">
+            <div><div class="set-label">⏸️ 暂停游戏</div><div class="set-desc">暂停时间推进和动物行为</div></div>
+            <button class="btn" onclick="togglePause()">${gameState.paused ? '▶️ 继续' : '⏸️ 暂停'}</button>
+        </div>
+        <div class="settings-item">
+            <div><div class="set-label">📊 游戏统计</div><div class="set-desc">动物: ${gameState.animals.length} | 作物收获: ${gameState.stats.cropsHarvested} | 出售: ${gameState.stats.sold} 币 | 繁殖: ${gameState.stats.bred}</div></div>
+        </div>
+        <div class="settings-item">
+            <div><div class="set-label">🔄 重新开始</div><div class="set-desc">清除所有进度，从头开始游戏</div></div>
+            <button class="danger-btn" onclick="restartGame()">重新开始</button>
+        </div>
+    `;
+    area.appendChild(list);
+}
 
-                let inner = `<div class="plot-level">Lv.${plot.level}</div>`;
-                if (plot.crop) {
-                    const crop = CROPS[plot.crop];
-                    inner += `<div class="crop-emoji">${crop.emoji}</div>`;
-                    if (!plot.harvestReady) {
-                        const elapsed = (Date.now() - plot.plantTime) / 1000;
-                        const timeNeeded = crop.growTime / plot.level;
-                        const progress = Math.min(1, elapsed / timeNeeded);
-                        inner += `<div class="crop-progress"><div class="crop-progress-fill" style="width:${progress * 100}%"></div></div>`;
-                    } else {
-                        inner += `<div style="position:absolute; top:2px; left:2px; font-size:10px;">✨</div>`;
-                    }
+// ========== 时间推进 ==========
+function gameTick() {
+    if (gameState.paused) { gameState.lastTick = Date.now(); return; }
+    const now = Date.now();
+    const elapsed = (now - gameState.lastTick) / 1000;
+    gameState.lastTick = now; gameState.gameTime += elapsed;
+
+    const newDay = Math.floor(gameState.gameTime / 60) + 1;
+    if (newDay > gameState.day) {
+        gameState.day = newDay;
+        const seasonIdx = Math.floor((gameState.day - 1) / 30) % 4;
+        const newSeason = SEASON_ORDER[seasonIdx];
+        if (newSeason !== gameState.season) {
+            gameState.season = newSeason;
+            showNotification(`${SEASONS[newSeason].emoji} 季节变换为${SEASONS[newSeason].name}了！`);
+        }
+    }
+
+    let changed = false;
+    gameState.animals.forEach(animal => {
+        const type = ANIMAL_TYPES[animal.typeId];
+        animal.hunger = Math.max(0, animal.hunger - 0.1 * elapsed);
+        animal.happy = Math.max(0, animal.happy - 0.05 * elapsed);
+        if (isAdult(animal) && !animal.productReady && animal.hunger > 50 && animal.happy > 50) {
+            animal.productTimer = (animal.productTimer || 0) + elapsed;
+            if (animal.productTimer >= 60) { animal.productReady = true; animal.productTimer = 0; }
+        }
+        if (animal.pregnant) {
+            animal.pregnantTime -= elapsed;
+            if (animal.pregnantTime <= 0) {
+                animal.pregnant = false; animal.pregnantTime = 0;
+                const zone = ZONES[animal.zone];
+                const zoneCount = gameState.animals.filter(a => a.zone === animal.zone).length;
+                if (zoneCount < zone.max) {
+                    gameState.animals.push({
+                        id: gameState.nextAnimalId++, typeId: animal.typeId, zone: animal.zone,
+                        name: null, gender: Math.random() > 0.5 ? 'male' : 'female',
+                        hunger: 80, happy: 80, growth: 0, level: 1,
+                        productReady: false, productTimer: 0, pregnant: false, pregnantTime: 0,
+                        x: animal.x + (Math.random() - 0.5) * 20, y: animal.y + (Math.random() - 0.5) * 20,
+                        targetX: 0, targetY: 0, behavior: 'idle', behaviorTimer: 0,
+                        facing: 1, speed: 0.3 + Math.random() * 0.4,
+                    });
+                    showNotification(`🎉 ${type.name} 生下了宝宝！`);
                 }
-                el.innerHTML = inner;
-            });
-
-            // 更新动物饥饿条
-            gameState.creatures.forEach(creature => {
-                const el = document.getElementById(`animal-${creature.id}`);
-                if (!el) return;
-                const hungerFill = el.querySelector('.animal-hunger-fill');
-                if (hungerFill) {
-                    const color = creature.hunger > 50 ? '#81c784' : creature.hunger > 20 ? '#ffd54f' : '#ef5350';
-                    hungerFill.style.width = creature.hunger + '%';
-                    hungerFill.style.background = color;
-                }
-            });
-        }
-
-        // ============ 检查作物成熟 ============
-        function checkCropGrowth() {
-            let changed = false;
-            gameState.plots.forEach(plot => {
-                if (plot.crop && !plot.harvestReady) {
-                    const crop = CROPS[plot.crop];
-                    const elapsed = (Date.now() - plot.plantTime) / 1000;
-                    if (elapsed >= crop.growTime / plot.level) {
-                        plot.harvestReady = true;
-                        changed = true;
-                    }
-                }
-            });
-            if (changed) {
-                saveGame();
-                updateFarmDisplay();
             }
         }
-
-        // ============ 探索 ============
-        function renderExplore(area) {
-            const title = document.createElement('div');
-            title.style.cssText = 'text-align:center; font-size:22px; color:#e0aaff; margin-bottom:15px; font-weight:bold;';
-            title.textContent = '🗺️ 探索世界';
-            area.appendChild(title);
-
-            const grid = document.createElement('div');
-            grid.className = 'explore-zones';
-
-            Object.entries(ZONES).forEach(([key, zone]) => {
-                const card = document.createElement('div');
-                card.className = 'zone-card';
-                card.innerHTML = `
-                    <div class="zone-emoji">${zone.emoji}</div>
-                    <div class="zone-name">${zone.name}</div>
-                    <div class="zone-desc">${zone.desc}</div>
-                `;
-                card.onclick = () => startExplore(key);
-                grid.appendChild(card);
-            });
-
-            area.appendChild(grid);
+        changed = true;
+    });
+    gameState.plots.forEach(plot => {
+        if (!plot.crop) return;
+        const cropType = CROP_TYPES[plot.crop.type];
+        plot.crop.water = Math.max(0, plot.crop.water - 0.05 * elapsed);
+        const timeNeeded = cropType.growTime / plot.level;
+        if (plot.crop.progress < timeNeeded && plot.crop.water > 0) {
+            const wellBonus = 1 + (gameState.upgrades.well - 1) * 0.2;
+            const seasonBonus = cropType.season.includes(gameState.season) ? 1 : 0.3;
+            plot.crop.progress += elapsed * wellBonus * seasonBonus;
         }
+        changed = true;
+    });
+    if (changed) saveGame();
+}
 
-        function startExplore(zoneKey) {
-            const area = document.getElementById('mainArea');
-            area.innerHTML = '';
+function updateDisplay() {
+    const s = SEASONS[gameState.season];
+    document.getElementById('coins').textContent = gameState.coins;
+    document.getElementById('level').textContent = gameState.level;
+    document.getElementById('season').textContent = s.name;
+    document.getElementById('seasonIcon').textContent = s.emoji;
+    document.getElementById('day').textContent = gameState.day;
+    document.getElementById('pauseBtn').textContent = gameState.paused ? '▶️' : '⏸️';
+    document.getElementById('playerNameDisplay').textContent = gameState.playerName || '小农夫';
+    const avatarBtn = document.getElementById('playerAvatarBtn');
+    if (avatarBtn) avatarBtn.textContent = gameState.playerAvatar || '👤';
+}
 
-            const anim = document.createElement('div');
-            anim.className = 'explore-animation';
-            anim.innerHTML = `
-                <div class="search-emoji">🔍</div>
-                <div style="margin-top:20px; font-size:18px;">正在${ZONES[zoneKey].name}探索中...</div>
-            `;
-            area.appendChild(anim);
-
-            setTimeout(() => exploreResult(zoneKey), 2000 + Math.random() * 1500);
-        }
-
-        function exploreResult(zoneKey) {
-            const allTypes = { ...CREATURE_TYPES };
-            const weights = { common: 60, rare: 30, legendary: 5 };
-            let pool = [];
-            Object.entries(allTypes).forEach(([id, t]) => {
-                const w = weights[t.rarity] || 10;
-                for (let i = 0; i < w; i++) pool.push([id, t]);
-            });
-
-            const [foundId, foundType] = pool[Math.floor(Math.random() * pool.length)];
-
-            const area = document.getElementById('mainArea');
-            area.innerHTML = '';
-
-            const result = document.createElement('div');
-            result.className = 'found-creature';
-            const rarityClass = `rarity-${foundType.rarity}`;
-            result.innerHTML = `
-                <div class="found-emoji">${foundType.emoji}</div>
-                <div class="found-name">发现了 ${foundType.name}！</div>
-                <div class="found-rarity ${rarityClass}">${getRarityLabel(foundType.rarity)}</div>
-                <div style="font-size:14px; color:#aaa; margin-bottom:20px;">${foundType.desc}</div>
-                <button class="btn" onclick="catchCreature('${foundId}')">捕捉它！</button>
-                <button class="btn" style="background:#555; margin-left:10px;" onclick="switchPage('explore')">放走它</button>
-            `;
-            area.appendChild(result);
-        }
-
-        function catchCreature(typeId) {
-            const type = CREATURE_TYPES[typeId];
-            const newCreature = {
-                id: gameState.nextCreatureId++,
-                typeId: typeId,
-                name: type.name,
-                hunger: 70, happy: 50, growth: 0, level: 1,
-            };
-            gameState.creatures.push(newCreature);
-            if (!gameState.discovered.includes(typeId)) {
-                gameState.discovered.push(typeId);
-                showNotification(`🎉 首次发现 ${type.name}！`);
-            } else {
-                showNotification(`✨ 捕捉成功！获得 ${type.name}`);
-            }
-            gameState.coins += 10;
-            addExp(5);
-            saveGame();
-            updateDisplay();
-            switchPage('farm');
-
-            const rect = document.getElementById('mainArea').getBoundingClientRect();
-            createParticles(rect.left + rect.width / 2, rect.top + rect.height / 2, ['✨', '💫', '🌟', '⭐']);
-        }
-
-        // ============ 图鉴 ============
-        function renderEncyclopedia(area) {
-            const title = document.createElement('div');
-            title.style.cssText = 'text-align:center; font-size:22px; color:#e0aaff; margin-bottom:15px; font-weight:bold;';
-            title.textContent = '📖 生物图鉴';
-            area.appendChild(title);
-
-            const progress = document.createElement('div');
-            progress.style.cssText = 'text-align:center; margin:10px 0; color:#81c784;';
-            const allIds = Object.keys(CREATURE_TYPES);
-            progress.innerHTML = `<span style="font-weight:bold;">${gameState.discovered.length}</span> / ${allIds.length} 种生物已发现`;
-            area.appendChild(progress);
-
-            const grid = document.createElement('div');
-            grid.className = 'encyclopedia-grid';
-
-            Object.entries(CREATURE_TYPES).forEach(([id, type]) => {
-                const unlocked = gameState.discovered.includes(id);
-                const entry = document.createElement('div');
-                entry.className = `ency-entry ${unlocked ? 'unlocked' : ''}`;
-                entry.innerHTML = `
-                    <div class="ency-emoji">${unlocked ? type.emoji : '❓'}</div>
-                    <div class="ency-name">${unlocked ? type.name : '???'}</div>
-                `;
-                grid.appendChild(entry);
-            });
-
-            area.appendChild(grid);
-        }
-
-        // ============ 角色面板 ============
-        function openCharacterPanel() {
-            renderCharacterPanel();
-            document.getElementById('charPanel').classList.add('open');
-        }
-
-        function closeCharPanel() {
-            document.getElementById('charPanel').classList.remove('open');
-        }
-
-        function renderCharacterPanel() {
-            const outfit = OUTFITS[gameState.playerOutfit] || OUTFITS.default_male;
-            const needed = gameState.playerLevel * 50;
-
-            let outfitsHtml = '';
-            Object.entries(OUTFITS).forEach(([key, o]) => {
-                if (o.gender !== gameState.playerGender) return;
-                const locked = gameState.playerLevel < o.unlockLevel;
-                const equipped = gameState.playerOutfit === key;
-                outfitsHtml += `
-                    <div class="outfit-item ${locked ? 'locked' : ''} ${equipped ? 'equipped' : ''}"
-                        ${locked ? '' : `onclick="equipOutfit('${key}')"`}
-                        title="${o.name}${locked ? ` (Lv.${o.unlockLevel} 解锁)` : ''}">
-                        ${o.emoji}
-                        ${locked ? '<span class="lock-icon">🔒</span>' : ''}
-                    </div>
-                `;
-            });
-
-            document.getElementById('charPanelContent').innerHTML = `
-                <div style="text-align:center; padding:10px 0;">
-                    <div style="font-size:80px;">${outfit.emoji}</div>
-                    <div style="font-size:18px; font-weight:bold; margin-top:5px;">${gameState.playerName}</div>
-                    <div style="font-size:14px; color:#e0aaff;">Lv.${gameState.playerLevel} ${outfit.name}</div>
-                </div>
-                <div class="stat-bar" style="margin:15px 0;">
-                    <label><span>经验值</span><span>${gameState.exp} / ${needed}</span></label>
-                    <div class="bar"><div class="bar-fill bar-growth" style="width:${(gameState.exp / needed) * 100}%"></div></div>
-                </div>
-                <div style="font-size:13px; color:#aaa; margin-bottom:10px; text-align:center;">
-                    完成任务、种植、养殖可获得经验值
-                </div>
-                <div style="margin-top:15px;">
-                    <div style="font-size:14px; font-weight:bold; color:#e0aaff; margin-bottom:10px; text-align:center;">👕 服装仓库</div>
-                    <div class="outfit-grid">${outfitsHtml}</div>
-                </div>
-            `;
-        }
-
-        function equipOutfit(key) {
-            gameState.playerOutfit = key;
-            saveGame();
-            renderCharacterPanel();
-            updateDisplay();
-            showNotification(`👕 换上了 ${OUTFITS[key].name}！`);
-        }
-
-        // ============ 面板控制 ============
-        function closeSidePanel() {
-            document.getElementById('sidePanel').classList.remove('open');
-            selectedAnimalId = null;
-            selectedPlotIdx = null;
-        }
-
-        // ============ 显示更新 ============
-        function updateDisplay() {
-            const s = SEASONS[gameState.season];
-            document.getElementById('seasonDisplay').textContent = `${s.emoji} ${s.name}`;
-            document.getElementById('coinsDisplay').textContent = gameState.coins;
-            document.getElementById('expDisplay').textContent = gameState.exp;
-            document.getElementById('playerLevel').textContent = gameState.playerLevel;
-            document.getElementById('playerNameDisplay').textContent = gameState.playerName;
-
-            const outfit = OUTFITS[gameState.playerOutfit] || OUTFITS.default_male;
-            document.getElementById('playerAvatarBtn').textContent = outfit.emoji;
-        }
-
-        // ============ 季节更新 ============
-        function updateSeason() {
-            const now = new Date();
-            const month = now.getMonth() + 1;
-            let season = 'spring';
-            if (month >= 6 && month <= 8) season = 'summer';
-            else if (month >= 9 && month <= 11) season = 'autumn';
-            else if (month === 12 || month <= 2) season = 'winter';
-
-            if (gameState.season !== season) {
-                gameState.season = season;
-                showNotification(`${SEASONS[season].emoji} 季节变换为${SEASONS[season].name}了！`);
-            }
-        }
-
-        // ============ 时间衰减 ============
-        function tick() {
-            if (!gameState.creatures.length) return;
-            let changed = false;
-            gameState.creatures.forEach(c => {
-                c.hunger = Math.max(0, c.hunger - 0.5);
-                c.happy = Math.max(0, c.happy - 0.3);
-                changed = true;
-            });
-            if (changed) {
-                saveGame();
-                updateFarmDisplay();
-            }
-        }
-
-        // ============ 星空背景 ============
-        function createStars() {
-            const container = document.getElementById('stars');
-            for (let i = 0; i < 80; i++) {
-                const star = document.createElement('div');
-                star.className = 'star';
-                star.style.left = Math.random() * 100 + '%';
-                star.style.top = Math.random() * 100 + '%';
-                star.style.width = Math.random() * 3 + 1 + 'px';
-                star.style.height = star.style.width;
-                star.style.animationDelay = Math.random() * 2 + 's';
-                container.appendChild(star);
-            }
-        }
-
-        // ============ 初始化 ============
-        function init() {
-            createStars();
-            updateSeason();
-
-            if (gameState.firstTime || !gameState.playerGender) {
-                renderCharacterSelect();
-            } else {
-                document.getElementById('topBar').style.display = 'flex';
-                document.getElementById('bottomNav').style.display = 'flex';
-                updateDisplay();
-                switchPage('farm');
-            }
-
-            // 定时器
-            setInterval(tick, 30000);
-            setInterval(updateSeason, 60000);
-            setInterval(checkCropGrowth, 1000);
-        }
-
-        init();
-    </script>
+function init() {
+    gameState.lastTick = Date.now();
+    updateDisplay();
+    if (!gameState.playerGender) {
+        renderCharacterSelect();
+    } else {
+        renderPage();
+    }
+    setInterval(() => { gameTick(); updateDisplay(); if (currentPage === 'field') renderPage(); }, 1000);
+    setInterval(() => { if (gameState.paused) return; updateAnimalBehavior(); updateAnimalPositions(); }, 500);
+    setInterval(() => { if (currentPage === 'achievements') renderPage(); }, 5000);
+}
+init();
+</script>
 </body>
 </html>

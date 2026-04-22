@@ -934,30 +934,48 @@ function handleFileSelect(e, type) {
 
 // CSV编码检测：尝试多种编码，返回最可能正确的文本
 function decodeCsvText(data) {
-    const encodings = ['utf-8', 'gbk', 'big5'];
     const candidates = [];
     const chineseKeywords = ['日期', '金额', '银行', '存入', '支出', '结余', '详情', '交易', '货币', '账户'];
 
-    for (const enc of encodings) {
+    // 检测是否有UTF-8 BOM
+    const hasBom = data.length >= 3 && data[0] === 0xEF && data[1] === 0xBB && data[2] === 0xBF;
+    const dataWithoutBom = hasBom ? data.slice(3) : data;
+
+    const encodings = [
+        { name: 'utf-8', data: dataWithoutBom },
+        { name: 'gb18030', data: data }, // gb18030兼容gbk
+        { name: 'big5', data: data },
+    ];
+
+    for (const { name, data: encData } of encodings) {
         try {
-            const text = new TextDecoder(enc, { fatal: true }).decode(data);
-            // 统计匹配的中文关键词数量
+            const decoder = new TextDecoder(name, { fatal: true });
+            const text = decoder.decode(encData);
+
             let score = 0;
             for (const kw of chineseKeywords) {
-                if (text.includes(kw)) score += 10;
+                if (text.includes(kw)) score += 100;
             }
-            // 惩罚替换字符和明显乱码
+
+            // 惩罚替换字符
             const replacementCount = (text.match(/�/g) || []).length;
-            const mojibakeCount = (text.match(/[ÃÂÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþÿ]/g) || []).length;
-            score -= replacementCount * 5 + mojibakeCount * 2;
-            candidates.push({ text, score });
+            score -= replacementCount * 50;
+
+            // 惩罚西欧乱码字符（GBK被误读为Latin-1的典型特征）
+            const latinMojibake = (text.match(/[ÃÂÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþÿ]/g) || []).length;
+            score -= latinMojibake * 10;
+
+            // utf-8有BOM时加分
+            if (name === 'utf-8' && hasBom) score += 50;
+
+            candidates.push({ text, score, name });
         } catch (e) {
-            // fatal解码失败，编码不匹配
-            candidates.push({ text: '', score: -9999 });
+            candidates.push({ text: '', score: -99999, name });
         }
     }
 
     candidates.sort((a, b) => b.score - a.score);
+    console.log('[decodeCsvText] encoding candidates:', candidates.map(c => ({ name: c.name, score: c.score, preview: c.text.slice(0, 50) })));
     return candidates[0].text;
 }
 

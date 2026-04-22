@@ -377,14 +377,201 @@
         }
         @keyframes notifIn { 0% { transform: translateX(-50%) translateY(-20px); opacity: 0; } 100% { transform: translateX(-50%) translateY(0); opacity: 1; } }
 
-        /* 人物形象 */
-        .player-avatar {
-            width: 36px; height: 36px; border-radius: 50%;
-            background: #e8f5e9; border: 2px solid #81c784;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 20px; cursor: pointer; transition: all 0.2s;
+        /* ====== CSS 卡通角色系统 ====== */
+        .css-avatar {
+            position: relative;
+            width: 70px; height: 90px;
+            margin: 0 auto;
+            --skin: #fce4d6;
+            --hair: #2c1a0b;
         }
-        .player-avatar:hover { transform: scale(1.1); box-shadow: 0 0 8px rgba(129,199,132,0.5); }
+        /* 头部 */
+        .avatar-head {
+            width: 44px; height: 42px;
+            border-radius: 50%;
+            background: var(--skin);
+            position: absolute; top: 0; left: 13px;
+            z-index: 3;
+            box-shadow: inset -2px -2px 6px rgba(0,0,0,0.08);
+        }
+        /* 脸 */
+        .avatar-face {
+            position: absolute;
+            top: 12px; left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+        }
+        .avatar-eyes {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+        .avatar-eyes span {
+            width: 5px; height: 7px;
+            background: #333;
+            border-radius: 50%;
+            display: block;
+            position: relative;
+        }
+        .avatar-eyes span::after {
+            content: ''; position: absolute;
+            top: 1px; left: 1px;
+            width: 2px; height: 2px;
+            background: white; border-radius: 50%;
+        }
+        .avatar-blush {
+            display: flex;
+            justify-content: center;
+            gap: 18px;
+            margin-top: 2px;
+        }
+        .avatar-blush span {
+            width: 7px; height: 4px;
+            background: rgba(255, 138, 138, 0.35);
+            border-radius: 50%;
+            display: block;
+        }
+        .avatar-mouth {
+            width: 10px; height: 5px;
+            border-bottom: 2px solid #d4837a;
+            border-radius: 0 0 10px 10px;
+            margin: 2px auto 0;
+        }
+        /* 头发 - 男生短发 */
+        .avatar-hair.male {
+            position: absolute; top: -3px; left: 11px;
+            width: 48px; height: 24px;
+            background: var(--hair);
+            border-radius: 50% 50% 30% 30%;
+            z-index: 4;
+        }
+        .avatar-hair.male::after {
+            content: ''; position: absolute;
+            bottom: -4px; left: 4px;
+            width: 40px; height: 14px;
+            background: var(--hair);
+            border-radius: 0 0 40% 40%;
+        }
+        /* 头发 - 女生长发 */
+        .avatar-hair.female {
+            position: absolute; top: -4px; left: 9px;
+            width: 52px; height: 28px;
+            background: var(--hair);
+            border-radius: 50% 50% 40% 40%;
+            z-index: 4;
+        }
+        .avatar-hair.female::before {
+            content: ''; position: absolute;
+            top: 18px; left: -2px;
+            width: 16px; height: 42px;
+            background: var(--hair);
+            border-radius: 50% 0 0 50%;
+        }
+        .avatar-hair.female::after {
+            content: ''; position: absolute;
+            top: 18px; right: -2px;
+            width: 16px; height: 42px;
+            background: var(--hair);
+            border-radius: 0 50% 50% 0;
+        }
+        /* 身体 */
+        .avatar-body {
+            position: absolute; bottom: 0; left: 18px;
+            width: 34px; height: 48px;
+            z-index: 2;
+        }
+        .avatar-neck {
+            position: absolute; top: 0; left: 50%;
+            transform: translateX(-50%);
+            width: 10px; height: 8px;
+            background: var(--skin);
+        }
+        /* 衣服 - 默认 */
+        .avatar-clothes {
+            position: absolute; bottom: 0; left: 0;
+            width: 100%; height: 42px;
+            border-radius: 40% 40% 0 0;
+        }
+        .avatar-clothes.default.male { background: #64b5f6; }
+        .avatar-clothes.default.female { background: #f48fb1; border-radius: 50% 50% 20% 20%; height: 45px; }
+        /* 农夫装 */
+        .avatar-clothes.farmer { background: #8d6e63; }
+        .avatar-clothes.farmer::before {
+            content: ''; position: absolute;
+            top: 8px; left: 50%; transform: translateX(-50%);
+            width: 16px; height: 22px;
+            background: #a1887f; border-radius: 3px;
+        }
+        .avatar-clothes.farmer.female { background: #a1887f; border-radius: 50% 50% 20% 20%; height: 45px; }
+        /* 牛仔装 */
+        .avatar-clothes.cowboy { background: #5c6bc0; }
+        .avatar-clothes.cowboy::before {
+            content: ''; position: absolute;
+            top: 18px; left: 50%; transform: translateX(-50%);
+            width: 10px; height: 10px;
+            background: #ffd54f; border-radius: 50%;
+            border: 2px solid #fff;
+        }
+        .avatar-clothes.cowboy.female { background: #7986cb; border-radius: 50% 50% 20% 20%; height: 45px; }
+        /* 贵族装 */
+        .avatar-clothes.royal { background: #ce93d8; }
+        .avatar-clothes.royal.male { background: #7986cb; }
+        .avatar-clothes.royal::before {
+            content: ''; position: absolute;
+            top: -6px; left: 50%; transform: translateX(-50%);
+            width: 24px; height: 12px;
+            background: #ffd700; border-radius: 50% 50% 0 0;
+        }
+        .avatar-clothes.royal.female { background: #ba68c8; border-radius: 50% 50% 20% 20%; height: 45px; }
+        /* 魔法装 */
+        .avatar-clothes.magic { background: #9575cd; }
+        .avatar-clothes.magic.female { background: #ba68c8; border-radius: 50% 50% 20% 20%; height: 45px; }
+        .avatar-clothes.magic::before {
+            content: ''; position: absolute;
+            top: -4px; left: -3px;
+            width: 40px; height: 8px;
+            background: rgba(255,255,255,0.25); border-radius: 50%;
+        }
+        /* 王室装 */
+        .avatar-clothes.king { background: #d4af37; }
+        .avatar-clothes.king::before {
+            content: ''; position: absolute;
+            top: -10px; left: 50%; transform: translateX(-50%);
+            width: 0; height: 0;
+            border-left: 14px solid transparent;
+            border-right: 14px solid transparent;
+            border-bottom: 14px solid #ffd700;
+        }
+        .avatar-clothes.king.female { background: #e8c547; border-radius: 50% 50% 20% 20%; height: 45px; }
+
+        /* 小头像（顶部栏） */
+        .css-avatar.tiny {
+            width: 36px; height: 44px;
+            transform: scale(0.52);
+            transform-origin: top left;
+        }
+
+        /* 颜色选择器 */
+        .color-picker {
+            display: flex; justify-content: center; gap: 12px; margin: 15px 0;
+        }
+        .color-option {
+            width: 36px; height: 36px; border-radius: 50%;
+            border: 3px solid transparent; cursor: pointer;
+            transition: all 0.2s; position: relative;
+        }
+        .color-option:hover { transform: scale(1.15); }
+        .color-option.selected { border-color: #4caf50; box-shadow: 0 0 0 3px rgba(76,175,80,0.2); }
+
+        /* 人物形象 */
+        .player-avatar-btn {
+            width: 38px; height: 38px; border-radius: 50%;
+            background: #f1f8e9; border: 2px solid #81c784;
+            cursor: pointer; transition: all 0.2s;
+            overflow: hidden; position: relative;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .player-avatar-btn:hover { transform: scale(1.1); box-shadow: 0 0 8px rgba(129,199,132,0.5); }
 
         /* 侧边操作面板 */
         .side-panel {
@@ -480,7 +667,7 @@
         <div class="top-bar">
             <div style="display:flex; align-items:center; gap:8px;"
             >
-                <div class="player-avatar" id="playerAvatarBtn" onclick="openCharacterPanel()" title="我的角色">👤</div>
+                <div class="player-avatar-btn" id="playerAvatarBtn" onclick="openCharacterPanel()" title="我的角色"></div>
                 <div>
                     <div id="playerNameDisplay" style="font-size:13px; font-weight:bold;">小农夫</div>
                     <div style="font-size:11px; color:#4a7c59;">Lv.<span id="level">1</span></div>
@@ -631,19 +818,28 @@ const ACHIEVEMENTS = [
     { id: 'unlock_all_zones', name: '农场扩张', desc: '解锁所有区域', emoji: '🏗️', reward: 500, check: (s) => s.unlockedZones.length >= Object.keys(ZONES).length },
 ];
 
+const SKIN_COLORS = [
+    { value: '#fce4d6', name: '象牙白' },
+    { value: '#f5d0a9', name: '自然肤' },
+    { value: '#e8b89a', name: '小麦肤' },
+    { value: '#d4a574', name: '古铜肤' },
+];
+
+const HAIR_COLORS = [
+    { value: '#2c1a0b', name: '乌黑' },
+    { value: '#6b4423', name: '棕色' },
+    { value: '#d4a843', name: '金色' },
+    { value: '#8b4513', name: '深褐' },
+    { value: '#c41e3a', name: '红色' },
+];
+
 const OUTFITS = {
-    default_male: { emoji: '👦', name: '默认男装', unlockLevel: 1, gender: 'male' },
-    default_female: { emoji: '👧', name: '默认女装', unlockLevel: 1, gender: 'female' },
-    farmer_male: { emoji: '👨‍🌾', name: '农夫装', unlockLevel: 3, gender: 'male' },
-    farmer_female: { emoji: '👩‍🌾', name: '农妇装', unlockLevel: 3, gender: 'female' },
-    cowboy_male: { emoji: '🤠', name: '牛仔装', unlockLevel: 5, gender: 'male' },
-    girl_bow: { emoji: '👧🎀', name: '蝴蝶结装', unlockLevel: 5, gender: 'female' },
-    prince_male: { emoji: '🤴', name: '王子装', unlockLevel: 8, gender: 'male' },
-    princess_female: { emoji: '👸', name: '公主装', unlockLevel: 8, gender: 'female' },
-    wizard_male: { emoji: '🧙‍♂️', name: '法师装', unlockLevel: 12, gender: 'male' },
-    fairy_female: { emoji: '🧚‍♀️', name: '仙子装', unlockLevel: 12, gender: 'female' },
-    king_male: { emoji: '👑', name: '国王装', unlockLevel: 15, gender: 'male' },
-    queen_female: { emoji: '👸✨', name: '女王装', unlockLevel: 15, gender: 'female' },
+    default: { name: '默认服装', unlockLevel: 1, class: 'default' },
+    farmer: { name: '农夫装', unlockLevel: 3, class: 'farmer' },
+    cowboy: { name: '牛仔装', unlockLevel: 5, class: 'cowboy' },
+    royal: { name: '贵族装', unlockLevel: 8, class: 'royal' },
+    magic: { name: '魔法装', unlockLevel: 12, class: 'magic' },
+    king: { name: '王室装', unlockLevel: 15, class: 'king' },
 };
 
 let gameState = loadGame();
@@ -663,7 +859,8 @@ function getInitialState() {
         playerGender: null,
         playerName: '小农夫',
         playerOutfit: null,
-        playerAvatar: '👤',
+        playerSkinColor: '#fce4d6',
+        playerHairColor: '#2c1a0b',
         inventory: {}, upgrades: { field: 4, well: 1 },
         achievements: [], unlockedZones: ['chicken_coop', 'pet_house'],
         stats: { cropsHarvested: 0, sold: 0, bred: 0, fed: 0 },
@@ -684,7 +881,20 @@ function loadGame() {
             if (!data.playerGender) data.playerGender = null;
             if (!data.playerName) data.playerName = '小农夫';
             if (!data.playerOutfit) data.playerOutfit = null;
-            if (!data.playerAvatar) data.playerAvatar = '👤';
+            // 兼容旧存档：旧版服装 key 转换为新版
+            if (data.playerOutfit && !OUTFITS[data.playerOutfit]) {
+                const oldToNew = {
+                    'default_male': 'default', 'default_female': 'default',
+                    'farmer_male': 'farmer', 'farmer_female': 'farmer',
+                    'cowboy_male': 'cowboy', 'girl_bow': 'cowboy',
+                    'prince_male': 'royal', 'princess_female': 'royal',
+                    'wizard_male': 'magic', 'fairy_female': 'magic',
+                    'king_male': 'king', 'queen_female': 'king',
+                };
+                data.playerOutfit = oldToNew[data.playerOutfit] || 'default';
+            }
+            if (!data.playerSkinColor) data.playerSkinColor = '#fce4d6';
+            if (!data.playerHairColor) data.playerHairColor = '#2c1a0b';
             data.animals.forEach(a => {
                 if (!a.zone) a.zone = ANIMAL_TYPES[a.typeId]?.zone || 'chicken_coop';
                 if (!a.gender) a.gender = Math.random() > 0.5 ? 'male' : 'female';
@@ -1086,48 +1296,117 @@ function closeSidePanel() { document.getElementById('sidePanel').classList.remov
 function closeAnimalPanel() { document.getElementById('animalSidePanel').classList.remove('open'); currentPanelAnimalId = null; }
 
 // ========== 人物形象系统 ==========
+function getAvatarHTML(gender, skinColor, hairColor, outfitClass, size) {
+    const sz = size || '';
+    return `
+        <div class="css-avatar ${sz}" style="--skin:${skinColor};--hair:${hairColor};">
+            <div class="avatar-hair ${gender}"></div>
+            <div class="avatar-head">
+                <div class="avatar-face">
+                    <div class="avatar-eyes"><span></span><span></span></div>
+                    <div class="avatar-blush"><span></span><span></span></div>
+                    <div class="avatar-mouth"></div>
+                </div>
+            </div>
+            <div class="avatar-body">
+                <div class="avatar-neck"></div>
+                <div class="avatar-clothes ${outfitClass || 'default'} ${gender}"></div>
+            </div>
+        </div>
+    `;
+}
+
+function updateAvatarPreview() {
+    const gender = gameState.playerGender || 'male';
+    const skin = gameState.playerSkinColor || '#fce4d6';
+    const hair = gameState.playerHairColor || '#2c1a0b';
+    const preview = document.getElementById('avatarPreview');
+    if (preview) preview.innerHTML = getAvatarHTML(gender, skin, hair, 'default');
+}
+
 function renderCharacterSelect() {
     const area = document.getElementById('mainArea');
     area.innerHTML = `
         <div class="character-select">
             <h2>🌾 欢迎来到乡村农场</h2>
-            <div style="color:#888; margin-bottom:25px;">选择你的角色开始农场生活吧！</div>
+            <div style="color:#888; margin-bottom:20px;">创建你的农场角色</div>
             <div class="gender-select">
                 <div class="gender-option" id="genderMale" onclick="selectGender('male')">
-                    <span class="big-emoji">👦</span>
+                    <div id="previewMale" style="margin-bottom:8px;"
+3e${getAvatarHTML('male', '#fce4d6', '#2c1a0b', 'default')}</div>
                     <span class="label">男生</span>
                 </div>
                 <div class="gender-option" id="genderFemale" onclick="selectGender('female')">
-                    <span class="big-emoji">👧</span>
+                    <div id="previewFemale" style="margin-bottom:8px;">${getAvatarHTML('female', '#fce4d6', '#2c1a0b', 'default')}</div>
                     <span class="label">女生</span>
                 </div>
             </div>
-            <div id="nameInputArea" style="display:none; margin-bottom:20px;">
-                <div style="margin-bottom:10px; color:#888;">给你的角色起个名字：</div>
-                <input type="text" id="playerNameInput" maxlength="8" value="小农夫"
-                    style="padding:10px 20px; border-radius:12px; border:2px solid #c8e6c9;
-                    background:#f1f8e9; color:#333; font-size:16px; text-align:center;
-                    outline:none; width:200px;">
+            <div id="customizeArea" style="display:none;">
+                <div style="margin:20px 0;">
+                    <div style="font-size:13px; color:#888; margin-bottom:10px;">选择肤色：</div>
+                    <div class="color-picker" id="skinPicker"></div>
+                </div>
+                <div style="margin:20px 0;">
+                    <div style="font-size:13px; color:#888; margin-bottom:10px;">选择发色：</div>
+                    <div class="color-picker" id="hairPicker"></div>
+                </div>
+                <div id="avatarPreviewBox" style="padding:15px; background:#f1f8e9; border-radius:15px; margin:15px auto; max-width:200px;">
+                    <div id="avatarPreview"></div>
+                </div>
+                <div style="margin-bottom:15px;">
+                    <div style="margin-bottom:8px; color:#888;">给你的角色起个名字：</div>
+                    <input type="text" id="playerNameInput" maxlength="8" value="小农夫"
+                        style="padding:10px 20px; border-radius:12px; border:2px solid #c8e6c9;
+                        background:#f1f8e9; color:#333; font-size:16px; text-align:center;
+                        outline:none; width:200px;">
+                </div>
+                <button class="btn" id="startBtn" onclick="startGame()">开始游戏</button>
             </div>
-            <button class="btn" id="startBtn" style="display:none;" onclick="startGame()">开始游戏</button>
         </div>
     `;
+    // 填充颜色选择器
+    const skinPicker = document.getElementById('skinPicker');
+    SKIN_COLORS.forEach((c, i) => {
+        const div = document.createElement('div');
+        div.className = 'color-option' + (i === 0 ? ' selected' : '');
+        div.style.background = c.value;
+        div.title = c.name;
+        div.onclick = () => {
+            gameState.playerSkinColor = c.value;
+            document.querySelectorAll('#skinPicker .color-option').forEach(el => el.classList.remove('selected'));
+            div.classList.add('selected');
+            updateAvatarPreview();
+        };
+        skinPicker.appendChild(div);
+    });
+    const hairPicker = document.getElementById('hairPicker');
+    HAIR_COLORS.forEach((c, i) => {
+        const div = document.createElement('div');
+        div.className = 'color-option' + (i === 0 ? ' selected' : '');
+        div.style.background = c.value;
+        div.title = c.name;
+        div.onclick = () => {
+            gameState.playerHairColor = c.value;
+            document.querySelectorAll('#hairPicker .color-option').forEach(el => el.classList.remove('selected'));
+            div.classList.add('selected');
+            updateAvatarPreview();
+        };
+        hairPicker.appendChild(div);
+    });
 }
 
 function selectGender(gender) {
     gameState.playerGender = gender;
     document.querySelectorAll('.gender-option').forEach(el => el.classList.remove('selected'));
     document.getElementById(gender === 'male' ? 'genderMale' : 'genderFemale').classList.add('selected');
-    document.getElementById('nameInputArea').style.display = 'block';
-    document.getElementById('startBtn').style.display = 'inline-block';
+    document.getElementById('customizeArea').style.display = 'block';
+    updateAvatarPreview();
 }
 
 function startGame() {
     const name = document.getElementById('playerNameInput').value.trim();
     if (name) gameState.playerName = name;
-    gameState.playerOutfit = gameState.playerGender === 'male' ? 'default_male' : 'default_female';
-    const outfit = OUTFITS[gameState.playerOutfit];
-    gameState.playerAvatar = outfit.emoji;
+    gameState.playerOutfit = 'default';
     saveGame();
     updateDisplay();
     switchPage('farm');
@@ -1144,20 +1423,25 @@ function closeCharacterPanel() {
 }
 
 function renderCharacterPanel() {
-    const outfit = OUTFITS[gameState.playerOutfit] || OUTFITS.default_male;
+    const outfit = OUTFITS[gameState.playerOutfit] || OUTFITS.default;
     const needed = gameState.xpNeeded;
+    const gender = gameState.playerGender || 'male';
+    const skin = gameState.playerSkinColor || '#fce4d6';
+    const hair = gameState.playerHairColor || '#2c1a0b';
 
     let outfitsHtml = '';
     Object.entries(OUTFITS).forEach(([key, o]) => {
-        if (o.gender !== gameState.playerGender) return;
         const locked = gameState.level < o.unlockLevel;
         const equipped = gameState.playerOutfit === key;
+        const outfitClass = o.class;
         outfitsHtml += `
             <div class="outfit-item ${locked ? 'locked' : ''} ${equipped ? 'equipped' : ''}"
                 ${locked ? '' : `onclick="equipOutfit('${key}')"`}
                 title="${o.name}${locked ? ` (Lv.${o.unlockLevel} 解锁)` : ''}"
+                style="padding:4px;"
             >
-                ${o.emoji}
+                <div style="transform:scale(0.45); transform-origin:center;">${getAvatarHTML(gender, skin, hair, outfitClass)}</div>
+                <div style="font-size:9px; margin-top:-8px; color:#666;">${o.name}</div>
                 ${locked ? '<span class="lock-icon">🔒</span>' : ''}
             </div>
         `;
@@ -1165,7 +1449,7 @@ function renderCharacterPanel() {
 
     document.getElementById('charPanelBody').innerHTML = `
         <div style="text-align:center; padding:10px 0;">
-            <div style="font-size:70px;">${outfit.emoji}</div>
+            <div style="display:flex; justify-content:center; padding:10px 0;">${getAvatarHTML(gender, skin, hair, outfit.class)}</div>
             <div style="font-size:18px; font-weight:bold; margin-top:5px;">${gameState.playerName}</div>
             <div style="font-size:14px; color:#4a7c59;">Lv.${gameState.level} ${outfit.name}</div>
         </div>
@@ -1187,7 +1471,6 @@ function renderCharacterPanel() {
 
 function equipOutfit(key) {
     gameState.playerOutfit = key;
-    gameState.playerAvatar = OUTFITS[key].emoji;
     saveGame();
     renderCharacterPanel();
     updateDisplay();
@@ -1705,7 +1988,13 @@ function updateDisplay() {
     document.getElementById('pauseBtn').textContent = gameState.paused ? '▶️' : '⏸️';
     document.getElementById('playerNameDisplay').textContent = gameState.playerName || '小农夫';
     const avatarBtn = document.getElementById('playerAvatarBtn');
-    if (avatarBtn) avatarBtn.textContent = gameState.playerAvatar || '👤';
+    if (avatarBtn) {
+        const gender = gameState.playerGender || 'male';
+        const skin = gameState.playerSkinColor || '#fce4d6';
+        const hair = gameState.playerHairColor || '#2c1a0b';
+        const outfit = OUTFITS[gameState.playerOutfit] || OUTFITS.default;
+        avatarBtn.innerHTML = getAvatarHTML(gender, skin, hair, outfit.class, 'tiny');
+    }
 }
 
 function init() {

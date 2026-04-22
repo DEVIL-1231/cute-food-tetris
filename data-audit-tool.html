@@ -675,10 +675,10 @@ const PLATFORM_CONFIGS = {
         filter: (row) => parseAmount(row['操作金额']) !== 0,
     },
     'BING': {
-        keywords: ['状态', '类型', '发生金额', 'Number', 'XID', '当前余额', '充值后金额', '操作人', '操作时间'],
+        keywords: ['状态', '类型', '发生金额', 'XID', '当前余额', '充值后金额', '操作人', '操作时间'],
         dateCol: ['操作时间'],
         amountCol: ['发生金额'],
-        accountCol: ['Number'],
+        accountCol: ['XID', 'Number'],
         currencyCol: ['币种'],
         filter: (row) => parseAmount(row['发生金额']) !== 0,
     },
@@ -935,12 +935,7 @@ function detectBankType(headers, filename) {
 }
 
 function detectPlatformType(headers, filename) {
-    const headerStr = headers.join(' ');
-    for (const [platform, config] of Object.entries(PLATFORM_CONFIGS)) {
-        const matchCount = config.keywords.filter(k => headerStr.includes(k)).length;
-        if (matchCount >= 3) return platform;
-    }
-    // 根据文件名检测
+    // 先根据文件名检测（通常更准确）
     const lower = filename.toLowerCase();
     if (lower.includes('yg') || lower.includes('引力')) return 'YG';
     if (lower.includes('td') && lower.includes('减')) return 'TD减款';
@@ -949,6 +944,21 @@ function detectPlatformType(headers, filename) {
     if (lower.includes('bing')) return 'BING';
     if (lower.includes('gg') || lower.includes('google')) return 'GG';
     if (lower.includes('pin') || lower.includes('pinterest')) return 'PIN';
+
+    // 文件名无法确定时，再用header检测（提高门槛避免误匹配）
+    const headerStr = headers.join(' ');
+    let bestMatch = null;
+    let bestCount = 0;
+    for (const [platform, config] of Object.entries(PLATFORM_CONFIGS)) {
+        const matchCount = config.keywords.filter(k => headerStr.includes(k)).length;
+        // 根据keyword数量动态门槛：至少匹配一半以上，且不少于4个
+        const threshold = Math.max(4, Math.floor(config.keywords.length / 2));
+        if (matchCount >= threshold && matchCount > bestCount) {
+            bestCount = matchCount;
+            bestMatch = platform;
+        }
+    }
+    if (bestMatch) return bestMatch;
     return 'YG'; // 默认
 }
 
@@ -1241,8 +1251,8 @@ function buildMappingUI() {
         const currDetected = findBestMatch(headers, bankConfig.currencyCol);
         html += `<div class="mapping-row">
             <label>币种列</label>
-            <select id="bank_currency_${idx}">${buildOptions(headers, currDetected)}</select>
-            ${currDetected ? '<span class="auto-detected">✓ 自动识别</span>' : '<span class="manual">可选</span>'}
+            <select id="bank_currency_${idx}">${buildCurrencyOptions(headers, currDetected)}</select>
+            ${currDetected ? '<span class="auto-detected">✓ 自动识别</span>' : '<span class="manual">可选（或选固定币种）</span>'}
         </div>`;
 
         // 预览
@@ -1283,10 +1293,13 @@ function buildMappingUI() {
 
         mappings.forEach(m => {
             const detected = findBestMatch(headers, m.keys);
+            const isCurrency = m.id.includes('currency');
+            const optionsHtml = isCurrency ? buildCurrencyOptions(headers, detected) : buildOptions(headers, detected);
+            const manualLabel = isCurrency ? '可选（或选固定币种）' : '⚠ 请手动选择';
             html += `<div class="mapping-row">
                 <label>${m.label}</label>
-                <select id="${m.id}">${buildOptions(headers, detected)}</select>
-                ${detected ? '<span class="auto-detected">✓ 自动识别</span>' : '<span class="manual">⚠ 请手动选择</span>'}
+                <select id="${m.id}">${optionsHtml}</select>
+                ${detected ? '<span class="auto-detected">✓ 自动识别</span>' : `<span class="manual">${manualLabel}</span>`}
             </div>`;
         });
 
@@ -1326,10 +1339,13 @@ function buildMappingUI() {
 
         mappings.forEach(m => {
             const detected = findBestMatch(headers, m.keys);
+            const isCurrency = m.id.includes('currency');
+            const optionsHtml = isCurrency ? buildCurrencyOptions(headers, detected) : buildOptions(headers, detected);
+            const manualLabel = isCurrency ? '可选（或选固定币种）' : '⚠ 请手动选择';
             html += `<div class="mapping-row">
                 <label>${m.label}</label>
-                <select id="${m.id}">${buildOptions(headers, detected)}</select>
-                ${detected ? '<span class="auto-detected">✓ 自动识别</span>' : '<span class="manual">⚠ 请手动选择</span>'}
+                <select id="${m.id}">${optionsHtml}</select>
+                ${detected ? '<span class="auto-detected">✓ 自动识别</span>' : `<span class="manual">${manualLabel}</span>`}
             </div>`;
         });
 
@@ -1379,8 +1395,8 @@ function buildMappingUI() {
         const currDetected = findBestMatch(headers, platConfig.currencyCol);
         html += `<div class="mapping-row">
             <label>币种列</label>
-            <select id="plat_currency_${idx}">${buildOptions(headers, currDetected)}</select>
-            ${currDetected ? '<span class="auto-detected">✓ 自动识别</span>' : '<span class="manual">可选</span>'}
+            <select id="plat_currency_${idx}">${buildCurrencyOptions(headers, currDetected)}</select>
+            ${currDetected ? '<span class="auto-detected">✓ 自动识别</span>' : '<span class="manual">可选（或选固定币种）</span>'}
         </div>`;
 
         // 账户列
@@ -1441,6 +1457,25 @@ function buildOptions(headers, selected) {
         html += `<option value="${h}" ${sel}>${h}</option>`;
     });
     return html;
+}
+
+function buildCurrencyOptions(headers, selected) {
+    let html = buildOptions(headers, selected);
+    html += '<optgroup label="固定币种">';
+    const fixedCurrencies = ['USD', 'CNY', 'HKD', 'GBP', 'EUR', 'JPY'];
+    fixedCurrencies.forEach(c => {
+        html += `<option value="[FIXED:${c}]" style="color:#1565c0;">${c}（固定）</option>`;
+    });
+    html += '</optgroup>';
+    return html;
+}
+
+function resolveCurrency(rawValue, mappingCurrencyCol, fallback) {
+    if (!mappingCurrencyCol) return fallback || '';
+    if (mappingCurrencyCol.startsWith('[FIXED:')) {
+        return mappingCurrencyCol.replace('[FIXED:', '').replace(']', '');
+    }
+    return parseCurrency(rawValue) || fallback || '';
 }
 
 function confirmMapping() {
@@ -1661,15 +1696,9 @@ function extractBankRecords() {
             const bankName = config.bankName ? config.bankName(row, item.file.name) : mapping.bankType;
 
             // 读取币种：优先独立币种列，其次从金额列原始值解析（如"USD 40,000.00"），最后fallback
-            let currency = '';
-            if (mapping.currencyCol && row[mapping.currencyCol] !== undefined) {
-                currency = parseCurrency(row[mapping.currencyCol]);
-            }
+            let currency = resolveCurrency(row[mapping.currencyCol], mapping.currencyCol, config.defaultCurrency);
             if (!currency && amountVal !== undefined) {
                 currency = parseCurrency(amountVal);
-            }
-            if (!currency && config.defaultCurrency) {
-                currency = config.defaultCurrency;
             }
 
             records.push({
@@ -1695,7 +1724,7 @@ function extractArrivalRecords() {
         if (!date || amount === 0) return;
 
         const feePurpose = m.feePurposeCol ? String(row[m.feePurposeCol] || '').trim() : '';
-        const currency = m.currencyCol ? parseCurrency(row[m.currencyCol]) : '';
+        const currency = resolveCurrency(row[m.currencyCol], m.currencyCol, '');
 
         records.push({
             date: formatDate(date),
@@ -1721,7 +1750,7 @@ function extractRechargeRecords() {
         const amount = parseAmount(row[m.amountCol]);
         if (!date || amount === 0) return;
 
-        const currency = m.currencyCol ? parseCurrency(row[m.currencyCol]) : '';
+        const currency = resolveCurrency(row[m.currencyCol], m.currencyCol, '');
 
         records.push({
             date: formatDate(date),
@@ -1750,7 +1779,7 @@ function extractPlatformRecords() {
                 const ggDate = parseDate(row[mapping.ggDateCol]);
                 const amount = parseAmount(row[mapping.amountCol]);
                 const account = String(row[mapping.accountCol] || '').trim();
-                const currency = mapping.currencyCol ? parseCurrency(row[mapping.currencyCol]) : '';
+                const currency = resolveCurrency(row[mapping.currencyCol], mapping.currencyCol, '');
                 if (!ggDate || amount === 0) return;
 
                 ggData.push({
@@ -1763,6 +1792,7 @@ function extractPlatformRecords() {
             return;
         }
 
+        // 正常提取
         item.rawData.rows.forEach(row => {
             let dateVal = row[mapping.dateCol];
             let amountVal = row[mapping.amountCol];
@@ -1795,7 +1825,7 @@ function extractPlatformRecords() {
                 platformName = 'TD';
             }
 
-            const currency = mapping.currencyCol ? parseCurrency(row[mapping.currencyCol]) : '';
+            const currency = resolveCurrency(row[mapping.currencyCol], mapping.currencyCol, '');
 
             records.push({
                 platform: platformName,
@@ -1806,6 +1836,46 @@ function extractPlatformRecords() {
                 raw: row,
             });
         });
+
+        // TD特殊处理：同一个文件可能同时包含充值和减款，额外提取另一种类型
+        if (mapping.platformType === 'TD充值' || mapping.platformType === 'TD减款') {
+            const otherType = mapping.platformType === 'TD充值' ? 'TD减款' : 'TD充值';
+            const otherConfig = PLATFORM_CONFIGS[otherType];
+            const otherAmountCol = otherType === 'TD充值' ? '充值金额' : '操作金额';
+
+            item.rawData.rows.forEach(row => {
+                if (otherConfig.filter && !otherConfig.filter(row)) return;
+
+                let dateVal = row[mapping.dateCol];
+                if (!mapping.dateCol) {
+                    for (const col of otherConfig.dateCol) {
+                        if (row[col] !== undefined) { dateVal = row[col]; break; }
+                    }
+                }
+
+                const date = parseDate(dateVal);
+                const amount = parseAmount(row[otherAmountCol]);
+                if (!date || amount === 0) return;
+
+                let accountVal = row[mapping.accountCol];
+                if (!mapping.accountCol && otherConfig.accountCol) {
+                    for (const col of otherConfig.accountCol) {
+                        if (row[col] !== undefined) { accountVal = row[col]; break; }
+                    }
+                }
+
+                const currency = resolveCurrency(row[mapping.currencyCol], mapping.currencyCol, '');
+
+                records.push({
+                    platform: 'TD',
+                    date: formatDate(date),
+                    account: String(accountVal || '').trim(),
+                    amount: amount,
+                    currency: currency,
+                    raw: row,
+                });
+            });
+        }
     });
 
     // 处理GG数据：按账号+日期分组，然后计算相邻日期的差额
@@ -1978,9 +2048,15 @@ function compareLayer2(arrivalRecords, rechargeRecords) {
 }
 
 function compareLayer3(rechargeRecords, platformRecords) {
-    // 按 平台+日期+账户 分组
+    // 分离GG和非GG记录
+    const rechargeNormal = rechargeRecords.filter(r => r.platform !== 'GG');
+    const rechargeGG = rechargeRecords.filter(r => r.platform === 'GG');
+    const platformNormal = platformRecords.filter(r => r.platform !== 'GG');
+    const platformGG = platformRecords.filter(r => r.platform === 'GG');
+
+    // 非GG按 平台+日期+账户 分组
     const rechargeGrouped = {};
-    rechargeRecords.forEach(r => {
+    rechargeNormal.forEach(r => {
         const key = `${r.platform}_${r.date}_${r.account}`;
         if (!rechargeGrouped[key]) rechargeGrouped[key] = { platform: r.platform, date: r.date, account: r.account, amount: 0, count: 0 };
         rechargeGrouped[key].amount += r.amount;
@@ -1988,19 +2064,39 @@ function compareLayer3(rechargeRecords, platformRecords) {
     });
 
     const platformGrouped = {};
-    platformRecords.forEach(r => {
+    platformNormal.forEach(r => {
         const key = `${r.platform}_${r.date}_${r.account}`;
         if (!platformGrouped[key]) platformGrouped[key] = { platform: r.platform, date: r.date, account: r.account, amount: 0, count: 0 };
         platformGrouped[key].amount += r.amount;
         platformGrouped[key].count++;
     });
 
-    const allKeys = new Set([...Object.keys(rechargeGrouped), ...Object.keys(platformGrouped)]);
+    // GG按 平台+月份+账户 分组（预算差额按月份汇总）
+    const rechargeGGGrouped = {};
+    rechargeGG.forEach(r => {
+        const month = r.date.substring(0, 7);
+        const key = `GG_${month}_${r.account}`;
+        if (!rechargeGGGrouped[key]) rechargeGGGrouped[key] = { platform: 'GG', date: month, account: r.account, amount: 0, count: 0 };
+        rechargeGGGrouped[key].amount += r.amount;
+        rechargeGGGrouped[key].count++;
+    });
+
+    const platformGGGrouped = {};
+    platformGG.forEach(r => {
+        const month = r.date.substring(0, 7);
+        const key = `GG_${month}_${r.account}`;
+        if (!platformGGGrouped[key]) platformGGGrouped[key] = { platform: 'GG', date: month, account: r.account, amount: 0, count: 0 };
+        platformGGGrouped[key].amount += r.amount;
+        platformGGGrouped[key].count++;
+    });
+
+    const allKeys = new Set([...Object.keys(rechargeGrouped), ...Object.keys(platformGrouped),
+                           ...Object.keys(rechargeGGGrouped), ...Object.keys(platformGGGrouped)]);
     const results = [];
 
     allKeys.forEach(key => {
-        const rec = rechargeGrouped[key];
-        const plat = platformGrouped[key];
+        const rec = rechargeGrouped[key] || rechargeGGGrouped[key];
+        const plat = platformGrouped[key] || platformGGGrouped[key];
 
         if (rec && plat) {
             const diff = Math.abs(rec.amount - plat.amount);

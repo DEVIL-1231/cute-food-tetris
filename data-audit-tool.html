@@ -1963,8 +1963,18 @@ function compareLayer1(bankRecords, arrivalRecords) {
         bankGrouped[key].details.push(r);
     });
 
-    const arrivalGrouped = {};
+    // 到账表先按公司去重：同一日期+银行+公司+金额 的完全重复行只保留一笔
+    const arrivalDeduped = [];
+    const arrivalSeen = new Set();
     arrivalRecords.forEach(r => {
+        const dedupKey = `${r.date}_${r.bank}_${r.company}_${r.amount}`;
+        if (arrivalSeen.has(dedupKey)) return;
+        arrivalSeen.add(dedupKey);
+        arrivalDeduped.push(r);
+    });
+
+    const arrivalGrouped = {};
+    arrivalDeduped.forEach(r => {
         const key = `${r.date}_${r.bank}`;
         if (!arrivalGrouped[key]) arrivalGrouped[key] = { date: r.date, bank: r.bank, amount: 0, count: 0, details: [] };
         arrivalGrouped[key].amount += r.amount;
@@ -2446,7 +2456,7 @@ function showResultTab(layer) {
 
 // ==================== 导出Excel ====================
 function exportResults() {
-    const { layer1, layer2, layer3 } = appData.results;
+                                                                                                                                                                                                                                const { layer1, layer2, layer3 } = appData.results;
 
     const wb = XLSX.utils.book_new();
 

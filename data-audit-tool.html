@@ -937,7 +937,7 @@ function processFiles(files, type) {
         const reader = new FileReader();
         reader.onload = function(e) {
             const data = new Uint8Array(e.target.result);
-            const workbook = XLSX.read(data, { type: 'array' });
+            const workbook = XLSX.read(data, { type: 'array', codepage: 936 });
             const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
             const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
 
@@ -1532,10 +1532,13 @@ function extractBankRecords() {
 
             const bankName = config.bankName ? config.bankName(row, item.file.name) : mapping.bankType;
 
-            // 读取币种
+            // 读取币种：优先独立币种列，其次从金额列原始值解析（如"USD 40,000.00"），最后fallback
             let currency = '';
             if (mapping.currencyCol && row[mapping.currencyCol] !== undefined) {
                 currency = parseCurrency(row[mapping.currencyCol]);
+            }
+            if (!currency && amountVal !== undefined) {
+                currency = parseCurrency(amountVal);
             }
             if (!currency && config.defaultCurrency) {
                 currency = config.defaultCurrency;

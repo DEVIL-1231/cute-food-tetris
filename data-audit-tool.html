@@ -932,6 +932,35 @@ function handleFileSelect(e, type) {
     processFiles(files, type);
 }
 
+// CSV编码检测：尝试多种编码，返回最可能正确的文本
+function decodeCsvText(data) {
+    const encodings = ['utf-8', 'gbk', 'big5'];
+    const candidates = [];
+    const chineseKeywords = ['日期', '金额', '银行', '存入', '支出', '结余', '详情', '交易', '货币', '账户'];
+
+    for (const enc of encodings) {
+        try {
+            const text = new TextDecoder(enc, { fatal: true }).decode(data);
+            // 统计匹配的中文关键词数量
+            let score = 0;
+            for (const kw of chineseKeywords) {
+                if (text.includes(kw)) score += 10;
+            }
+            // 惩罚替换字符和明显乱码
+            const replacementCount = (text.match(/�/g) || []).length;
+            const mojibakeCount = (text.match(/[ÃÂÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþÿ]/g) || []).length;
+            score -= replacementCount * 5 + mojibakeCount * 2;
+            candidates.push({ text, score });
+        } catch (e) {
+            // fatal解码失败，编码不匹配
+            candidates.push({ text: '', score: -9999 });
+        }
+    }
+
+    candidates.sort((a, b) => b.score - a.score);
+    return candidates[0].text;
+}
+
 function processFiles(files, type) {
     files.forEach(file => {
         const reader = new FileReader();
@@ -946,13 +975,8 @@ function processFiles(files, type) {
 
             let jsonData, sheetName;
             if (isCsv) {
-                // CSV文件：先用gb18030解码（银行CSV常见GBK编码），再用XLSX解析
-                let csvText;
-                try {
-                    csvText = new TextDecoder('gb18030').decode(data);
-                } catch (e) {
-                    csvText = new TextDecoder('utf-8').decode(data);
-                }
+                // CSV文件：自动检测编码（utf-8/gbk/big5）
+                const csvText = decodeCsvText(data);
                 const workbook = XLSX.read(csvText, { type: 'string' });
                 sheetName = workbook.SheetNames[0];
                 const firstSheet = workbook.Sheets[sheetName];

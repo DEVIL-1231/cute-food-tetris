@@ -718,6 +718,24 @@ function parseCurrency(val) {
     return str;
 }
 
+function normalizeBankName(name) {
+    if (!name) return '';
+    const n = String(name).trim().toLowerCase()
+        .replace(/银行/g, '')
+        .replace(/[''\s]/g, '');
+    const map = {
+        '华美': '华美', 'eastwest': '华美', 'ewb': '华美',
+        '汇丰': '汇丰', 'hsbc': '汇丰',
+        '中银': '中银', 'boc': '中银', '中国银行': '中银',
+        '连连': '连连', 'lianlian': '连连', 'll': '连连',
+        'pingpong': 'pingpong', 'pp': 'pingpong',
+    };
+    for (const [key, val] of Object.entries(map)) {
+        if (n.includes(key)) return val;
+    }
+    return n;
+}
+
 function parseDate(val) {
     if (!val) return null;
     if (val instanceof Date) {
@@ -1733,7 +1751,7 @@ function extractBankRecords() {
             const date = parseDate(dateVal);
             if (!date) return;
 
-            const bankName = config.bankName ? config.bankName(row, item.file.name) : mapping.bankType;
+            const bankName = normalizeBankName(config.bankName ? config.bankName(row, item.file.name) : mapping.bankType);
 
             // 读取币种：优先独立币种列，其次从金额列原始值解析（如"USD 40,000.00"），最后fallback
             let currency = resolveCurrency(row[mapping.currencyCol], mapping.currencyCol, config.defaultCurrency);
@@ -1768,7 +1786,7 @@ function extractArrivalRecords() {
 
         records.push({
             date: formatDate(date),
-            bank: String(row[m.bankCol] || '').trim(),
+            bank: normalizeBankName(row[m.bankCol]),
             company: String(row[m.companyCol] || '').trim(),
             platform: String(row[m.platformCol] || '').trim(),
             amount: amount,

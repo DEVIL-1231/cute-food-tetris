@@ -726,6 +726,17 @@ function parseDate(val) {
         if (y >= 2000 && y <= 2100) return val;
         return null;
     }
+    // 8位纯数字 YYYYMMDD（如 20260302），必须在 Excel 序列号检查之前
+    if (typeof val === 'number' && val >= 20000101 && val <= 21001231) {
+        const s = String(Math.floor(val));
+        if (s.length === 8) {
+            const y = parseInt(s.slice(0, 4)), mo = parseInt(s.slice(4, 6)), d = parseInt(s.slice(6, 8));
+            if (mo >= 1 && mo <= 12 && d >= 1 && d <= 31) {
+                return new Date(y, mo - 1, d);
+            }
+        }
+    }
+
     // Excel serial number
     if (typeof val === 'number' && val > 30000) {
         return new Date((val - 25569) * 86400 * 1000);
@@ -737,6 +748,16 @@ function parseDate(val) {
     str = str.replace(/\(UTC.*\)$/, '');
     str = str.replace(/\s*GMT[+-]\d+$/i, '');
     str = str.trim();
+
+    // YYYYMMDD 纯数字字符串（如 "20260302"）
+    const yyyymmddPattern = /^(\d{4})(\d{2})(\d{2})$/;
+    const yyyymmdd = str.match(yyyymmddPattern);
+    if (yyyymmdd) {
+        const y = parseInt(yyyymmdd[1]), mo = parseInt(yyyymmdd[2]), d = parseInt(yyyymmdd[3]);
+        if (mo >= 1 && mo <= 12 && d >= 1 && d <= 31) {
+            return new Date(y, mo - 1, d);
+        }
+    }
 
     // 月份格式：2026.01 或 2026.01月 → 取该月最后一天
     const monthPattern = /^(\d{4})\.(\d{1,2})月?$/;

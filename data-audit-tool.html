@@ -942,9 +942,23 @@ function processFiles(files, type) {
             const textPreview = new TextDecoder('utf-8').decode(data.slice(0, 512));
             const isHtml = /\s*<\s*(html|table|!DOCTYPE)/i.test(textPreview);
 
+            const isCsv = file.name.toLowerCase().endsWith('.csv');
+
             let jsonData, sheetName;
-            if (isHtml) {
-                // HTML文件：先用gbk解码再解析
+            if (isCsv) {
+                // CSV文件：先用gb18030解码（银行CSV常见GBK编码），再用XLSX解析
+                let csvText;
+                try {
+                    csvText = new TextDecoder('gb18030').decode(data);
+                } catch (e) {
+                    csvText = new TextDecoder('utf-8').decode(data);
+                }
+                const workbook = XLSX.read(csvText, { type: 'string' });
+                sheetName = workbook.SheetNames[0];
+                const firstSheet = workbook.Sheets[sheetName];
+                jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+            } else if (isHtml) {
+                // HTML文件：先用gb18030解码再解析
                 const htmlText = new TextDecoder('gb18030').decode(data);
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(htmlText, 'text/html');

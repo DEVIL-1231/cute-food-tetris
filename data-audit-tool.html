@@ -1953,14 +1953,12 @@ function extractPlatformRecords() {
 
 // ==================== 核对逻辑 ====================
 function compareLayer1(bankRecords, arrivalRecords) {
-    // 按 日期+银行 分组汇总
+    // 按 日期+银行 分组
     const bankGrouped = {};
     bankRecords.forEach(r => {
         const key = `${r.date}_${r.bank}`;
-        if (!bankGrouped[key]) bankGrouped[key] = { date: r.date, bank: r.bank, amount: 0, count: 0, details: [] };
-        bankGrouped[key].amount += r.amount;
-        bankGrouped[key].count++;
-        bankGrouped[key].details.push(r);
+        if (!bankGrouped[key]) bankGrouped[key] = [];
+        bankGrouped[key].push(r);
     });
 
     // 到账表先按公司去重：同一日期+银行+公司+金额 的完全重复行只保留一笔
@@ -1976,76 +1974,115 @@ function compareLayer1(bankRecords, arrivalRecords) {
     const arrivalGrouped = {};
     arrivalDeduped.forEach(r => {
         const key = `${r.date}_${r.bank}`;
-        if (!arrivalGrouped[key]) arrivalGrouped[key] = { date: r.date, bank: r.bank, amount: 0, count: 0, details: [] };
-        arrivalGrouped[key].amount += r.amount;
-        arrivalGrouped[key].count++;
-        arrivalGrouped[key].details.push(r);
+        if (!arrivalGrouped[key]) arrivalGrouped[key] = [];
+        arrivalGrouped[key].push(r);
     });
 
     const allKeys = new Set([...Object.keys(bankGrouped), ...Object.keys(arrivalGrouped)]);
     const results = [];
 
+    // 组内逐笔金额匹配（贪心：按金额排序后双指针匹配最接近的）
     allKeys.forEach(key => {
-        const bank = bankGrouped[key];
-        const arrival = arrivalGrouped[key];
+        let banks = (bankGrouped[key] || []).slice().sort((a, b) => a.amount - b.amount);
+        let arrivals = (arrivalGrouped[key] || []).slice().sort((a, b) => a.amount - b.amount);
 
-        if (bank && arrival) {
-            const diff = Math.abs(bank.amount - arrival.amount);
-            const crossMonthDetail = arrival.details.find(d => d.crossMonth);
-            const hasCrossMonth = !!crossMonthDetail;
-            if (diff < 0.01) {
-                results.push({
-                    status: hasCrossMonth ? 'crossMonthMatch' : 'match',
-                    date: bank.date,
-                    bank: bank.bank,
-                    bankAmount: bank.amount,
-                    arrivalAmount: arrival.amount,
-                    diff: 0,
-                    bankCount: bank.count,
-                    arrivalCount: arrival.count,
-                    crossMonthSource: crossMonthDetail?.crossMonthSource,
-                });
-            } else {
+        const matchedBank = new Set();
+        const matchedArrival = new Set();
+
+        // 先精确匹配金额（差 < 0.01）
+        for (let i = 0; i < banks.length; i++) {
+            if (matchedBank.has(i)) continue;
+            for (let j = 0; j < arrivals.length; j++) {
+                if (matchedArrival.has(j)) continue;
+                if (Math.abs(banks[i].amount - arrivals[j].amount) < 0.01) {
+                    const hasCrossMonth = arrivals[j].crossMonth;
+                    results.push({
+                        status: hasCrossMonth ? 'crossMonthMatch' : 'match',
+                        date: banks[i].date,
+                        bank: banks[i].bank,
+                        bankAmount: banks[i].amount,
+                        arrivalAmount: arrivals[j].amount,
+                        diff: 0,
+                        bankCount: 1,
+                        arrivalCount: 1,
+                        crossMonthSource: arrivals[j].crossMonthSource,
+                        company: arrivals[j].company,
+                    });
+                    matchedBank.add(i);
+                    matchedArrival.add(j);
+                    break;
+                }
+            }
+        }
+
+        // 再尝试金额最接近的模糊匹配（允许有差异）
+        for (let i = 0; i < banks.length; i++) {
+            if (matchedBank.has(i)) continue;
+            let bestJ = -1;
+            let bestDiff = Infinity;
+            for (let j = 0; j < arrivals.length; j++) {
+                if (matchedArrival.has(j)) continue;
+                const d = Math.abs(banks[i].amount - arrivals[j].amount);
+                if (d < bestDiff) {
+                    bestDiff = d;
+                    bestJ = j;
+                }
+            }
+            if (bestJ >= 0) {
+                const hasCrossMonth = arrivals[bestJ].crossMonth;
                 results.push({
                     status: hasCrossMonth ? 'crossMonthMismatch' : 'mismatch',
-                    date: bank.date,
-                    bank: bank.bank,
-                    bankAmount: bank.amount,
-                    arrivalAmount: arrival.amount,
-                    diff: bank.amount - arrival.amount,
-                    bankCount: bank.count,
-                    arrivalCount: arrival.count,
-                    crossMonthSource: crossMonthDetail?.crossMonthSource,
+                    date: banks[i].date,
+                    bank: banks[i].bank,
+                    bankAmount: banks[i].amount,
+                    arrivalAmount: arrivals[bestJ].amount,
+                    diff: banks[i].amount - arrivals[bestJ].amount,
+                    bankCount: 1,
+                    arrivalCount: 1,
+                    crossMonthSource: arrivals[bestJ].crossMonthSource,
+                    company: arrivals[bestJ].company,
                 });
+                matchedBank.add(i);
+                matchedArrival.add(bestJ);
             }
-        } else if (bank) {
+        }
+
+        // 银行剩余
+        for (let i = 0; i < banks.length; i++) {
+            if (matchedBank.has(i)) continue;
             results.push({
                 status: 'missing',
-                date: bank.date,
-                bank: bank.bank,
-                bankAmount: bank.amount,
+                date: banks[i].date,
+                bank: banks[i].bank,
+                bankAmount: banks[i].amount,
                 arrivalAmount: 0,
-                diff: bank.amount,
-                bankCount: bank.count,
+                diff: banks[i].amount,
+                bankCount: 1,
                 arrivalCount: 0,
                 side: '到账表缺失',
+                company: '',
             });
-        } else {
+        }
+
+        // 到账表剩余
+        for (let j = 0; j < arrivals.length; j++) {
+            if (matchedArrival.has(j)) continue;
             results.push({
                 status: 'missing',
-                date: arrival.date,
-                bank: arrival.bank,
+                date: arrivals[j].date,
+                bank: arrivals[j].bank,
                 bankAmount: 0,
-                arrivalAmount: arrival.amount,
-                diff: -arrival.amount,
+                arrivalAmount: arrivals[j].amount,
+                diff: -arrivals[j].amount,
                 bankCount: 0,
-                arrivalCount: arrival.count,
+                arrivalCount: 1,
                 side: '银行缺失',
+                company: arrivals[j].company,
             });
         }
     });
 
-    return results.sort((a, b) => a.date.localeCompare(b.date));
+    return results.sort((a, b) => a.date.localeCompare(b.date) || a.bank.localeCompare(b.bank));
 }
 
 function compareLayer2(arrivalRecords, rechargeRecords) {
@@ -2352,7 +2389,7 @@ function renderLayer1(data) {
         <thead><tr>
             <th>状态</th><th>日期</th><th>银行</th>
             <th>银行到账金额</th><th>到账表金额</th><th>差异</th>
-            <th>银行笔数</th><th>到账笔数</th><th>说明</th>
+            <th>公司名称</th><th>说明</th>
         </tr></thead><tbody>`;
 
     data.forEach(r => {
@@ -2377,8 +2414,7 @@ function renderLayer1(data) {
             <td class="amount">${formatMoney(r.bankAmount)}</td>
             <td class="amount">${formatMoney(r.arrivalAmount)}</td>
             <td class="amount ${diffClass}">${r.diff > 0 ? '+' : ''}${formatMoney(r.diff)}</td>
-            <td>${r.bankCount}</td>
-            <td>${r.arrivalCount}</td>
+            <td>${r.company || ''}</td>
             <td>${note}</td>
         </tr>`;
     });
@@ -2462,12 +2498,12 @@ function exportResults() {
 
     // Sheet1: 第一层（如启用）
     if (appData.enabledLayers[1]) {
-        const s1Data = [['状态', '日期', '银行', '银行到账金额', '到账表金额', '差异', '银行笔数', '到账笔数', '说明']];
+        const s1Data = [['状态', '日期', '银行', '银行到账金额', '到账表金额', '差异', '公司名称', '说明']];
         layer1.forEach(r => {
             s1Data.push([
                 r.status === 'match' ? '匹配' : r.status === 'mismatch' ? '金额不符' : r.status === 'crossMonthMatch' ? '跨月匹配' : r.status === 'crossMonthMismatch' ? '跨月金额不符' : '缺失',
                 r.date, r.bank, r.bankAmount, r.arrivalAmount, r.diff,
-                r.bankCount, r.arrivalCount, r.side || ''
+                r.company || '', r.side || ''
             ]);
         });
         XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(s1Data), '第一层-银行vs到账表');

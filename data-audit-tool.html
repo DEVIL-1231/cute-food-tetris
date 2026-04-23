@@ -2131,6 +2131,7 @@ function compareLayer1(bankRecords, arrivalRecords) {
         });
     });
 
+    results.forEach(r => { r.userNote = ''; r.isAdjusted = false; });
     return results.sort((a, b) => a.date.localeCompare(b.date) || a.bank.localeCompare(b.bank));
 }
 
@@ -2180,6 +2181,7 @@ function compareLayer2(arrivalRecords, rechargeRecords) {
         }
     });
 
+    results.forEach(r => { r.userNote = ''; r.isAdjusted = false; });
     return results.sort((a, b) => a.date.localeCompare(b.date));
 }
 
@@ -2248,7 +2250,30 @@ function compareLayer3(rechargeRecords, platformRecords) {
         }
     });
 
+    results.forEach(r => { r.userNote = ''; r.isAdjusted = false; });
     return results.sort((a, b) => a.date.localeCompare(b.date));
+}
+
+function updateResultNote(layer, index, note) {
+    const results = appData.results[layer];
+    if (results && results[index]) {
+        results[index].userNote = note;
+    }
+}
+
+function toggleResultAdjusted(layer, index) {
+    const results = appData.results[layer];
+    if (results && results[index]) {
+        results[index].isAdjusted = !results[index].isAdjusted;
+        renderCurrentLayer();
+    }
+}
+
+function renderCurrentLayer() {
+    const { layer1, layer2, layer3 } = appData.results;
+    if (appData.enabledLayers[1]) renderLayer1(layer1);
+    if (appData.enabledLayers[2]) renderLayer2(layer2);
+    if (appData.enabledLayers[3]) renderLayer3(layer3);
 }
 
 function groupByCurrency(records, amountField) {
@@ -2285,10 +2310,11 @@ function showResults() {
     if (appData.enabledLayers[1]) {
         const bankTotal = layer1.reduce((s, r) => s + (r.bankAmount || 0), 0);
         const arrivalTotal = layer1.reduce((s, r) => s + (r.arrivalAmount || 0), 0);
-        const l1Match = layer1.filter(r => r.status === 'match' || r.status === 'crossMonthMatch').length;
-        const l1Mismatch = layer1.filter(r => r.status === 'mismatch' || r.status === 'crossMonthMismatch').length;
-        const l1Missing = layer1.filter(r => r.status === 'missing').length;
-        const l1Pending = layer1.filter(r => r.status === 'pendingCheck').length;
+        const l1Match = layer1.filter(r => r.status === 'match' || r.status === 'crossMonthMatch' || r.isAdjusted).length;
+        const l1Mismatch = layer1.filter(r => (r.status === 'mismatch' || r.status === 'crossMonthMismatch') && !r.isAdjusted).length;
+        const l1Missing = layer1.filter(r => r.status === 'missing' && !r.isAdjusted).length;
+        const l1Pending = layer1.filter(r => r.status === 'pendingCheck' && !r.isAdjusted).length;
+        const l1Adjusted = layer1.filter(r => r.isAdjusted).length;
         const bankByCurr = groupByCurrency(appData.records?.bank || [], 'amount');
         const arrivalByCurr = groupByCurrency(appData.records?.arrival || [], 'amount');
         cards.push(`
@@ -2309,7 +2335,7 @@ function showResults() {
                 <div class="label">第一层匹配率</div>
                 <div class="value">${layer1.length ? Math.round(l1Match / layer1.length * 100) : 0}%</div>
                 <div class="diff" style="color:#666;font-size:12px;">
-                    ✓${l1Match} ⚠${l1Mismatch} ✗${l1Missing} ⏸${l1Pending}
+                    ✓${l1Match} ⚠${l1Mismatch} ✗${l1Missing} ⏸${l1Pending} ✓调${l1Adjusted}
                 </div>
             </div>
         `);
@@ -2318,9 +2344,10 @@ function showResults() {
     if (appData.enabledLayers[2]) {
         const arrivalTotal = layer2.reduce((s, r) => s + (r.arrivalAmount || 0), 0);
         const rechargeTotal = layer2.reduce((s, r) => s + (r.rechargeAmount || 0), 0);
-        const l2Match = layer2.filter(r => r.status === 'match').length;
-        const l2Mismatch = layer2.filter(r => r.status === 'mismatch').length;
-        const l2Missing = layer2.filter(r => r.status === 'missing').length;
+        const l2Match = layer2.filter(r => r.status === 'match' || r.isAdjusted).length;
+        const l2Mismatch = layer2.filter(r => r.status === 'mismatch' && !r.isAdjusted).length;
+        const l2Missing = layer2.filter(r => r.status === 'missing' && !r.isAdjusted).length;
+        const l2Adjusted = layer2.filter(r => r.isAdjusted).length;
         const arrivalByCurr = groupByCurrency(appData.records?.arrival || [], 'amount');
         const rechargeByCurr = groupByCurrency(appData.records?.recharge || [], 'amount');
         cards.push(`
@@ -2341,7 +2368,7 @@ function showResults() {
                 <div class="label">第二层匹配率</div>
                 <div class="value">${layer2.length ? Math.round(l2Match / layer2.length * 100) : 0}%</div>
                 <div class="diff" style="color:#666;font-size:12px;">
-                    ✓${l2Match} ⚠${l2Mismatch} ✗${l2Missing}
+                    ✓${l2Match} ⚠${l2Mismatch} ✗${l2Missing} ✓调${l2Adjusted}
                 </div>
             </div>
         `);
@@ -2350,9 +2377,10 @@ function showResults() {
     if (appData.enabledLayers[3]) {
         const rechargeTotal = layer3.reduce((s, r) => s + (r.rechargeAmount || 0), 0);
         const platformTotal = layer3.reduce((s, r) => s + (r.platformAmount || 0), 0);
-        const l3Match = layer3.filter(r => r.status === 'match').length;
-        const l3Mismatch = layer3.filter(r => r.status === 'mismatch').length;
-        const l3Missing = layer3.filter(r => r.status === 'missing').length;
+        const l3Match = layer3.filter(r => r.status === 'match' || r.isAdjusted).length;
+        const l3Mismatch = layer3.filter(r => r.status === 'mismatch' && !r.isAdjusted).length;
+        const l3Missing = layer3.filter(r => r.status === 'missing' && !r.isAdjusted).length;
+        const l3Adjusted = layer3.filter(r => r.isAdjusted).length;
         const rechargeByCurr = groupByCurrency(appData.records?.recharge || [], 'amount');
         const platformByCurr = groupByCurrency(appData.records?.platform || [], 'amount');
         cards.push(`
@@ -2373,7 +2401,7 @@ function showResults() {
                 <div class="label">第三层匹配率</div>
                 <div class="value">${layer3.length ? Math.round(l3Match / layer3.length * 100) : 0}%</div>
                 <div class="diff" style="color:#666;font-size:12px;">
-                    ✓${l3Match} ⚠${l3Mismatch} ✗${l3Missing}
+                    ✓${l3Match} ⚠${l3Mismatch} ✗${l3Missing} ✓调${l3Adjusted}
                 </div>
             </div>
         `);
@@ -2385,17 +2413,17 @@ function showResults() {
     const tabs = [];
     if (appData.enabledLayers[1]) {
         tabs.push(`<button class="result-tab ${tabs.length === 0 ? 'active' : ''}" onclick="showResultTab('layer1')">
-            第一层：银行 vs 到账表 <span class="badge" id="badge1">${layer1.filter(r => r.status !== 'match' && r.status !== 'crossMonthMatch').length}</span>
+            第一层：银行 vs 到账表 <span class="badge" id="badge1">${layer1.filter(r => r.status !== 'match' && r.status !== 'crossMonthMatch' && !r.isAdjusted).length}</span>
         </button>`);
     }
     if (appData.enabledLayers[2]) {
         tabs.push(`<button class="result-tab ${tabs.length === 0 ? 'active' : ''}" onclick="showResultTab('layer2')">
-            第二层：到账表 vs 充值表 <span class="badge" id="badge2">${layer2.filter(r => r.status !== 'match').length}</span>
+            第二层：到账表 vs 充值表 <span class="badge" id="badge2">${layer2.filter(r => r.status !== 'match' && !r.isAdjusted).length}</span>
         </button>`);
     }
     if (appData.enabledLayers[3]) {
         tabs.push(`<button class="result-tab ${tabs.length === 0 ? 'active' : ''}" onclick="showResultTab('layer3')">
-            第三层：充值表 vs 平台后台 <span class="badge" id="badge3">${layer3.filter(r => r.status !== 'match').length}</span>
+            第三层：充值表 vs 平台后台 <span class="badge" id="badge3">${layer3.filter(r => r.status !== 'match' && !r.isAdjusted).length}</span>
         </button>`);
     }
     document.getElementById('resultTabs').innerHTML = tabs.join('');
@@ -2435,17 +2463,50 @@ function showResults() {
 }
 
 function renderLayer1(data) {
-    let html = `<table class="result-table">
+    // 读取筛选条件
+    const filterStatus = document.getElementById('l1-filter-status')?.value || '';
+    const filterDate = document.getElementById('l1-filter-date')?.value || '';
+    const filterBank = document.getElementById('l1-filter-bank')?.value || '';
+    const filterCompany = document.getElementById('l1-filter-company')?.value || '';
+
+    const filtered = data.filter(r => {
+        if (filterStatus && r.status !== filterStatus && !(filterStatus === 'adjusted' && r.isAdjusted)) return false;
+        if (filterDate && !r.date.includes(filterDate)) return false;
+        if (filterBank && !r.bank.includes(filterBank)) return false;
+        if (filterCompany && !(r.company || '').includes(filterCompany)) return false;
+        return true;
+    });
+
+    let html = `<div class="filter-bar" style="margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+        <select id="l1-filter-status" onchange="renderLayer1(appData.results.layer1)" style="padding:4px 8px;border-radius:4px;border:1px solid #ccc;">
+            <option value="">全部状态</option>
+            <option value="match">匹配</option>
+            <option value="mismatch">金额不符</option>
+            <option value="missing">缺失</option>
+            <option value="pendingCheck">待核对</option>
+            <option value="adjusted">已调整</option>
+            <option value="crossMonthMatch">跨月匹配</option>
+            <option value="crossMonthMismatch">跨月金额不符</option>
+        </select>
+        <input id="l1-filter-date" placeholder="日期筛选" value="${filterDate}" oninput="renderLayer1(appData.results.layer1)" style="padding:4px 8px;border-radius:4px;border:1px solid #ccc;width:100px;" />
+        <input id="l1-filter-bank" placeholder="银行筛选" value="${filterBank}" oninput="renderLayer1(appData.results.layer1)" style="padding:4px 8px;border-radius:4px;border:1px solid #ccc;width:100px;" />
+        <input id="l1-filter-company" placeholder="公司筛选" value="${filterCompany}" oninput="renderLayer1(appData.results.layer1)" style="padding:4px 8px;border-radius:4px;border:1px solid #ccc;width:120px;" />
+        <span style="font-size:12px;color:#666;">共 ${filtered.length} / ${data.length} 条</span>
+    </div>`;
+
+    html += `<table class="result-table">
         <thead><tr>
-            <th>状态</th><th>日期</th><th>银行</th>
+            <th>异常项</th><th>状态</th><th>日期</th><th>银行</th>
             <th>银行到账金额</th><th>到账表金额</th><th>差异</th>
-            <th>公司名称</th><th>说明</th>
+            <th>公司名称</th><th>说明</th><th>备注</th>
         </tr></thead><tbody>`;
 
-    data.forEach(r => {
+    filtered.forEach((r, idx) => {
+        const originalIndex = data.indexOf(r);
         const statusClass = r.status;
         let statusText = '';
-        if (r.status === 'match') statusText = '✓ 匹配';
+        if (r.isAdjusted) statusText = '✓ 已调整';
+        else if (r.status === 'match') statusText = '✓ 匹配';
         else if (r.status === 'mismatch') statusText = '⚠ 金额不符';
         else if (r.status === 'crossMonthMatch') statusText = '🟣 跨月匹配';
         else if (r.status === 'crossMonthMismatch') statusText = '🟣 跨月金额不符';
@@ -2460,6 +2521,7 @@ function renderLayer1(data) {
         else if (r.crossMonthSource) note = `来源: ${r.crossMonthSource}`;
 
         html += `<tr class="${statusClass}">
+            <td style="text-align:center;"><input type="checkbox" ${r.isAdjusted ? 'checked' : ''} onchange="toggleResultAdjusted('layer1', ${originalIndex})" title="标记为已调整" /></td>
             <td><span class="status-tag ${statusClass}">${statusText}</span></td>
             <td>${r.date}</td>
             <td>${r.bank}</td>
@@ -2468,26 +2530,60 @@ function renderLayer1(data) {
             <td class="amount ${diffClass}">${r.diff > 0 ? '+' : ''}${formatMoney(r.diff)}</td>
             <td>${r.company || ''}</td>
             <td>${note}</td>
+            <td><input type="text" value="${r.userNote || ''}" placeholder="填写备注..." onchange="updateResultNote('layer1', ${originalIndex}, this.value)" style="width:120px;padding:2px 4px;border:1px solid #ddd;border-radius:3px;font-size:12px;" /></td>
         </tr>`;
     });
 
     html += '</tbody></table>';
     document.getElementById('resultLayer1').innerHTML = html;
+
+    // 恢复筛选控件的值
+    const sel = document.getElementById('l1-filter-status');
+    if (sel) sel.value = filterStatus;
 }
 
 function renderLayer2(data) {
-    let html = `<table class="result-table">
+    const filterStatus = document.getElementById('l2-filter-status')?.value || '';
+    const filterDate = document.getElementById('l2-filter-date')?.value || '';
+    const filterCompany = document.getElementById('l2-filter-company')?.value || '';
+    const filterPlatform = document.getElementById('l2-filter-platform')?.value || '';
+
+    const filtered = data.filter(r => {
+        if (filterStatus && r.status !== filterStatus && !(filterStatus === 'adjusted' && r.isAdjusted)) return false;
+        if (filterDate && !r.date.includes(filterDate)) return false;
+        if (filterCompany && !(r.company || '').includes(filterCompany)) return false;
+        if (filterPlatform && !(r.platform || '').includes(filterPlatform)) return false;
+        return true;
+    });
+
+    let html = `<div class="filter-bar" style="margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+        <select id="l2-filter-status" onchange="renderLayer2(appData.results.layer2)" style="padding:4px 8px;border-radius:4px;border:1px solid #ccc;">
+            <option value="">全部状态</option>
+            <option value="match">匹配</option>
+            <option value="mismatch">金额不符</option>
+            <option value="missing">缺失</option>
+            <option value="adjusted">已调整</option>
+        </select>
+        <input id="l2-filter-date" placeholder="日期筛选" value="${filterDate}" oninput="renderLayer2(appData.results.layer2)" style="padding:4px 8px;border-radius:4px;border:1px solid #ccc;width:100px;" />
+        <input id="l2-filter-company" placeholder="公司筛选" value="${filterCompany}" oninput="renderLayer2(appData.results.layer2)" style="padding:4px 8px;border-radius:4px;border:1px solid #ccc;width:120px;" />
+        <input id="l2-filter-platform" placeholder="平台筛选" value="${filterPlatform}" oninput="renderLayer2(appData.results.layer2)" style="padding:4px 8px;border-radius:4px;border:1px solid #ccc;width:100px;" />
+        <span style="font-size:12px;color:#666;">共 ${filtered.length} / ${data.length} 条</span>
+    </div>`;
+
+    html += `<table class="result-table">
         <thead><tr>
-            <th>状态</th><th>日期</th><th>公司名称</th><th>平台</th>
-            <th>到账金额</th><th>充值金额</th><th>差异</th><th>说明</th>
+            <th>异常项</th><th>状态</th><th>日期</th><th>公司名称</th><th>平台</th>
+            <th>到账金额</th><th>充值金额</th><th>差异</th><th>说明</th><th>备注</th>
         </tr></thead><tbody>`;
 
-    data.forEach(r => {
+    filtered.forEach((r, idx) => {
+        const originalIndex = data.indexOf(r);
         const statusClass = r.status;
-        const statusText = r.status === 'match' ? '✓ 匹配' : r.status === 'mismatch' ? '⚠ 金额不符' : '✗ ' + (r.side || '缺失');
+        const statusText = r.isAdjusted ? '✓ 已调整' : (r.status === 'match' ? '✓ 匹配' : r.status === 'mismatch' ? '⚠ 金额不符' : '✗ ' + (r.side || '缺失'));
         const diffClass = r.diff > 0 ? 'positive' : r.diff < 0 ? 'negative' : '';
 
         html += `<tr class="${statusClass}">
+            <td style="text-align:center;"><input type="checkbox" ${r.isAdjusted ? 'checked' : ''} onchange="toggleResultAdjusted('layer2', ${originalIndex})" title="标记为已调整" /></td>
             <td><span class="status-tag ${statusClass}">${statusText}</span></td>
             <td>${r.date}</td>
             <td>${r.company}</td>
@@ -2496,26 +2592,59 @@ function renderLayer2(data) {
             <td class="amount">${formatMoney(r.rechargeAmount)}</td>
             <td class="amount ${diffClass}">${r.diff > 0 ? '+' : ''}${formatMoney(r.diff)}</td>
             <td>${r.status === 'missing' ? (r.side || '') : (r.status === 'mismatch' ? '金额不匹配' : '')}</td>
+            <td><input type="text" value="${r.userNote || ''}" placeholder="填写备注..." onchange="updateResultNote('layer2', ${originalIndex}, this.value)" style="width:120px;padding:2px 4px;border:1px solid #ddd;border-radius:3px;font-size:12px;" /></td>
         </tr>`;
     });
 
     html += '</tbody></table>';
     document.getElementById('resultLayer2').innerHTML = html;
+
+    const sel = document.getElementById('l2-filter-status');
+    if (sel) sel.value = filterStatus;
 }
 
 function renderLayer3(data) {
-    let html = `<table class="result-table">
+    const filterStatus = document.getElementById('l3-filter-status')?.value || '';
+    const filterDate = document.getElementById('l3-filter-date')?.value || '';
+    const filterPlatform = document.getElementById('l3-filter-platform')?.value || '';
+    const filterAccount = document.getElementById('l3-filter-account')?.value || '';
+
+    const filtered = data.filter(r => {
+        if (filterStatus && r.status !== filterStatus && !(filterStatus === 'adjusted' && r.isAdjusted)) return false;
+        if (filterDate && !r.date.includes(filterDate)) return false;
+        if (filterPlatform && !(r.platform || '').includes(filterPlatform)) return false;
+        if (filterAccount && !(r.account || '').includes(filterAccount)) return false;
+        return true;
+    });
+
+    let html = `<div class="filter-bar" style="margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+        <select id="l3-filter-status" onchange="renderLayer3(appData.results.layer3)" style="padding:4px 8px;border-radius:4px;border:1px solid #ccc;">
+            <option value="">全部状态</option>
+            <option value="match">匹配</option>
+            <option value="mismatch">金额不符</option>
+            <option value="missing">缺失</option>
+            <option value="adjusted">已调整</option>
+        </select>
+        <input id="l3-filter-date" placeholder="日期筛选" value="${filterDate}" oninput="renderLayer3(appData.results.layer3)" style="padding:4px 8px;border-radius:4px;border:1px solid #ccc;width:100px;" />
+        <input id="l3-filter-platform" placeholder="平台筛选" value="${filterPlatform}" oninput="renderLayer3(appData.results.layer3)" style="padding:4px 8px;border-radius:4px;border:1px solid #ccc;width:100px;" />
+        <input id="l3-filter-account" placeholder="账户筛选" value="${filterAccount}" oninput="renderLayer3(appData.results.layer3)" style="padding:4px 8px;border-radius:4px;border:1px solid #ccc;width:120px;" />
+        <span style="font-size:12px;color:#666;">共 ${filtered.length} / ${data.length} 条</span>
+    </div>`;
+
+    html += `<table class="result-table">
         <thead><tr>
-            <th>状态</th><th>平台</th><th>日期</th><th>账户</th>
-            <th>充值表金额</th><th>后台金额</th><th>差异</th><th>说明</th>
+            <th>异常项</th><th>状态</th><th>平台</th><th>日期</th><th>账户</th>
+            <th>充值表金额</th><th>后台金额</th><th>差异</th><th>说明</th><th>备注</th>
         </tr></thead><tbody>`;
 
-    data.forEach(r => {
+    filtered.forEach((r, idx) => {
+        const originalIndex = data.indexOf(r);
         const statusClass = r.status;
-        const statusText = r.status === 'match' ? '✓ 匹配' : r.status === 'mismatch' ? '⚠ 金额不符' : '✗ ' + (r.side || '缺失');
+        const statusText = r.isAdjusted ? '✓ 已调整' : (r.status === 'match' ? '✓ 匹配' : r.status === 'mismatch' ? '⚠ 金额不符' : '✗ ' + (r.side || '缺失'));
         const diffClass = r.diff > 0 ? 'positive' : r.diff < 0 ? 'negative' : '';
 
         html += `<tr class="${statusClass}">
+            <td style="text-align:center;"><input type="checkbox" ${r.isAdjusted ? 'checked' : ''} onchange="toggleResultAdjusted('layer3', ${originalIndex})" title="标记为已调整" /></td>
             <td><span class="status-tag ${statusClass}">${statusText}</span></td>
             <td>${r.platform}</td>
             <td>${r.date}</td>
@@ -2524,11 +2653,15 @@ function renderLayer3(data) {
             <td class="amount">${formatMoney(r.platformAmount)}</td>
             <td class="amount ${diffClass}">${r.diff > 0 ? '+' : ''}${formatMoney(r.diff)}</td>
             <td>${r.status === 'missing' ? (r.side || '') : (r.status === 'mismatch' ? '金额不匹配' : '')}</td>
+            <td><input type="text" value="${r.userNote || ''}" placeholder="填写备注..." onchange="updateResultNote('layer3', ${originalIndex}, this.value)" style="width:120px;padding:2px 4px;border:1px solid #ddd;border-radius:3px;font-size:12px;" /></td>
         </tr>`;
     });
 
     html += '</tbody></table>';
     document.getElementById('resultLayer3').innerHTML = html;
+
+    const sel = document.getElementById('l3-filter-status');
+    if (sel) sel.value = filterStatus;
 }
 
 function showResultTab(layer) {
@@ -2550,12 +2683,20 @@ function exportResults() {
 
     // Sheet1: 第一层（如启用）
     if (appData.enabledLayers[1]) {
-        const s1Data = [['状态', '日期', '银行', '银行到账金额', '到账表金额', '差异', '公司名称', '说明']];
+        const s1Data = [['状态', '日期', '银行', '银行到账金额', '到账表金额', '差异', '公司名称', '说明', '异常项', '备注']];
         layer1.forEach(r => {
+            const statusText = r.isAdjusted ? '已调整' :
+                r.status === 'match' ? '匹配' :
+                r.status === 'mismatch' ? '金额不符' :
+                r.status === 'crossMonthMatch' ? '跨月匹配' :
+                r.status === 'crossMonthMismatch' ? '跨月金额不符' :
+                r.status === 'pendingCheck' ? '待核对' : '缺失';
             s1Data.push([
-                r.status === 'match' ? '匹配' : r.status === 'mismatch' ? '金额不符' : r.status === 'crossMonthMatch' ? '跨月匹配' : r.status === 'crossMonthMismatch' ? '跨月金额不符' : r.status === 'pendingCheck' ? '待核对' : '缺失',
+                statusText,
                 r.date, r.bank, r.bankAmount, r.arrivalAmount, r.diff,
-                r.company || '', r.status === 'pendingCheck' ? '收款人（银行）为空，需进一步核对' : (r.side || '')
+                r.company || '', r.status === 'pendingCheck' ? '收款人（银行）为空，需进一步核对' : (r.side || ''),
+                r.isAdjusted ? '是' : '',
+                r.userNote || ''
             ]);
         });
         XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(s1Data), '第一层-银行vs到账表');
@@ -2563,12 +2704,19 @@ function exportResults() {
 
     // Sheet2: 第二层（如启用）
     if (appData.enabledLayers[2]) {
-        const s2Data = [['状态', '日期', '公司名称', '平台', '到账金额', '充值金额', '差异', '说明']];
+        const s2Data = [['状态', '日期', '公司名称', '平台', '到账金额', '充值金额', '差异', '说明', '异常项', '备注']];
         layer2.forEach(r => {
+            const statusText = r.isAdjusted ? '已调整' :
+                r.status === 'match' ? '匹配' :
+                r.status === 'mismatch' ? '金额不符' :
+                r.status === 'crossMonthMatch' ? '跨月匹配' :
+                r.status === 'crossMonthMismatch' ? '跨月金额不符' : '缺失';
             s2Data.push([
-                r.status === 'match' ? '匹配' : r.status === 'mismatch' ? '金额不符' : r.status === 'crossMonthMatch' ? '跨月匹配' : r.status === 'crossMonthMismatch' ? '跨月金额不符' : '缺失',
+                statusText,
                 r.date, r.company, r.platform, r.arrivalAmount, r.rechargeAmount, r.diff,
-                r.side || ''
+                r.side || '',
+                r.isAdjusted ? '是' : '',
+                r.userNote || ''
             ]);
         });
         XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(s2Data), '第二层-到账表vs充值表');
@@ -2576,12 +2724,19 @@ function exportResults() {
 
     // Sheet3: 第三层（如启用）
     if (appData.enabledLayers[3]) {
-        const s3Data = [['状态', '平台', '日期', '账户', '充值表金额', '后台金额', '差异', '说明']];
+        const s3Data = [['状态', '平台', '日期', '账户', '充值表金额', '后台金额', '差异', '说明', '异常项', '备注']];
         layer3.forEach(r => {
+            const statusText = r.isAdjusted ? '已调整' :
+                r.status === 'match' ? '匹配' :
+                r.status === 'mismatch' ? '金额不符' :
+                r.status === 'crossMonthMatch' ? '跨月匹配' :
+                r.status === 'crossMonthMismatch' ? '跨月金额不符' : '缺失';
             s3Data.push([
-                r.status === 'match' ? '匹配' : r.status === 'mismatch' ? '金额不符' : r.status === 'crossMonthMatch' ? '跨月匹配' : r.status === 'crossMonthMismatch' ? '跨月金额不符' : '缺失',
+                statusText,
                 r.platform, r.date, r.account, r.rechargeAmount, r.platformAmount, r.diff,
-                r.side || ''
+                r.side || '',
+                r.isAdjusted ? '是' : '',
+                r.userNote || ''
             ]);
         });
         XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(s3Data), '第三层-充值表vs平台后台');
@@ -2598,8 +2753,8 @@ function exportResults() {
         const bankTotal = layer1.reduce((s, r) => s + (r.bankAmount || 0), 0);
         const arrivalTotal1 = layer1.reduce((s, r) => s + (r.arrivalAmount || 0), 0);
         s4Data.push(['第一层（银行 vs 到账表）', `银行总额: ${bankTotal}`, `到账总额: ${arrivalTotal1}`, `差异: ${bankTotal - arrivalTotal1}`]);
-        s4Data.push(['', '匹配', '跨月匹配', '金额不符', '跨月金额不符', '缺失', '总计']);
-        s4Data.push(['', layer1.filter(r=>r.status==='match').length, layer1.filter(r=>r.status==='crossMonthMatch').length, layer1.filter(r=>r.status==='mismatch').length, layer1.filter(r=>r.status==='crossMonthMismatch').length, layer1.filter(r=>r.status==='missing').length, layer1.length]);
+        s4Data.push(['', '匹配', '跨月匹配', '金额不符', '跨月金额不符', '缺失', '待核对', '已调整', '总计']);
+        s4Data.push(['', layer1.filter(r=>r.status==='match').length, layer1.filter(r=>r.status==='crossMonthMatch').length, layer1.filter(r=>r.status==='mismatch' && !r.isAdjusted).length, layer1.filter(r=>r.status==='crossMonthMismatch' && !r.isAdjusted).length, layer1.filter(r=>r.status==='missing' && !r.isAdjusted).length, layer1.filter(r=>r.status==='pendingCheck' && !r.isAdjusted).length, layer1.filter(r=>r.isAdjusted).length, layer1.length]);
         s4Data.push([]);
     }
 
@@ -2607,8 +2762,8 @@ function exportResults() {
         const arrivalTotal2 = layer2.reduce((s, r) => s + (r.arrivalAmount || 0), 0);
         const rechargeTotal2 = layer2.reduce((s, r) => s + (r.rechargeAmount || 0), 0);
         s4Data.push(['第二层（到账表 vs 充值表）', `到账总额: ${arrivalTotal2}`, `充值总额: ${rechargeTotal2}`, `差异: ${arrivalTotal2 - rechargeTotal2}`]);
-        s4Data.push(['', '匹配', '金额不符', '缺失', '总计']);
-        s4Data.push(['', layer2.filter(r=>r.status==='match').length, layer2.filter(r=>r.status==='mismatch').length, layer2.filter(r=>r.status==='missing').length, layer2.length]);
+        s4Data.push(['', '匹配', '金额不符', '缺失', '已调整', '总计']);
+        s4Data.push(['', layer2.filter(r=>r.status==='match' && !r.isAdjusted).length, layer2.filter(r=>r.status==='mismatch' && !r.isAdjusted).length, layer2.filter(r=>r.status==='missing' && !r.isAdjusted).length, layer2.filter(r=>r.isAdjusted).length, layer2.length]);
         s4Data.push([]);
     }
 
@@ -2616,8 +2771,8 @@ function exportResults() {
         const rechargeTotal3 = layer3.reduce((s, r) => s + (r.rechargeAmount || 0), 0);
         const platformTotal3 = layer3.reduce((s, r) => s + (r.platformAmount || 0), 0);
         s4Data.push(['第三层（充值表 vs 平台后台）', `充值总额: ${rechargeTotal3}`, `平台总额: ${platformTotal3}`, `差异: ${rechargeTotal3 - platformTotal3}`]);
-        s4Data.push(['', '匹配', '金额不符', '缺失', '总计']);
-        s4Data.push(['', layer3.filter(r=>r.status==='match').length, layer3.filter(r=>r.status==='mismatch').length, layer3.filter(r=>r.status==='missing').length, layer3.length]);
+        s4Data.push(['', '匹配', '金额不符', '缺失', '已调整', '总计']);
+        s4Data.push(['', layer3.filter(r=>r.status==='match' && !r.isAdjusted).length, layer3.filter(r=>r.status==='mismatch' && !r.isAdjusted).length, layer3.filter(r=>r.status==='missing' && !r.isAdjusted).length, layer3.filter(r=>r.isAdjusted).length, layer3.length]);
     }
 
     XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(s4Data), '汇总');

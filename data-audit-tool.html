@@ -2000,8 +2000,12 @@ function compareLayer1(bankRecords, arrivalRecords) {
         arrivalDeduped.push(r);
     });
 
+    // 收款人/银行为空的记录，标注为待核对，不参与匹配
+    const pendingCheckRecords = arrivalDeduped.filter(r => !r.bank || r.bank.trim() === '');
+    const arrivalValid = arrivalDeduped.filter(r => r.bank && r.bank.trim() !== '');
+
     const arrivalGrouped = {};
-    arrivalDeduped.forEach(r => {
+    arrivalValid.forEach(r => {
         const key = `${r.date}_${r.bank}`;
         if (!arrivalGrouped[key]) arrivalGrouped[key] = [];
         arrivalGrouped[key].push(r);
@@ -2109,6 +2113,22 @@ function compareLayer1(bankRecords, arrivalRecords) {
                 company: arrivals[j].company,
             });
         }
+    });
+
+    // 银行名称为空的记录，标注为待核对
+    pendingCheckRecords.forEach(r => {
+        results.push({
+            status: 'pendingCheck',
+            date: r.date,
+            bank: '其他银行',
+            bankAmount: 0,
+            arrivalAmount: r.amount,
+            diff: -r.amount,
+            bankCount: 0,
+            arrivalCount: 1,
+            side: '到账待核对',
+            company: r.company,
+        });
     });
 
     return results.sort((a, b) => a.date.localeCompare(b.date) || a.bank.localeCompare(b.bank));
@@ -2268,6 +2288,7 @@ function showResults() {
         const l1Match = layer1.filter(r => r.status === 'match' || r.status === 'crossMonthMatch').length;
         const l1Mismatch = layer1.filter(r => r.status === 'mismatch' || r.status === 'crossMonthMismatch').length;
         const l1Missing = layer1.filter(r => r.status === 'missing').length;
+        const l1Pending = layer1.filter(r => r.status === 'pendingCheck').length;
         const bankByCurr = groupByCurrency(appData.records?.bank || [], 'amount');
         const arrivalByCurr = groupByCurrency(appData.records?.arrival || [], 'amount');
         cards.push(`
@@ -2288,7 +2309,7 @@ function showResults() {
                 <div class="label">第一层匹配率</div>
                 <div class="value">${layer1.length ? Math.round(l1Match / layer1.length * 100) : 0}%</div>
                 <div class="diff" style="color:#666;font-size:12px;">
-                    ✓${l1Match} ⚠${l1Mismatch} ✗${l1Missing}
+                    ✓${l1Match} ⚠${l1Mismatch} ✗${l1Missing} ⏸${l1Pending}
                 </div>
             </div>
         `);
@@ -2428,11 +2449,13 @@ function renderLayer1(data) {
         else if (r.status === 'mismatch') statusText = '⚠ 金额不符';
         else if (r.status === 'crossMonthMatch') statusText = '🟣 跨月匹配';
         else if (r.status === 'crossMonthMismatch') statusText = '🟣 跨月金额不符';
+        else if (r.status === 'pendingCheck') statusText = '⚠ 待核对';
         else statusText = '✗ ' + (r.side || '缺失');
         const diffClass = r.diff > 0 ? 'positive' : r.diff < 0 ? 'negative' : '';
 
         let note = '';
         if (r.status === 'missing') note = r.side || '';
+        else if (r.status === 'pendingCheck') note = '收款人（银行）为空，需进一步核对';
         else if (r.status === 'mismatch' || r.status === 'crossMonthMismatch') note = '金额不匹配';
         else if (r.crossMonthSource) note = `来源: ${r.crossMonthSource}`;
 
@@ -2530,9 +2553,9 @@ function exportResults() {
         const s1Data = [['状态', '日期', '银行', '银行到账金额', '到账表金额', '差异', '公司名称', '说明']];
         layer1.forEach(r => {
             s1Data.push([
-                r.status === 'match' ? '匹配' : r.status === 'mismatch' ? '金额不符' : r.status === 'crossMonthMatch' ? '跨月匹配' : r.status === 'crossMonthMismatch' ? '跨月金额不符' : '缺失',
+                r.status === 'match' ? '匹配' : r.status === 'mismatch' ? '金额不符' : r.status === 'crossMonthMatch' ? '跨月匹配' : r.status === 'crossMonthMismatch' ? '跨月金额不符' : r.status === 'pendingCheck' ? '待核对' : '缺失',
                 r.date, r.bank, r.bankAmount, r.arrivalAmount, r.diff,
-                r.company || '', r.side || ''
+                r.company || '', r.status === 'pendingCheck' ? '收款人（银行）为空，需进一步核对' : (r.side || '')
             ]);
         });
         XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(s1Data), '第一层-银行vs到账表');

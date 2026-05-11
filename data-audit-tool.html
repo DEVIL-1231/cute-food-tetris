@@ -324,6 +324,7 @@
         .result-table tr.missing { background: #ffebee; }
         .result-table tr.duplicate { background: #fff3e0; }
         .result-table tr.platformTransfer { background: #e3f2fd; }
+        .result-table tr.withdraw { background: #e8f5e9; }
 
         .status-tag {
             display: inline-block;
@@ -341,6 +342,7 @@
         .result-table tr.crossMonthMismatch { background: #f3e5f5; }
         .status-tag.duplicate { background: #ffe0b2; color: #e65100; }
         .status-tag.platformTransfer { background: #bbdefb; color: #1565c0; }
+        .status-tag.withdraw { background: #c8e6c9; color: #2e7d32; }
 
         .amount { font-family: 'Courier New', monospace; font-weight: 600; }
         .amount.positive { color: #4caf50; }
@@ -1984,9 +1986,24 @@ function extractPlatformRecords() {
 
 // ==================== 核对逻辑 ====================
 function compareLayer1(bankRecords, arrivalRecords) {
+    // 提取中银提现记录：交易对手名称为 HONGKONG IWISH TECHNOLOGY CO., LIMITED
+    const withdrawRecords = [];
+    const bankNonWithdraw = [];
+    bankRecords.forEach(r => {
+        if (r.bank === '中银银行') {
+            const raw = r.raw || {};
+            const counterparty = String(raw['交易對手名稱'] || raw['Counterparty Name'] || '').trim();
+            if (counterparty === 'HONGKONG IWISH TECHNOLOGY CO., LIMITED') {
+                withdrawRecords.push(r);
+                return;
+            }
+        }
+        bankNonWithdraw.push(r);
+    });
+
     // 按 日期+银行 分组
     const bankGrouped = {};
-    bankRecords.forEach(r => {
+    bankNonWithdraw.forEach(r => {
         const key = `${r.date}_${r.bank}`;
         if (!bankGrouped[key]) bankGrouped[key] = [];
         bankGrouped[key].push(r);
@@ -2174,6 +2191,23 @@ function compareLayer1(bankRecords, arrivalRecords) {
             arrivalCount: 1,
             side: '平台互转',
             company: r.company,
+        });
+    });
+
+    // 中银提现记录
+    withdrawRecords.forEach(r => {
+        results.push({
+            status: 'withdraw',
+            date: r.date,
+            bank: r.bank,
+            bankAmount: r.amount,
+            arrivalAmount: 0,
+            diff: r.amount,
+            bankCount: 1,
+            arrivalCount: 0,
+            side: '提现',
+            company: '',
+            counterparty: r.raw?.['交易對手名稱'] || r.raw?.['Counterparty Name'] || '',
         });
     });
 
@@ -2399,6 +2433,7 @@ function showResults() {
         const l1Pending = layer1.filter(r => r.status === 'pendingCheck' && !r.isAdjusted).length;
         const l1Adjusted = layer1.filter(r => r.isAdjusted).length;
         const l1Transfer = layer1.filter(r => r.status === 'platformTransfer').length;
+        const l1Withdraw = layer1.filter(r => r.status === 'withdraw').length;
         const bankByCurr = groupByCurrency(appData.records?.bank || [], 'amount');
         const arrivalByCurr = groupByCurrency(appData.records?.arrival || [], 'amount');
         cards.push(`
@@ -2419,7 +2454,7 @@ function showResults() {
                 <div class="label">第一层匹配率</div>
                 <div class="value">${layer1.length ? Math.round(l1Match / layer1.length * 100) : 0}%</div>
                 <div class="diff" style="color:#666;font-size:12px;">
-                    ✓${l1Match} ⚠${l1Mismatch} ✗${l1Missing} ⏸${l1Pending} 🔄${l1Transfer} ✓调${l1Adjusted}
+                    ✓${l1Match} ⚠${l1Mismatch} ✗${l1Missing} ⏸${l1Pending} 🔄${l1Transfer} 💰${l1Withdraw} ✓调${l1Adjusted}
                 </div>
             </div>
         `);
@@ -2497,7 +2532,7 @@ function showResults() {
     const tabs = [];
     if (appData.enabledLayers[1]) {
         tabs.push(`<button class="result-tab ${tabs.length === 0 ? 'active' : ''}" onclick="showResultTab('layer1')">
-            第一层：银行 vs 到账表 <span class="badge" id="badge1">${layer1.filter(r => r.status !== 'match' && r.status !== 'crossMonthMatch' && r.status !== 'platformTransfer' && !r.isAdjusted).length}</span>
+            第一层：银行 vs 到账表 <span class="badge" id="badge1">${layer1.filter(r => r.status !== 'match' && r.status !== 'crossMonthMatch' && r.status !== 'platformTransfer' && r.status !== 'withdraw' && !r.isAdjusted).length}</span>
         </button>`);
     }
     if (appData.enabledLayers[2]) {
@@ -2572,6 +2607,7 @@ function renderLayer1(data) {
             <option value="crossMonthMatch">跨月匹配</option>
             <option value="crossMonthMismatch">跨月金额不符</option>
             <option value="platformTransfer">平台互转</option>
+            <option value="withdraw">提现</option>
         </select>
         <input id="l1-filter-date" placeholder="日期筛选" value="${filterDate}" oninput="renderLayer1(appData.results.layer1)" style="padding:4px 8px;border-radius:4px;border:1px solid #ccc;width:100px;" />
         <input id="l1-filter-bank" placeholder="银行筛选" value="${filterBank}" oninput="renderLayer1(appData.results.layer1)" style="padding:4px 8px;border-radius:4px;border:1px solid #ccc;width:100px;" />
@@ -2597,6 +2633,7 @@ function renderLayer1(data) {
         else if (r.status === 'crossMonthMismatch') statusText = '🟣 跨月金额不符';
         else if (r.status === 'pendingCheck') statusText = '⚠ 待核对';
         else if (r.status === 'platformTransfer') statusText = '🔄 平台互转';
+        else if (r.status === 'withdraw') statusText = '💰 提现';
         else statusText = '✗ ' + (r.side || '缺失');
         const diffClass = r.diff > 0 ? 'positive' : r.diff < 0 ? 'negative' : '';
 
@@ -2605,6 +2642,7 @@ function renderLayer1(data) {
         else if (r.status === 'pendingCheck') note = '收款人（银行）为空，需进一步核对';
         else if (r.status === 'mismatch' || r.status === 'crossMonthMismatch') note = '金额不匹配';
         else if (r.status === 'platformTransfer') note = '平台互转';
+        else if (r.status === 'withdraw') note = '中银提现：' + (r.counterparty || '');
         else if (r.crossMonthSource) note = `来源: ${r.crossMonthSource}`;
 
         html += `<tr class="${statusClass}">
@@ -2778,7 +2816,8 @@ function exportResults() {
                 r.status === 'crossMonthMatch' ? '跨月匹配' :
                 r.status === 'crossMonthMismatch' ? '跨月金额不符' :
                 r.status === 'pendingCheck' ? '待核对' :
-                r.status === 'platformTransfer' ? '平台互转' : '缺失';
+                r.status === 'platformTransfer' ? '平台互转' :
+                r.status === 'withdraw' ? '提现' : '缺失';
             s1Data.push([
                 statusText,
                 r.date, r.bank, r.bankAmount, r.arrivalAmount, r.diff,
@@ -2841,8 +2880,8 @@ function exportResults() {
         const bankTotal = layer1.reduce((s, r) => s + (r.bankAmount || 0), 0);
         const arrivalTotal1 = layer1.reduce((s, r) => s + (r.arrivalAmount || 0), 0);
         s4Data.push(['第一层（银行 vs 到账表）', `银行总额: ${bankTotal}`, `到账总额: ${arrivalTotal1}`, `差异: ${bankTotal - arrivalTotal1}`]);
-        s4Data.push(['', '匹配', '跨月匹配', '金额不符', '跨月金额不符', '缺失', '待核对', '平台互转', '已调整', '总计']);
-        s4Data.push(['', layer1.filter(r=>r.status==='match').length, layer1.filter(r=>r.status==='crossMonthMatch').length, layer1.filter(r=>r.status==='mismatch' && !r.isAdjusted).length, layer1.filter(r=>r.status==='crossMonthMismatch' && !r.isAdjusted).length, layer1.filter(r=>r.status==='missing' && !r.isAdjusted).length, layer1.filter(r=>r.status==='pendingCheck' && !r.isAdjusted).length, layer1.filter(r=>r.status==='platformTransfer').length, layer1.filter(r=>r.isAdjusted).length, layer1.length]);
+        s4Data.push(['', '匹配', '跨月匹配', '金额不符', '跨月金额不符', '缺失', '待核对', '平台互转', '提现', '已调整', '总计']);
+        s4Data.push(['', layer1.filter(r=>r.status==='match').length, layer1.filter(r=>r.status==='crossMonthMatch').length, layer1.filter(r=>r.status==='mismatch' && !r.isAdjusted).length, layer1.filter(r=>r.status==='crossMonthMismatch' && !r.isAdjusted).length, layer1.filter(r=>r.status==='missing' && !r.isAdjusted).length, layer1.filter(r=>r.status==='pendingCheck' && !r.isAdjusted).length, layer1.filter(r=>r.status==='platformTransfer').length, layer1.filter(r=>r.status==='withdraw').length, layer1.filter(r=>r.isAdjusted).length, layer1.length]);
         s4Data.push([]);
     }
 

@@ -2877,18 +2877,61 @@ function renderSnapshotList() {
         return;
     }
     const password = getAuditPassword();
-    let html = '<div style="font-size: 13px; color: #666; margin-bottom: 8px;">📦 已保存的历史数据：</div>';
+    let html = '<div style="font-size: 13px; color: #666; margin-bottom: 8px;">📦 已保存的历史数据（点击加载）：</div>';
     html += '<div style="display: flex; gap: 8px; flex-wrap: wrap;">';
     months.forEach(m => {
         const snap = loadSnapshot(m, password);
         const isEncrypted = snap === null && JSON.parse(localStorage.getItem(LS_KEY) || '{}')[m]?._enc;
-        const label = isEncrypted ? `🔒 ${m}` : m;
-        const bg = isEncrypted ? '#fce4ec' : '#e3f2fd';
-        const color = isEncrypted ? '#c62828' : '#1565c0';
-        html += `<span style="background: ${bg}; color: ${color}; padding: 4px 10px; border-radius: 4px; font-size: 12px;">${label}</span>`;
+        const label = isEncrypted ? `🔒 ${m}` : `📂 ${m}`;
+        const bg = isEncrypted ? '#fce4ec' : '#e8f5e9';
+        const color = isEncrypted ? '#c62828' : '#2e7d32';
+        const btnStyle = `background: ${bg}; color: ${color}; padding: 4px 10px; border-radius: 4px; font-size: 12px; border: 1px solid ${color};`;
+        if (isEncrypted) {
+            html += `<span style="${btnStyle}" title="需要密码">${label}</span>`;
+        } else {
+            html += `<button style="${btnStyle}; cursor: pointer;" onclick="loadSnapshotAndRestore('${m}')">${label}</button>`;
+        }
     });
     html += '</div>';
     container.innerHTML = html;
+}
+
+function loadSnapshotAndRestore(month) {
+    const password = getAuditPassword();
+    const snap = loadSnapshot(month, password);
+    if (!snap) {
+        alert('加载失败：数据可能已损坏或密码不正确');
+        return;
+    }
+
+    // 恢复数据
+    appData.month = snap.month || month;
+    appData.results = snap.results || {};
+    appData.originalRecords = {
+        bank: snap.bankRecords || [],
+        arrival: snap.arrivalRecords || [],
+        recharge: snap.rechargeRecords || [],
+        platform: snap.platformRecords || [],
+    };
+    appData.records = { ...appData.originalRecords };
+
+    // 根据快照结果设置启用的层级
+    appData.enabledLayers = {
+        1: !!(snap.results?.layer1 && snap.results.layer1.length > 0),
+        2: !!(snap.results?.layer2 && snap.results.layer2.length > 0),
+        3: !!(snap.results?.layer3 && snap.results.layer3.length > 0),
+    };
+
+    // 更新月份选择器
+    const monthInput = document.getElementById('auditMonth');
+    if (monthInput) monthInput.value = appData.month;
+
+    // 跳转到结果页
+    goToStep(4);
+
+    // 重新渲染快照列表
+    renderSnapshotList();
+    updateSnapshotInfo();
 }
 
 function updateSnapshotInfo() {

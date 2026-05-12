@@ -1990,9 +1990,9 @@ function compareLayer1(bankRecords, arrivalRecords) {
     const withdrawRecords = [];
     const bankNonWithdraw = [];
     bankRecords.forEach(r => {
-        if (r.bank === '中银银行') {
+        if (r.bank === '中银') {
             const raw = r.raw || {};
-            const counterparty = String(raw['交易對手名稱'] || raw['Counterparty Name'] || '').trim();
+            const counterparty = String(raw['交易對手名稱 Counterparty Name'] || raw['交易對手名稱'] || raw['Counterparty Name'] || '').trim();
             if (counterparty === 'HONGKONG IWISH TECHNOLOGY CO., LIMITED') {
                 withdrawRecords.push(r);
                 return;

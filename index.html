@@ -3,109 +3,67 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>汇丰银行回单PDF解析与流水匹配工具</title>
+    <title>财务工作台</title>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
-            background: #f5f7fa;
+            background: #f0f2f5;
             color: #333;
             line-height: 1.6;
         }
-        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
-        header {
-            background: linear-gradient(135deg, #1e3a5f 0%, #4a90a4 100%);
-            color: white;
-            padding: 30px;
-            border-radius: 12px;
-            margin-bottom: 24px;
-            text-align: center;
-        }
-        header h1 { font-size: 26px; margin-bottom: 8px; }
-        header p { opacity: 0.9; font-size: 14px; }
 
-        .section {
+        /* ========== 登录页 ========== */
+        #loginPage {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%);
+        }
+        .login-box {
             background: white;
-            border-radius: 12px;
-            padding: 24px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            padding: 48px 40px;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            width: 100%;
+            max-width: 420px;
         }
-        .section-title {
-            font-size: 18px; font-weight: 600;
-            margin-bottom: 16px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .two-col {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
-        @media (max-width: 768px) {
-            .two-col { grid-template-columns: 1fr; }
-        }
-
-        .drop-zone {
-            border: 2px dashed #c0c0c0;
-            border-radius: 10px;
-            padding: 40px 20px;
+        .login-box h1 {
             text-align: center;
-            transition: all 0.3s;
-            background: #fafafa;
-            cursor: pointer;
+            color: #1e3a5f;
+            font-size: 26px;
+            margin-bottom: 8px;
         }
-        .drop-zone:hover, .drop-zone.dragover {
-            border-color: #4a90a4;
-            background: #f0f7ff;
-        }
-        .drop-zone .icon { font-size: 48px; margin-bottom: 12px; }
-        .drop-zone p { color: #666; font-size: 14px; }
-        .drop-zone input { display: none; }
-
-        .file-list { margin-top: 16px; }
-        .file-item {
-            display: flex;
-            align-items: center;
-            padding: 10px 14px;
-            background: #f8f9fa;
-            border-radius: 8px;
-            margin-bottom: 6px;
+        .login-box .subtitle {
+            text-align: center;
+            color: #888;
             font-size: 14px;
+            margin-bottom: 32px;
         }
-        .file-item .name { flex: 1; }
-        .file-item .size { color: #999; font-size: 12px; margin-right: 10px; }
-        .file-item .remove {
-            color: #f44336; cursor: pointer; font-size: 18px;
-            width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;
-            border-radius: 4px;
-        }
-        .file-item .remove:hover { background: #ffebee; }
-
-        .config-row {
-            display: flex;
-            gap: 24px;
-            flex-wrap: wrap;
-            align-items: center;
-        }
-        .config-item label {
-            font-size: 13px;
-            color: #666;
+        .form-group { margin-bottom: 20px; }
+        .form-group label {
             display: block;
+            font-size: 13px;
+            color: #555;
             margin-bottom: 6px;
+            font-weight: 500;
         }
-        .config-item input, .config-item select {
-            padding: 8px 12px;
+        .form-group input {
+            width: 100%;
+            padding: 12px 14px;
             border: 1px solid #ddd;
-            border-radius: 6px;
-            font-size: 14px;
-            min-width: 160px;
+            border-radius: 8px;
+            font-size: 15px;
+            transition: border-color 0.2s;
         }
-
+        .form-group input:focus {
+            outline: none;
+            border-color: #2d5a87;
+        }
         .btn {
             padding: 12px 28px;
             border: none;
@@ -115,30 +73,276 @@
             cursor: pointer;
             transition: all 0.2s;
         }
+        .btn-block { width: 100%; }
         .btn-primary {
-            background: linear-gradient(135deg, #1e3a5f 0%, #4a90a4 100%);
+            background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%);
             color: white;
         }
-        .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
-        .btn-primary:disabled {
-            opacity: 0.5; cursor: not-allowed; transform: none;
-        }
+        .btn-primary:hover { opacity: 0.92; transform: translateY(-1px); }
         .btn-success {
             background: linear-gradient(135deg, #43a047 0%, #66bb6a 100%);
             color: white;
         }
-        .btn-success:hover { opacity: 0.9; }
+        .btn-success:hover { opacity: 0.92; }
+        .btn-danger {
+            background: linear-gradient(135deg, #d32f2f 0%, #f44336 100%);
+            color: white;
+        }
+        .btn-sm { padding: 6px 14px; font-size: 13px; }
+        .login-toggle {
+            text-align: center;
+            margin-top: 16px;
+            font-size: 13px;
+            color: #666;
+        }
+        .login-toggle a {
+            color: #2d5a87;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .login-toggle a:hover { text-decoration: underline; }
 
-        .action-bar {
+        /* ========== 工作台布局 ========== */
+        #workbench {
+            display: none;
+            min-height: 100vh;
+        }
+        #sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 220px;
+            background: #1e3a5f;
+            color: white;
+            padding: 20px 0;
+            overflow-y: auto;
+            z-index: 100;
+            transition: transform 0.3s;
+        }
+        .sidebar-brand {
+            padding: 0 20px 20px;
+            font-size: 20px;
+            font-weight: 600;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 12px;
+        }
+        .sidebar-brand small {
+            display: block;
+            font-size: 12px;
+            font-weight: 400;
+            opacity: 0.7;
+            margin-top: 2px;
+        }
+        .nav-item {
+            display: block;
+            padding: 12px 20px;
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+        .nav-item:hover { background: rgba(255,255,255,0.08); color: white; }
+        .nav-item.active {
+            background: rgba(255,255,255,0.12);
+            color: white;
+            border-left-color: #4fc3f7;
+        }
+        .nav-item .icon { margin-right: 10px; font-size: 16px; }
+
+        #mainContent {
+            margin-left: 220px;
+            min-height: 100vh;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
+        }
+        .topbar {
+            background: white;
+            padding: 14px 28px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+        .topbar h2 { font-size: 18px; color: #1e3a5f; }
+        .topbar-user { display: flex; align-items: center; gap: 16px; font-size: 14px; }
+        .topbar-user .data-actions { display: flex; gap: 8px; }
+        .content-area { flex: 1; padding: 24px 28px; }
+
+        /* ========== 通用组件 ========== */
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            margin-bottom: 20px;
+        }
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #1e3a5f;
+        }
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 16px;
-            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+        .kpi-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+        .kpi-card .num {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1e3a5f;
+        }
+        .kpi-card .label {
+            font-size: 13px;
+            color: #888;
+            margin-top: 4px;
+        }
+        .kpi-card .trend {
+            font-size: 12px;
+            margin-top: 6px;
+        }
+        .trend-up { color: #43a047; }
+        .trend-down { color: #d32f2f; }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        .data-table th, .data-table td {
+            padding: 10px 12px;
+            text-align: left;
+            border-bottom: 1px solid #e8e8e8;
+        }
+        .data-table th {
+            background: #f5f7fa;
+            font-weight: 600;
+        }
+        .data-table tr:hover { background: #f8f9fa; }
+        .tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        .tag-success { background: #e8f5e9; color: #2e7d32; }
+        .tag-warning { background: #fff3e0; color: #e65100; }
+        .tag-danger { background: #ffebee; color: #c62828; }
+        .tag-info { background: #e3f2fd; color: #1565c0; }
+
+        .form-row { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
+        .form-row .form-group { flex: 1; min-width: 160px; margin-bottom: 0; }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-top: 16px;
         }
 
-        .progress-container {
+        .page { display: none; }
+        .page.active { display: block; }
+
+        .alert-bar {
+            background: #fff3e0;
+            border-left: 4px solid #e65100;
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-bottom: 16px;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .alert-bar.danger {
+            background: #ffebee;
+            border-left-color: #c62828;
+        }
+
+        /* 合同管理 */
+        .drop-zone {
+            border: 2px dashed #c0c0c0;
+            border-radius: 10px;
+            padding: 32px 20px;
             text-align: center;
-            padding: 40px 20px;
+            transition: all 0.3s;
+            background: #fafafa;
+            cursor: pointer;
+        }
+        .drop-zone:hover { border-color: #2d5a87; background: #f0f7ff; }
+        .drop-zone input { display: none; }
+
+        .contract-item {
+            border: 1px solid #e8e8e8;
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 12px;
+            background: white;
+        }
+        .contract-item .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .contract-item .name { font-weight: 600; color: #1e3a5f; }
+        .contract-item .meta {
+            font-size: 13px;
+            color: #666;
+            margin-top: 6px;
+        }
+        .contract-item .actions { display: flex; gap: 8px; margin-top: 10px; }
+
+        textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            resize: vertical;
+            min-height: 60px;
+            font-family: inherit;
+        }
+        textarea:focus { outline: none; border-color: #2d5a87; }
+
+        /* 银行流水 */
+        .two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        @media (max-width: 768px) {
+            .two-col { grid-template-columns: 1fr; }
+            #sidebar { transform: translateX(-100%); }
+            #sidebar.open { transform: translateX(0); }
+            #mainContent { margin-left: 0; }
+        }
+        .file-list { margin-top: 12px; }
+        .file-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            margin-bottom: 6px;
+            font-size: 13px;
+        }
+        .file-item .name { flex: 1; }
+        .file-item .remove {
+            color: #f44336; cursor: pointer; font-size: 18px;
+            width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;
         }
         .progress-bar {
             width: 100%;
@@ -146,23 +350,15 @@
             height: 8px;
             background: #e0e0e0;
             border-radius: 4px;
-            margin: 16px auto;
+            margin: 12px auto;
             overflow: hidden;
         }
         .progress-fill {
             height: 100%;
-            background: linear-gradient(90deg, #1e3a5f, #4a90a4);
+            background: linear-gradient(90deg, #1e3a5f, #2d5a87);
             border-radius: 4px;
             transition: width 0.3s;
             width: 0%;
-        }
-        .progress-text { color: #666; font-size: 14px; }
-
-        .result-summary {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 16px;
-            margin-bottom: 20px;
         }
         .summary-card {
             background: linear-gradient(135deg, #f5f7fa 0%, #e8f0fe 100%);
@@ -170,230 +366,956 @@
             padding: 16px;
             text-align: center;
         }
-        .summary-card .num {
-            font-size: 28px;
-            font-weight: 700;
-            color: #1e3a5f;
-        }
-        .summary-card .label {
-            font-size: 13px;
-            color: #666;
-            margin-top: 4px;
-        }
-
-        .data-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 13px;
-            margin-top: 12px;
-        }
-        .data-table th, .data-table td {
-            padding: 10px 12px;
-            text-align: left;
-            border-bottom: 1px solid #e0e0e0;
-        }
-        .data-table th {
-            background: #f5f7fa;
-            font-weight: 600;
-            position: sticky;
-            top: 0;
-        }
-        .data-table tr:hover { background: #f8f9fa; }
-        .data-table .matched { color: #2e7d32; font-weight: 500; }
-        .data-table .unmatched { color: #999; }
-        .data-table .tag {
-            display: inline-block;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-        }
-        .tag-success { background: #e8f5e9; color: #2e7d32; }
-        .tag-pending { background: #fff3e0; color: #e65100; }
-
+        .summary-card .num { font-size: 24px; font-weight: 700; color: #1e3a5f; }
+        .summary-card .label { font-size: 13px; color: #666; margin-top: 4px; }
         .hidden { display: none !important; }
 
-        .pdf-preview {
-            max-height: 300px;
-            overflow-y: auto;
-            background: #f8f9fa;
-            border-radius: 8px;
-            padding: 12px;
-            font-size: 12px;
-            font-family: monospace;
-            white-space: pre-wrap;
-            word-break: break-all;
+        .section-title {
+            font-size: 16px; font-weight: 600;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .config-row {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .config-item label {
+            font-size: 13px;
+            color: #666;
+            display: block;
+            margin-bottom: 4px;
+        }
+        .config-item input, .config-item select {
+            padding: 8px 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            min-width: 140px;
+        }
+        .action-bar {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-top: 20px;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>汇丰银行回单PDF解析与流水匹配工具</h1>
-            <p>自动从银行回单PDF中提取付款方名称，并匹配到银行流水Excel中</p>
-        </header>
 
-        <!-- 上传区域 -->
-        <div class="two-col">
-            <div class="section">
-                <div class="section-title"><span class="icon">📊</span>银行流水 Excel</div>
-                <div class="drop-zone" onclick="document.getElementById('excelFile').click()"
-                     ondrop="handleDrop(event, 'excel')" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
-                    <div class="icon">📁</div>
-                    <p>点击或拖拽上传银行流水文件<br><small>支持 .xlsx / .xls / .csv</small></p>
-                    <input type="file" id="excelFile" accept=".xlsx,.xls,.csv" onchange="handleFileSelect(event, 'excel')">
-                </div>
-                <div class="file-list" id="excelFileList"></div>
-            </div>
+<!-- ==================== 登录页 ==================== -->
+<div id="loginPage">
+    <div class="login-box">
+        <h1>财务工作台</h1>
+        <p class="subtitle" id="loginSubtitle">请输入账号密码登录</p>
+        <div class="form-group">
+            <label>账号</label>
+            <input type="text" id="loginUser" placeholder="请输入账号">
+        </div>
+        <div class="form-group">
+            <label>密码</label>
+            <input type="password" id="loginPass" placeholder="请输入密码">
+        </div>
+        <div class="form-group hidden" id="regPassGroup">
+            <label>确认密码</label>
+            <input type="password" id="regPassConfirm" placeholder="请再次输入密码">
+        </div>
+        <button class="btn btn-primary btn-block" id="authBtn" onclick="handleAuth()">登录</button>
+        <div class="login-toggle">
+            <span id="authToggleText">还没有账号？</span>
+            <a onclick="toggleAuthMode()" id="authToggleLink">立即注册</a>
+        </div>
+    </div>
+</div>
 
-            <div class="section">
-                <div class="section-title"><span class="icon">📄</span>银行回单 PDF（可多选）</div>
-                <div class="drop-zone" onclick="document.getElementById('pdfFiles').click()"
-                     ondrop="handleDrop(event, 'pdf')" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
-                    <div class="icon">📑</div>
-                    <p>点击或拖拽上传银行回单PDF<br><small>支持多选，可上传多个PDF文件</small></p>
-                    <input type="file" id="pdfFiles" multiple accept=".pdf" onchange="handleFileSelect(event, 'pdf')">
+<!-- ==================== 工作台 ==================== -->
+<div id="workbench">
+    <!-- 侧边栏 -->
+    <aside id="sidebar">
+        <div class="sidebar-brand">
+            财务工作台
+            <small>企业财务管理一体化平台</small>
+        </div>
+        <nav>
+            <a class="nav-item active" onclick="navTo('dashboard')" data-page="dashboard">
+                <span class="icon">📊</span>总览仪表盘
+            </a>
+            <a class="nav-item" onclick="navTo('income')" data-page="income">
+                <span class="icon">💰</span>收入分析
+            </a>
+            <a class="nav-item" onclick="navTo('contracts')" data-page="contracts">
+                <span class="icon">📝</span>合同管理
+            </a>
+            <a class="nav-item" onclick="navTo('consumption')" data-page="consumption">
+                <span class="icon">📉</span>客户消耗分析
+            </a>
+            <a class="nav-item" onclick="navTo('invoice')" data-page="invoice">
+                <span class="icon">🧾</span>发票管理
+            </a>
+            <a class="nav-item" onclick="navTo('bankflow')" data-page="bankflow">
+                <span class="icon">🏦</span>银行流水到账管理
+            </a>
+        </nav>
+    </aside>
+
+    <!-- 主内容 -->
+    <main id="mainContent">
+        <div class="topbar">
+            <h2 id="pageTitle">总览仪表盘</h2>
+            <div class="topbar-user">
+                <div class="data-actions">
+                    <button class="btn btn-sm btn-primary" onclick="exportAllData()">📤 导出数据</button>
+                    <button class="btn btn-sm btn-success" onclick="importAllData()">📥 导入数据</button>
+                    <input type="file" id="importFile" accept=".json" class="hidden" onchange="handleImportFile(event)">
                 </div>
-                <div class="file-list" id="pdfFileList"></div>
+                <span id="userDisplay">管理员</span>
+                <button class="btn btn-sm btn-danger" onclick="logout()">退出</button>
             </div>
         </div>
 
-        <!-- 配置选项 -->
-        <div class="section">
-            <div class="section-title"><span class="icon">⚙️</span>匹配配置</div>
-            <div class="config-row">
-                <div class="config-item">
-                    <label>交易编号所在列</label>
-                    <select id="refColSelect">
-                        <option value="1">A列（第1列）</option>
-                        <option value="2" selected>B列（第2列）</option>
-                        <option value="3">C列（第3列）</option>
-                        <option value="4">D列（第4列）</option>
-                        <option value="5">E列（第5列）</option>
-                    </select>
+        <div class="content-area">
+            <!-- ====== 仪表盘 ====== -->
+            <div class="page active" id="page-dashboard">
+                <div class="kpi-grid">
+                    <div class="kpi-card">
+                        <div class="num" id="kpiIncome">¥0.00</div>
+                        <div class="label">本月收入</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="num" id="kpiExpense">¥0.00</div>
+                        <div class="label">本月支出</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="num" id="kpiProfit">¥0.00</div>
+                        <div class="label">本月净利润</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="num" id="kpiContracts" style="color:#e65100;">0</div>
+                        <div class="label">即将到期合同</div>
+                    </div>
                 </div>
-                <div class="config-item">
-                    <label>数据起始行</label>
-                    <input type="number" id="startRow" value="3" min="1">
-                    <small style="color:#999; display:block; margin-top:2px;">从第几行开始读取数据，表头在上一行</small>
+
+                <div class="card">
+                    <div class="card-title">📈 收入支出趋势</div>
+                    <div class="chart-container">
+                        <canvas id="trendChart"></canvas>
+                    </div>
                 </div>
-                <div class="config-item">
-                    <label>输出列名</label>
-                    <input type="text" id="outputColName" value="匹配对手" style="width: 140px;">
-                </div>
-                <div class="config-item">
-                    <label>插入位置</label>
-                    <select id="insertPosition">
-                        <option value="last" selected>最后一列</option>
-                        <option value="after_ref">交易编号列之后</option>
-                    </select>
+
+                <div class="card" id="contractAlertCard">
+                    <div class="card-title">⚠️ 合同到期提醒</div>
+                    <div id="contractAlerts"></div>
                 </div>
             </div>
-        </div>
 
-        <!-- 操作按钮 -->
-        <div class="action-bar">
-            <button class="btn btn-primary" id="matchBtn" onclick="startMatch()" disabled>
-                🔍 开始匹配
-            </button>
-        </div>
+            <!-- ====== 收入分析 ====== -->
+            <div class="page" id="page-income">
+                <div class="card">
+                    <div class="card-title">收入数据录入</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>日期</label>
+                            <input type="date" id="incDate">
+                        </div>
+                        <div class="form-group">
+                            <label>收入来源</label>
+                            <input type="text" id="incSource" placeholder="如：产品销售、服务费">
+                        </div>
+                        <div class="form-group">
+                            <label>金额（元）</label>
+                            <input type="number" id="incAmount" placeholder="0.00">
+                        </div>
+                        <div class="form-group" style="display:flex;align-items:flex-end;">
+                            <button class="btn btn-primary" onclick="addIncomeRecord()">添加记录</button>
+                        </div>
+                    </div>
+                </div>
 
-        <!-- 进度显示 -->
-        <div id="progressArea" class="section hidden">
-            <div class="progress-container">
-                <div class="icon" style="font-size:48px;">⏳</div>
-                <h3 style="margin:12px 0;">正在处理...</h3>
-                <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
-                <div class="progress-text" id="progressText">准备中...</div>
-            </div>
-        </div>
+                <div class="two-col">
+                    <div class="card">
+                        <div class="card-title">收入来源占比</div>
+                        <div class="chart-container">
+                            <canvas id="incomePieChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">月度收入趋势</div>
+                        <div class="chart-container">
+                            <canvas id="incomeBarChart"></canvas>
+                        </div>
+                    </div>
+                </div>
 
-        <!-- 结果区域 -->
-        <div id="resultArea" class="hidden">
-            <div class="section">
-                <div class="section-title"><span class="icon">📈</span>匹配结果概览</div>
-                <div class="result-summary" id="summaryCards"></div>
-            </div>
-
-            <div class="section" style="background:#f8f9fa;">
-                <div class="section-title" style="cursor:pointer;" onclick="togglePdfExtract()"><span class="icon">📄</span>PDF提取记录（点击展开/收起）<span id="pdfExtractToggle">▼</span></div>
-                <div id="pdfExtractPanel" style="display:none;">
-                    <p style="color:#666;font-size:13px;margin-bottom:10px;">以下是从所有PDF中提取到的 Transaction reference 列表，可据此排查未匹配项：</p>
+                <div class="card">
+                    <div class="card-title">收入明细</div>
                     <div style="overflow-x:auto;">
-                        <table class="data-table" id="pdfExtractTable">
+                        <table class="data-table">
                             <thead>
-                                <tr><th>PDF文件</th><th>页码</th><th>Transaction Reference</th><th>付款方名称</th></tr>
+                                <tr><th>日期</th><th>收入来源</th><th>金额</th><th>操作</th></tr>
                             </thead>
-                            <tbody id="pdfExtractBody"></tbody>
+                            <tbody id="incomeTableBody"></tbody>
                         </table>
                     </div>
                 </div>
             </div>
 
-            <div class="section">
-                <div class="section-title"><span class="icon">📋</span>匹配明细</div>
-                <div style="overflow-x:auto;">
-                    <table class="data-table" id="resultTable">
-                        <thead>
-                            <tr>
-                                <th>日期</th>
-                                <th>详情</th>
-                                <th>支出(USD 美元)</th>
-                                <th>存入(USD 美元)</th>
-                                <th>账面结余(USD 美元)</th>
-                                <th>匹配对手</th>
-                            </tr>
-                        </thead>
-                        <tbody id="resultTableBody"></tbody>
-                    </table>
+            <!-- ====== 合同管理 ====== -->
+            <div class="page" id="page-contracts">
+                <div class="card">
+                    <div class="card-title">导入合同</div>
+                    <div class="drop-zone" onclick="document.getElementById('contractFile').click()">
+                        <div style="font-size:36px;margin-bottom:8px;">📁</div>
+                        <p>点击上传合同文件（支持 PDF / Word / Excel / 图片）</p>
+                        <input type="file" id="contractFile" accept=".pdf,.doc,.docx,.xlsx,.xls,.png,.jpg,.jpeg" onchange="handleContractUpload(event)">
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">合同列表</div>
+                    <div id="contractList"></div>
                 </div>
             </div>
 
-            <div class="action-bar">
-                <button class="btn btn-success" onclick="exportExcel()">📥 导出匹配结果Excel</button>
+            <!-- ====== 客户消耗分析 ====== -->
+            <div class="page" id="page-consumption">
+                <div class="card">
+                    <div class="card-title">客户消耗数据录入</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>日期</label>
+                            <input type="date" id="consDate">
+                        </div>
+                        <div class="form-group">
+                            <label>客户名称</label>
+                            <input type="text" id="consCustomer" placeholder="如：张三公司">
+                        </div>
+                        <div class="form-group">
+                            <label>消耗项目/服务</label>
+                            <input type="text" id="consItem" placeholder="如：咨询服务、产品采购">
+                        </div>
+                        <div class="form-group">
+                            <label>消耗金额（元）</label>
+                            <input type="number" id="consAmount" placeholder="0.00">
+                        </div>
+                        <div class="form-group" style="display:flex;align-items:flex-end;">
+                            <button class="btn btn-primary" onclick="addConsumptionRecord()">添加记录</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="two-col">
+                    <div class="card">
+                        <div class="card-title">客户消耗占比</div>
+                        <div class="chart-container">
+                            <canvas id="consPieChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">客户月度消耗趋势</div>
+                        <div class="chart-container">
+                            <canvas id="consBarChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">客户消耗明细</div>
+                    <div style="overflow-x:auto;">
+                        <table class="data-table">
+                            <thead>
+                                <tr><th>日期</th><th>客户名称</th><th>消耗项目</th><th>金额</th><th>操作</th></tr>
+                            </thead>
+                            <tbody id="consTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ====== 发票管理 ====== -->
+            <div class="page" id="page-invoice">
+                <div class="card">
+                    <div class="card-title">发票录入</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>发票号码</label>
+                            <input type="text" id="invNo" placeholder="如：12345678">
+                        </div>
+                        <div class="form-group">
+                            <label>开票日期</label>
+                            <input type="date" id="invDate">
+                        </div>
+                        <div class="form-group">
+                            <label>客户名称</label>
+                            <input type="text" id="invCustomer" placeholder="客户名称">
+                        </div>
+                        <div class="form-group">
+                            <label>金额（不含税，元）</label>
+                            <input type="number" id="invAmount" placeholder="0.00" oninput="calcInvoiceTax()">
+                        </div>
+                        <div class="form-group">
+                            <label>税率（%）</label>
+                            <input type="number" id="invTaxRate" value="13" placeholder="13" oninput="calcInvoiceTax()">
+                        </div>
+                        <div class="form-group">
+                            <label>税额（元）</label>
+                            <input type="number" id="invTax" placeholder="0.00" readonly style="background:#f5f5f5;">
+                        </div>
+                        <div class="form-group">
+                            <label>价税合计（元）</label>
+                            <input type="number" id="invTotal" placeholder="0.00" readonly style="background:#f5f5f5;">
+                        </div>
+                        <div class="form-group">
+                            <label>发票类型</label>
+                            <select id="invType">
+                                <option value="专票">增值税专用发票</option>
+                                <option value="普票">增值税普通发票</option>
+                                <option value="电子专票">电子专用发票</option>
+                                <option value="电子普票">电子普通发票</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="display:flex;align-items:flex-end;">
+                            <button class="btn btn-primary" onclick="addInvoiceRecord()">添加发票</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">发票统计</div>
+                    <div class="kpi-grid">
+                        <div class="kpi-card">
+                            <div class="num" id="invStatMonth">¥0.00</div>
+                            <div class="label">本月开票金额</div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="num" id="invStatTotal">¥0.00</div>
+                            <div class="label">累计开票金额</div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="num" id="invStatCount">0</div>
+                            <div class="label">发票总张数</div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="num" id="invStatTax">¥0.00</div>
+                            <div class="label">累计税额</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">发票列表</div>
+                    <div style="overflow-x:auto;">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>发票号码</th><th>开票日期</th><th>客户名称</th><th>金额</th>
+                                    <th>税率</th><th>税额</th><th>价税合计</th><th>类型</th><th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="invoiceTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ====== 银行流水到账管理 ====== -->
+            <div class="page" id="page-bankflow">
+                <div class="two-col">
+                    <div class="card">
+                        <div class="section-title">📊 银行流水 Excel</div>
+                        <div class="drop-zone" onclick="document.getElementById('excelFile').click()">
+                            <div style="font-size:36px;margin-bottom:8px;">📁</div>
+                            <p>点击或拖拽上传银行流水文件<br><small>支持 .xlsx / .xls / .csv</small></p>
+                            <input type="file" id="excelFile" accept=".xlsx,.xls,.csv" onchange="handleFileSelect(event, 'excel')">
+                        </div>
+                        <div class="file-list" id="excelFileList"></div>
+                    </div>
+                    <div class="card">
+                        <div class="section-title">📄 银行回单 PDF（可多选）</div>
+                        <div class="drop-zone" onclick="document.getElementById('pdfFiles').click()">
+                            <div style="font-size:36px;margin-bottom:8px;">📑</div>
+                            <p>点击或拖拽上传银行回单PDF<br><small>支持多选，可上传多个PDF文件</small></p>
+                            <input type="file" id="pdfFiles" multiple accept=".pdf" onchange="handleFileSelect(event, 'pdf')">
+                        </div>
+                        <div class="file-list" id="pdfFileList"></div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="section-title">⚙️ 匹配配置</div>
+                    <div class="config-row">
+                        <div class="config-item">
+                            <label>交易编号所在列</label>
+                            <select id="refColSelect">
+                                <option value="1">A列（第1列）</option>
+                                <option value="2" selected>B列（第2列）</option>
+                                <option value="3">C列（第3列）</option>
+                                <option value="4">D列（第4列）</option>
+                                <option value="5">E列（第5列）</option>
+                            </select>
+                        </div>
+                        <div class="config-item">
+                            <label>数据起始行</label>
+                            <input type="number" id="startRow" value="3" min="1">
+                        </div>
+                        <div class="config-item">
+                            <label>输出列名</label>
+                            <input type="text" id="outputColName" value="匹配对手" style="width:130px;">
+                        </div>
+                        <div class="config-item">
+                            <label>插入位置</label>
+                            <select id="insertPosition">
+                                <option value="last" selected>最后一列</option>
+                                <option value="after_ref">交易编号列之后</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="action-bar">
+                    <button class="btn btn-primary" id="matchBtn" onclick="startMatch()" disabled>🔍 开始匹配</button>
+                </div>
+
+                <div id="progressArea" class="card hidden">
+                    <div style="text-align:center;padding:30px;">
+                        <div style="font-size:40px;">⏳</div>
+                        <h4 style="margin:10px 0;">正在处理...</h4>
+                        <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+                        <div style="color:#666;font-size:13px;" id="progressText">准备中...</div>
+                    </div>
+                </div>
+
+                <div id="resultArea" class="hidden">
+                    <div class="card">
+                        <div class="section-title">📈 匹配结果概览</div>
+                        <div class="kpi-grid" id="summaryCards"></div>
+                    </div>
+                    <div class="card">
+                        <div class="section-title">📋 匹配明细</div>
+                        <div style="overflow-x:auto;">
+                            <table class="data-table">
+                                <thead>
+                                    <tr><th>日期</th><th>详情</th><th>支出(USD)</th><th>存入(USD)</th><th>账面结余(USD)</th><th>匹配对手</th></tr>
+                                </thead>
+                                <tbody id="resultTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="action-bar">
+                        <button class="btn btn-success" onclick="exportExcel()">📥 导出匹配结果Excel</button>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
+    </main>
+</div>
 
 <script>
 // ==================== PDF.js 配置 ====================
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-// ==================== 全局数据 ====================
-const appState = {
-    excelFile: null,
-    pdfFiles: [],
-    excelData: null,
-    excelSheet: null,
-    pdfExtracted: [],
-    matchedResults: [],
+// ==================== 数据层 ====================
+const DB = {
+    keys: { auth:'fw_auth', income:'fw_income', contracts:'fw_contracts', transactions:'fw_transactions', settings:'fw_settings', consumptions:'fw_consumptions', invoices:'fw_invoices' },
+    get(k, def) { try { return JSON.parse(localStorage.getItem(k)) || def; } catch { return def; } },
+    set(k, v) { localStorage.setItem(k, JSON.stringify(v)); },
+    getAuth() { return this.get(this.keys.auth, null); },
+    setAuth(v) { this.set(this.keys.auth, v); },
+    getIncome() { return this.get(this.keys.income, []); },
+    setIncome(v) { this.set(this.keys.income, v); },
+    getContracts() { return this.get(this.keys.contracts, []); },
+    setContracts(v) { this.set(this.keys.contracts, v); },
+    getTransactions() { return this.get(this.keys.transactions, []); },
+    setTransactions(v) { this.set(this.keys.transactions, v); },
+    getConsumptions() { return this.get(this.keys.consumptions, []); },
+    setConsumptions(v) { this.set(this.keys.consumptions, v); },
+    getInvoices() { return this.get(this.keys.invoices, []); },
+    setInvoices(v) { this.set(this.keys.invoices, v); },
 };
 
-// ==================== 文件上传 ====================
-function handleDragOver(e) {
-    e.preventDefault();
-    e.currentTarget.classList.add('dragover');
-}
-function handleDragLeave(e) {
-    e.currentTarget.classList.remove('dragover');
-}
-function handleDrop(e, type) {
-    e.preventDefault();
-    e.currentTarget.classList.remove('dragover');
-    const files = Array.from(e.dataTransfer.files);
-    processFiles(files, type);
-}
-function handleFileSelect(e, type) {
-    const files = Array.from(e.target.files);
-    processFiles(files, type);
+function exportAllData() {
+    const data = {
+        exportTime: new Date().toISOString(),
+        income: DB.getIncome(),
+        contracts: DB.getContracts(),
+        transactions: DB.getTransactions(),
+        consumptions: DB.getConsumptions(),
+        invoices: DB.getInvoices(),
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `财务工作台备份_${new Date().toISOString().slice(0,10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    alert('数据导出成功！');
 }
 
-function processFiles(files, type) {
+function importAllData() { document.getElementById('importFile').click(); }
+
+function handleImportFile(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(ev) {
+        try {
+            const data = JSON.parse(ev.target.result);
+            if (data.income) DB.setIncome(data.income);
+            if (data.contracts) DB.setContracts(data.contracts);
+            if (data.transactions) DB.setTransactions(data.transactions);
+            if (data.consumptions) DB.setConsumptions(data.consumptions);
+            if (data.invoices) DB.setInvoices(data.invoices);
+            alert('数据导入成功！页面将刷新。');
+            location.reload();
+        } catch(err) {
+            alert('导入失败：文件格式错误');
+        }
+    };
+    reader.readAsText(file);
+}
+
+// ==================== 登录认证 ====================
+let authMode = 'login'; // 'login' | 'register'
+
+function toggleAuthMode() {
+    authMode = authMode === 'login' ? 'register' : 'login';
+    document.getElementById('authBtn').textContent = authMode === 'login' ? '登录' : '注册';
+    document.getElementById('loginSubtitle').textContent = authMode === 'login' ? '请输入账号密码登录' : '注册新账号';
+    document.getElementById('authToggleText').textContent = authMode === 'login' ? '还没有账号？' : '已有账号？';
+    document.getElementById('authToggleLink').textContent = authMode === 'login' ? '立即注册' : '立即登录';
+    document.getElementById('regPassGroup').classList.toggle('hidden', authMode === 'login');
+}
+
+async function sha256(str) {
+    const buf = new TextEncoder().encode(str);
+    const hash = await crypto.subtle.digest('SHA-256', buf);
+    return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+async function handleAuth() {
+    const user = document.getElementById('loginUser').value.trim();
+    const pass = document.getElementById('loginPass').value;
+    const confirm = document.getElementById('regPassConfirm').value;
+    if (!user || !pass) { alert('请填写账号和密码'); return; }
+
+    if (authMode === 'register') {
+        if (pass !== confirm) { alert('两次输入的密码不一致'); return; }
+        const existing = DB.getAuth();
+        if (existing) { alert('已有账号，请直接登录'); toggleAuthMode(); return; }
+        const hash = await sha256(pass);
+        DB.setAuth({ username: user, passwordHash: hash });
+        alert('注册成功，请登录');
+        toggleAuthMode();
+        return;
+    }
+
+    const auth = DB.getAuth();
+    if (!auth) { alert('账号不存在，请先注册'); toggleAuthMode(); return; }
+    const hash = await sha256(pass);
+    if (auth.username !== user || auth.passwordHash !== hash) {
+        alert('账号或密码错误'); return;
+    }
+    sessionStorage.setItem('fw_session', JSON.stringify({ user, time: Date.now() }));
+    enterWorkbench(user);
+}
+
+function enterWorkbench(user) {
+    document.getElementById('loginPage').style.display = 'none';
+    document.getElementById('workbench').style.display = 'block';
+    document.getElementById('userDisplay').textContent = user;
+    initDashboard();
+    initIncomePage();
+    renderContracts();
+}
+
+function logout() {
+    sessionStorage.removeItem('fw_session');
+    location.reload();
+}
+
+function checkSession() {
+    const s = sessionStorage.getItem('fw_session');
+    if (s) {
+        try { const d = JSON.parse(s); enterWorkbench(d.user); } catch {}
+    }
+}
+checkSession();
+
+// ==================== 导航 ====================
+function navTo(page) {
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.querySelector(`.nav-item[data-page="${page}"]`).classList.add('active');
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('page-' + page).classList.add('active');
+    const titles = { dashboard:'总览仪表盘', income:'收入分析', contracts:'合同管理', consumption:'客户消耗分析', invoice:'发票管理', bankflow:'银行流水到账管理' };
+    document.getElementById('pageTitle').textContent = titles[page];
+    if (page === 'dashboard') initDashboard();
+    if (page === 'income') initIncomePage();
+    if (page === 'contracts') renderContracts();
+    if (page === 'consumption') initConsumptionPage();
+    if (page === 'invoice') initInvoicePage();
+}
+
+// ==================== 仪表盘 ====================
+let trendChart = null;
+
+function initDashboard() {
+    const income = DB.getIncome();
+    const contracts = DB.getContracts();
+    const now = new Date();
+    const ym = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+
+    let monthIncome = 0, monthExpense = 0;
+    income.forEach(r => {
+        if (r.date && r.date.startsWith(ym) && r.amount > 0) monthIncome += r.amount;
+        if (r.date && r.date.startsWith(ym) && r.amount < 0) monthExpense += -r.amount;
+    });
+
+    document.getElementById('kpiIncome').textContent = '¥' + monthIncome.toLocaleString('zh-CN', {minimumFractionDigits:2});
+    document.getElementById('kpiExpense').textContent = '¥' + monthExpense.toLocaleString('zh-CN', {minimumFractionDigits:2});
+    document.getElementById('kpiProfit').textContent = '¥' + (monthIncome - monthExpense).toLocaleString('zh-CN', {minimumFractionDigits:2});
+
+    // 合同到期提醒
+    const alertDays = 30;
+    const alerts = [];
+    contracts.forEach(c => {
+        if (!c.serviceEnd) return;
+        const end = new Date(c.serviceEnd);
+        const diff = Math.ceil((end - now) / (1000*60*60*24));
+        if (diff <= alertDays && diff >= -1) {
+            alerts.push({ name: c.name, days: diff, end: c.serviceEnd });
+        }
+    });
+    document.getElementById('kpiContracts').textContent = alerts.length;
+    const alertBox = document.getElementById('contractAlerts');
+    if (alerts.length === 0) {
+        alertBox.innerHTML = '<p style="color:#888;font-size:13px;">暂无即将到期的合同</p>';
+    } else {
+        alertBox.innerHTML = alerts.map(a => `
+            <div class="alert-bar ${a.days <= 7 ? 'danger' : ''}">
+                <span>⚠️</span>
+                <span><strong>${a.name}</strong> 服务期限至 ${a.end}，${a.days <= 0 ? '已到期' : '还有 ' + a.days + ' 天到期'}</span>
+            </div>
+        `).join('');
+    }
+
+    // 趋势图
+    renderTrendChart(income);
+}
+
+function renderTrendChart(income) {
+    const months = {};
+    income.forEach(r => {
+        if (!r.date) return;
+        const m = r.date.slice(0, 7);
+        if (!months[m]) months[m] = { income: 0, expense: 0 };
+        if (r.amount > 0) months[m].income += r.amount;
+        else months[m].expense += -r.amount;
+    });
+    const labels = Object.keys(months).sort().slice(-12);
+    const incData = labels.map(m => months[m].income);
+    const expData = labels.map(m => months[m].expense);
+
+    const ctx = document.getElementById('trendChart').getContext('2d');
+    if (trendChart) trendChart.destroy();
+    trendChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels,
+            datasets: [
+                { label: '收入', data: incData, borderColor: '#43a047', backgroundColor: 'rgba(67,160,71,0.1)', fill: true, tension: 0.3 },
+                { label: '支出', data: expData, borderColor: '#d32f2f', backgroundColor: 'rgba(211,47,47,0.1)', fill: true, tension: 0.3 }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: 'bottom' } },
+            scales: { y: { beginAtZero: true, ticks: { callback: v => '¥' + v } } }
+        }
+    });
+}
+
+// ==================== 收入分析 ====================
+let incomePieChart = null, incomeBarChart = null;
+
+function initIncomePage() {
+    document.getElementById('incDate').value = new Date().toISOString().slice(0,10);
+    renderIncomeTable();
+    renderIncomeCharts();
+}
+
+function addIncomeRecord() {
+    const date = document.getElementById('incDate').value;
+    const source = document.getElementById('incSource').value.trim();
+    const amount = parseFloat(document.getElementById('incAmount').value);
+    if (!date || !source || isNaN(amount)) { alert('请填写完整信息'); return; }
+    const records = DB.getIncome();
+    records.push({ id: Date.now(), date, source, amount });
+    DB.setIncome(records);
+    document.getElementById('incSource').value = '';
+    document.getElementById('incAmount').value = '';
+    renderIncomeTable();
+    renderIncomeCharts();
+}
+
+function deleteIncome(id) {
+    if (!confirm('确定删除这条记录？')) return;
+    DB.setIncome(DB.getIncome().filter(r => r.id !== id));
+    renderIncomeTable();
+    renderIncomeCharts();
+}
+
+function renderIncomeTable() {
+    const records = DB.getIncome().sort((a,b) => b.date.localeCompare(a.date));
+    document.getElementById('incomeTableBody').innerHTML = records.map(r => `
+        <tr>
+            <td>${r.date}</td>
+            <td>${r.source}</td>
+            <td style="color:${r.amount>=0?'#43a047':'#d32f2f'};">¥${r.amount.toLocaleString('zh-CN',{minimumFractionDigits:2})}</td>
+            <td><button class="btn btn-sm btn-danger" onclick="deleteIncome(${r.id})">删除</button></td>
+        </tr>
+    `).join('') || '<tr><td colspan="4" style="text-align:center;color:#999;">暂无数据</td></tr>';
+}
+
+function renderIncomeCharts() {
+    const records = DB.getIncome();
+    // 饼图：按来源统计
+    const srcMap = {};
+    records.forEach(r => { if (r.amount > 0) srcMap[r.source] = (srcMap[r.source] || 0) + r.amount; });
+    const pieLabels = Object.keys(srcMap);
+    const pieData = Object.values(srcMap);
+
+    const pieCtx = document.getElementById('incomePieChart').getContext('2d');
+    if (incomePieChart) incomePieChart.destroy();
+    incomePieChart = new Chart(pieCtx, {
+        type: 'doughnut',
+        data: {
+            labels: pieLabels.length ? pieLabels : ['暂无数据'],
+            datasets: [{ data: pieData.length ? pieData : [1], backgroundColor: ['#1e3a5f','#2d5a87','#4fc3f7','#81d4fa','#b3e5fc','#e1f5fe'] }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+    });
+
+    // 柱状图：月度收入
+    const monthMap = {};
+    records.forEach(r => { if (r.amount > 0 && r.date) monthMap[r.date.slice(0,7)] = (monthMap[r.date.slice(0,7)] || 0) + r.amount; });
+    const barLabels = Object.keys(monthMap).sort().slice(-12);
+    const barData = barLabels.map(m => monthMap[m]);
+
+    const barCtx = document.getElementById('incomeBarChart').getContext('2d');
+    if (incomeBarChart) incomeBarChart.destroy();
+    incomeBarChart = new Chart(barCtx, {
+        type: 'bar',
+        data: {
+            labels: barLabels.length ? barLabels : ['暂无'],
+            datasets: [{ label: '收入', data: barData.length ? barData : [0], backgroundColor: '#2d5a87', borderRadius: 6 }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true, ticks: { callback: v => '¥' + v } } }
+        }
+    });
+}
+
+// ==================== 合同管理 ====================
+function handleContractUpload(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(ev) {
+        const content = ev.target.result;
+        // 提取日期范围
+        let serviceStart = '', serviceEnd = '';
+
+        // 多种日期格式匹配
+        const patterns = [
+            /(\d{4})年\s*(\d{1,2})月\s*(\d{1,2})日?\s*至\s*(\d{4})年\s*(\d{1,2})月\s*(\d{1,2})日?/,
+            /(\d{4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})\s*[-~至]\s*(\d{4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})/,
+            /(20\d{2})(\d{2})(\d{2})\s*[-~至]\s*(20\d{2})(\d{2})(\d{2})/,
+            /服务期限[：:]\s*(\d{4}).*?(\d{1,2}).*?(\d{1,2}).*?至.*?(\d{4}).*?(\d{1,2}).*?(\d{1,2})/,
+            /合同期限[：:]\s*(\d{4}).*?(\d{1,2}).*?(\d{1,2}).*?至.*?(\d{4}).*?(\d{1,2}).*?(\d{1,2})/,
+            /有效期[：:]\s*(\d{4}).*?(\d{1,2}).*?(\d{1,2}).*?至.*?(\d{4}).*?(\d{1,2}).*?(\d{1,2})/,
+        ];
+
+        for (const pat of patterns) {
+            const m = content.match(pat);
+            if (m) {
+                serviceStart = `${m[1]}-${String(m[2]).padStart(2,'0')}-${String(m[3]).padStart(2,'0')}`;
+                serviceEnd = `${m[4]}-${String(m[5]).padStart(2,'0')}-${String(m[6]).padStart(2,'0')}`;
+                break;
+            }
+        }
+
+        // 如果没匹配到，尝试简单提取单个日期作为开始和结束
+        if (!serviceStart) {
+            const simple = content.match(/(20\d{2})[年\-/](\d{1,2})[月\-/](\d{1,2})/g);
+            if (simple && simple.length >= 2) {
+                const first = simple[0].match(/(\d{4}).*?(\d{1,2}).*?(\d{1,2})/);
+                const last = simple[simple.length-1].match(/(\d{4}).*?(\d{1,2}).*?(\d{1,2})/);
+                if (first && last) {
+                    serviceStart = `${first[1]}-${String(first[2]).padStart(2,'0')}-${String(first[3]).padStart(2,'0')}`;
+                    serviceEnd = `${last[1]}-${String(last[2]).padStart(2,'0')}-${String(last[3]).padStart(2,'0')}`;
+                }
+            }
+        }
+
+        const contracts = DB.getContracts();
+        contracts.push({
+            id: Date.now(),
+            name: file.name,
+            fileName: file.name,
+            serviceStart,
+            serviceEnd,
+            notes: '',
+            uploadedAt: new Date().toISOString()
+        });
+        DB.setContracts(contracts);
+        alert(`合同已导入${serviceStart ? '，检测到服务期限：' + serviceStart + ' 至 ' + serviceEnd : '，未自动检测到服务期限，请手动填写'}`);
+        renderContracts();
+    };
+
+    if (file.name.match(/\.(pdf|doc|docx)$/i)) {
+        // 对于PDF，尝试提取文本
+        if (file.name.endsWith('.pdf')) {
+            extractTextFromPDF(file).then(text => {
+                reader.onload = ev => {};
+                processContractText(file, text);
+            }).catch(() => {
+                reader.readAsText(file);
+            });
+            return;
+        }
+        reader.readAsText(file);
+    } else if (file.name.match(/\.(xlsx|xls)$/i)) {
+        reader.onload = function(e) {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            let text = '';
+            workbook.SheetNames.forEach(sn => {
+                const ws = workbook.Sheets[sn];
+                text += XLSX.utils.sheet_to_csv(ws) + '\n';
+            });
+            processContractText(file, text);
+        };
+        reader.readAsArrayBuffer(file);
+    } else {
+        // 图片等，只保存文件名
+        processContractText(file, '');
+    }
+}
+
+async function extractTextFromPDF(file) {
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    let text = '';
+    for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        text += content.items.map(it => it.str).join(' ') + '\n';
+    }
+    return text;
+}
+
+function processContractText(file, content) {
+    let serviceStart = '', serviceEnd = '';
+    const patterns = [
+        /(\d{4})年\s*(\d{1,2})月\s*(\d{1,2})日?\s*至\s*(\d{4})年\s*(\d{1,2})月\s*(\d{1,2})日?/,
+        /(\d{4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})\s*[-~至]\s*(\d{4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})/,
+        /(20\d{2})(\d{2})(\d{2})\s*[-~至]\s*(20\d{2})(\d{2})(\d{2})/,
+        /服务期限[：:]\s*(\d{4}).*?(\d{1,2}).*?(\d{1,2}).*?至.*?(\d{4}).*?(\d{1,2}).*?(\d{1,2})/,
+        /合同期限[：:]\s*(\d{4}).*?(\d{1,2}).*?(\d{1,2}).*?至.*?(\d{4}).*?(\d{1,2}).*?(\d{1,2})/,
+        /有效期[：:]\s*(\d{4}).*?(\d{1,2}).*?(\d{1,2}).*?至.*?(\d{4}).*?(\d{1,2}).*?(\d{1,2})/,
+    ];
+    for (const pat of patterns) {
+        const m = content.match(pat);
+        if (m) {
+            serviceStart = `${m[1]}-${String(m[2]).padStart(2,'0')}-${String(m[3]).padStart(2,'0')}`;
+            serviceEnd = `${m[4]}-${String(m[5]).padStart(2,'0')}-${String(m[6]).padStart(2,'0')}`;
+            break;
+        }
+    }
+    if (!serviceStart) {
+        const simple = content.match(/(20\d{2})[年\-/](\d{1,2})[月\-/](\d{1,2})/g);
+        if (simple && simple.length >= 2) {
+            const first = simple[0].match(/(\d{4}).*?(\d{1,2}).*?(\d{1,2})/);
+            const last = simple[simple.length-1].match(/(\d{4}).*?(\d{1,2}).*?(\d{1,2})/);
+            if (first && last) {
+                serviceStart = `${first[1]}-${String(first[2]).padStart(2,'0')}-${String(first[3]).padStart(2,'0')}`;
+                serviceEnd = `${last[1]}-${String(last[2]).padStart(2,'0')}-${String(last[3]).padStart(2,'0')}`;
+            }
+        }
+    }
+    const contracts = DB.getContracts();
+    contracts.push({ id: Date.now(), name: file.name, fileName: file.name, serviceStart, serviceEnd, notes: '', uploadedAt: new Date().toISOString() });
+    DB.setContracts(contracts);
+    alert(`合同已导入${serviceStart ? '，检测到服务期限：' + serviceStart + ' 至 ' + serviceEnd : '，未自动检测到服务期限'}`);
+    renderContracts();
+}
+
+function renderContracts() {
+    const contracts = DB.getContracts();
+    const now = new Date();
+    const list = document.getElementById('contractList');
+    if (!contracts.length) {
+        list.innerHTML = '<p style="color:#999;text-align:center;padding:30px;">暂无合同，请先导入</p>';
+        return;
+    }
+    list.innerHTML = contracts.map(c => {
+        let status = '<span class="tag tag-info">正常</span>';
+        if (c.serviceEnd) {
+            const end = new Date(c.serviceEnd);
+            const diff = Math.ceil((end - now) / (1000*60*60*24));
+            if (diff <= 0) status = '<span class="tag tag-danger">已到期</span>';
+            else if (diff <= 30) status = '<span class="tag tag-warning">即将到期</span>';
+        }
+        return `
+        <div class="contract-item">
+            <div class="header">
+                <span class="name">${c.name}</span>
+                ${status}
+            </div>
+            <div class="meta">
+                ${c.serviceStart ? `服务期限：${c.serviceStart} 至 ${c.serviceEnd}` : '服务期限：未识别'}
+                <br>上传时间：${new Date(c.uploadedAt).toLocaleString('zh-CN')}
+            </div>
+            <div style="margin-top:10px;">
+                <label style="font-size:13px;color:#666;">备注：</label>
+                <textarea onchange="updateContractNotes(${c.id}, this.value)" placeholder="添加备注...">${c.notes || ''}</textarea>
+            </div>
+            <div class="actions">
+                <button class="btn btn-sm btn-danger" onclick="deleteContract(${c.id})">删除</button>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function updateContractNotes(id, notes) {
+    const contracts = DB.getContracts();
+    const c = contracts.find(x => x.id === id);
+    if (c) { c.notes = notes; DB.setContracts(contracts); }
+}
+
+function deleteContract(id) {
+    if (!confirm('确定删除此合同？')) return;
+    DB.setContracts(DB.getContracts().filter(c => c.id !== id));
+    renderContracts();
+}
+
+// ==================== 银行流水到账管理（原有功能）====================
+const appState = { excelFile: null, pdfFiles: [], excelData: null, excelSheet: null, pdfExtracted: [], matchedResults: [] };
+
+function handleFileSelect(e, type) {
+    const files = Array.from(e.target.files);
     if (type === 'excel') {
-        const file = files[0];
-        if (!file) return;
-        appState.excelFile = file;
-        renderFileList('excelFileList', [file]);
-        readExcel(file);
+        appState.excelFile = files[0];
+        renderFileList('excelFileList', [files[0]]);
+        readExcel(files[0]);
     } else if (type === 'pdf') {
         const newFiles = files.filter(f => f.name.endsWith('.pdf'));
         appState.pdfFiles.push(...newFiles);
@@ -402,157 +1324,82 @@ function processFiles(files, type) {
     updateMatchButton();
 }
 
-function renderFileList(containerId, files, allowRemove = false) {
+function renderFileList(containerId, files, allowRemove) {
     const container = document.getElementById(containerId);
     container.innerHTML = files.map((f, idx) => `
         <div class="file-item">
             <span class="name">${f.name}</span>
-            <span class="size">${(f.size / 1024).toFixed(1)} KB</span>
             ${allowRemove ? `<span class="remove" onclick="removePdf(${idx})" title="移除">&times;</span>` : ''}
         </div>
     `).join('');
 }
+function removePdf(idx) { appState.pdfFiles.splice(idx, 1); renderFileList('pdfFileList', appState.pdfFiles, true); updateMatchButton(); }
+function updateMatchButton() { document.getElementById('matchBtn').disabled = !(appState.excelFile && appState.pdfFiles.length > 0); }
 
-function removePdf(idx) {
-    appState.pdfFiles.splice(idx, 1);
-    renderFileList('pdfFileList', appState.pdfFiles, true);
-    updateMatchButton();
-}
-
-function updateMatchButton() {
-    const btn = document.getElementById('matchBtn');
-    btn.disabled = !(appState.excelFile && appState.pdfFiles.length > 0);
-}
-
-// ==================== 读取Excel / CSV ====================
 function readExcel(file) {
     const isCSV = file.name.toLowerCase().endsWith('.csv');
     const reader = new FileReader();
-
     reader.onload = function(e) {
         let workbook;
-        if (isCSV) {
-            const text = e.target.result;
-            workbook = XLSX.read(text, { type: 'string', cellDates: true });
-        } else {
-            const data = new Uint8Array(e.target.result);
-            workbook = XLSX.read(data, { type: 'array', cellDates: true });
-        }
+        if (isCSV) workbook = XLSX.read(e.target.result, { type: 'string', cellDates: true });
+        else workbook = XLSX.read(new Uint8Array(e.target.result), { type: 'array', cellDates: true });
         appState.excelData = workbook;
-        const firstSheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[firstSheetName];
-        appState.excelSheet = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
+        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+        appState.excelSheet = XLSX.utils.sheet_to_json(firstSheet, { header: 1, defval: '' });
     };
-
-    if (isCSV) {
-        reader.readAsText(file);
-    } else {
-        reader.readAsArrayBuffer(file);
-    }
+    if (isCSV) reader.readAsText(file); else reader.readAsArrayBuffer(file);
 }
 
-// ==================== 解析PDF ====================
 async function extractFromPDF(file) {
     const arrayBuffer = await file.arrayBuffer();
     const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
     const results = [];
-
     for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
         const page = await pdf.getPage(pageNum);
         const textContent = await page.getTextContent();
         const items = textContent.items;
-
         const rowMap = new Map();
         const yThreshold = 4;
-
         for (const item of items) {
             const y = item.transform[5];
             let rowY = null;
-            for (const [key] of rowMap) {
-                if (Math.abs(key - y) < yThreshold) {
-                    rowY = key;
-                    break;
-                }
-            }
-            if (rowY === null) {
-                rowY = y;
-                rowMap.set(rowY, []);
-            }
+            for (const [key] of rowMap) { if (Math.abs(key - y) < yThreshold) { rowY = key; break; } }
+            if (rowY === null) { rowY = y; rowMap.set(rowY, []); }
             rowMap.get(rowY).push(item);
         }
+        const rows = Array.from(rowMap.entries()).sort((a,b) => b[0] - a[0]).map(([_, rowItems]) => {
+            rowItems.sort((a,b) => a.transform[4] - b.transform[4]);
+            return rowItems.map(it => it.str).join(' ').trim();
+        }).filter(line => line.length > 0);
 
-        const rows = Array.from(rowMap.entries())
-            .sort((a, b) => b[0] - a[0])
-            .map(([_, rowItems]) => {
-                rowItems.sort((a, b) => a.transform[4] - b.transform[4]);
-                return rowItems.map(it => it.str).join(' ').trim();
-            })
-            .filter(line => line.length > 0);
-
-        let transactionRef = null;
-        let payerName = null;
-
+        let transactionRef = null, payerName = null;
         for (let i = 0; i < rows.length; i++) {
             const line = rows[i];
-
-            // Transaction reference: 匹配
-            const refPatterns = [
-                /Transaction\s*reference\s*:?\s*([A-Z0-9]{6,})\b/i,
-            ];
+            const refPatterns = [/Transaction\s*reference\s*:?\s*([A-Z0-9]{6,})\b/i];
             for (const pat of refPatterns) {
                 const m = line.match(pat);
                 if (m && m[1]) {
                     const rawRef = m[1].replace(/\s+/g, '').toUpperCase();
-                    if (rawRef.length >= 6) {
-                        transactionRef = rawRef;
-                        break;
-                    }
+                    if (rawRef.length >= 6) { transactionRef = rawRef; break; }
                 }
             }
-
-            // By order of : 匹配
             const byOrderIdx = line.toLowerCase().indexOf('by order of');
             if (byOrderIdx !== -1) {
-                let after = line.slice(byOrderIdx + 'by order of'.length);
-                after = after.replace(/^[:.\s]*/, '').trim();
-
+                let after = line.slice(byOrderIdx + 'by order of'.length).replace(/^[:.\s]*/, '').trim();
                 const stopWords = ['bank to bank', 'payment details', 'local charges', 'total charges', 'credited account'];
                 for (const sw of stopWords) {
                     const idx = after.toLowerCase().indexOf(sw);
-                    if (idx !== -1) {
-                        after = after.slice(0, idx).trim();
-                    }
+                    if (idx !== -1) after = after.slice(0, idx).trim();
                 }
-
-                if (after && after.length > 1) {
-                    payerName = cleanPayerName(after);
-                } else if (i + 1 < rows.length) {
-                    payerName = cleanPayerName(rows[i + 1]);
-                }
+                if (after && after.length > 1) payerName = after.replace(/^\d+[\/\\]/, '').replace(/^\d+\s*[\/\\]\s*/, '').trim();
+                else if (i + 1 < rows.length) payerName = rows[i + 1].replace(/^\d+[\/\\]/, '').replace(/^\d+\s*[\/\\]\s*/, '').trim();
             }
         }
-
-        if (transactionRef) {
-            results.push({
-                fileName: file.name,
-                page: pageNum,
-                transactionRef,
-                payerName
-            });
-        }
+        if (transactionRef) results.push({ fileName: file.name, page: pageNum, transactionRef, payerName });
     }
-
     return results;
 }
 
-function cleanPayerName(name) {
-    return name
-        .replace(/^\d+[/\\]/, '')
-        .replace(/^\d+\s*[/\\]\s*/, '')
-        .trim();
-}
-
-// ==================== 执行匹配 ====================
 async function startMatch() {
     const progressArea = document.getElementById('progressArea');
     const progressFill = document.getElementById('progressFill');
@@ -568,216 +1415,292 @@ async function startMatch() {
     const totalPdfs = appState.pdfFiles.length;
     for (let i = 0; i < totalPdfs; i++) {
         const file = appState.pdfFiles[i];
-        progressText.textContent = `正在解析 PDF (${i + 1}/${totalPdfs}): ${file.name}`;
-        progressFill.style.width = `${((i + 0.5) / (totalPdfs + 1)) * 100}%`;
-
+        progressText.textContent = `正在解析 PDF (${i+1}/${totalPdfs}): ${file.name}`;
+        progressFill.style.width = `${((i+0.5)/(totalPdfs+1))*100}%`;
         try {
             const extracted = await extractFromPDF(file);
             appState.pdfExtracted.push(...extracted);
-        } catch (err) {
+        } catch(err) {
             console.error('PDF解析失败:', file.name, err);
             alert(`PDF解析失败: ${file.name}\n${err.message}`);
         }
     }
 
     progressText.textContent = `共从PDF中提取 ${appState.pdfExtracted.length} 条回单记录`;
-    progressFill.style.width = `${(totalPdfs / (totalPdfs + 1)) * 100}%`;
+    progressFill.style.width = `${(totalPdfs/(totalPdfs+1))*100}%`;
 
     const refMap = new Map();
     for (const item of appState.pdfExtracted) {
         if (item.transactionRef) {
             const existing = refMap.get(item.transactionRef);
-            if (!existing || (!existing.payerName && item.payerName)) {
-                refMap.set(item.transactionRef, item);
-            }
+            if (!existing || (!existing.payerName && item.payerName)) refMap.set(item.transactionRef, item);
         }
     }
 
     const refColIndex = parseInt(document.getElementById('refColSelect').value) - 1;
     const startRow = parseInt(document.getElementById('startRow').value) - 1;
     const sheetData = appState.excelSheet;
-
     appState.matchedResults = [];
 
     for (let rowIdx = startRow; rowIdx < sheetData.length; rowIdx++) {
         const row = sheetData[rowIdx];
         if (!row || row.length === 0) continue;
-
-        // 跳过支出行（负数/扣款没有回单）
         const withdrawVal = parseFloat(row[2]);
         if (withdrawVal && !isNaN(withdrawVal) && withdrawVal !== 0) {
-            appState.matchedResults.push({
-                rowIndex: rowIdx,
-                rowData: row,
-                refValue: '',
-                isValidRef: false,
-                matched: false,
-                payerName: null,
-            });
+            appState.matchedResults.push({ rowIndex: rowIdx, rowData: row, refValue: '', isValidRef: false, matched: false, payerName: null });
             continue;
         }
-
         const rawRef = String(row[refColIndex] || '').replace(/["]+/g, '').trim();
         const firstToken = rawRef.split(/\s+/)[0] || '';
         const refValue = firstToken;
         const isValidRef = /^[A-Z0-9]{10,}$/i.test(refValue);
-
         let matchedItem = null;
-        if (isValidRef) {
-            matchedItem = refMap.get(refValue.toUpperCase());
-        }
-
-        appState.matchedResults.push({
-            rowIndex: rowIdx,
-            rowData: row,
-            refValue: refValue,
-            isValidRef: isValidRef,
-            matched: !!matchedItem,
-            payerName: matchedItem ? matchedItem.payerName : null,
-        });
+        if (isValidRef) matchedItem = refMap.get(refValue.toUpperCase());
+        appState.matchedResults.push({ rowIndex: rowIdx, rowData: row, refValue, isValidRef, matched: !!matchedItem, payerName: matchedItem ? matchedItem.payerName : null });
     }
 
     progressFill.style.width = '100%';
     progressText.textContent = '匹配完成！';
-
     setTimeout(() => {
         progressArea.classList.add('hidden');
-        renderResults();
+        renderBankResults();
         resultArea.classList.remove('hidden');
         matchBtn.disabled = false;
     }, 500);
 }
 
-// ==================== 渲染结果 ====================
-function renderResults() {
+function renderBankResults() {
     const results = appState.matchedResults;
     const matched = results.filter(r => r.matched);
     const unmatched = results.filter(r => r.isValidRef && !r.matched);
     const invalid = results.filter(r => !r.isValidRef);
 
     document.getElementById('summaryCards').innerHTML = `
-        <div class="summary-card">
-            <div class="num">${results.length}</div>
-            <div class="label">总行数</div>
-        </div>
-        <div class="summary-card">
-            <div class="num" style="color:#2e7d32;">${matched.length}</div>
-            <div class="label">匹配成功</div>
-        </div>
-        <div class="summary-card">
-            <div class="num" style="color:#e65100;">${unmatched.length}</div>
-            <div class="label">未匹配</div>
-        </div>
-        <div class="summary-card">
-            <div class="num" style="color:#666;">${invalid.length}</div>
-            <div class="label">无有效编号</div>
-        </div>
+        <div class="summary-card"><div class="num">${results.length}</div><div class="label">总行数</div></div>
+        <div class="summary-card"><div class="num" style="color:#2e7d32;">${matched.length}</div><div class="label">匹配成功</div></div>
+        <div class="summary-card"><div class="num" style="color:#e65100;">${unmatched.length}</div><div class="label">未匹配</div></div>
+        <div class="summary-card"><div class="num" style="color:#666;">${invalid.length}</div><div class="label">无有效编号</div></div>
     `;
 
-    const tbody = document.getElementById('resultTableBody');
-    tbody.innerHTML = results.map(r => {
-        const date = r.rowData[0] || '';
-        const detail = r.rowData[1] || '';
-        const withdraw = r.rowData[2] || '';
-        const deposit = r.rowData[3] || '';
-        const balance = r.rowData[4] || '';
-
-        return `
-            <tr>
-                <td>${date}</td>
-                <td>${detail}</td>
-                <td>${withdraw}</td>
-                <td>${deposit}</td>
-                <td>${balance}</td>
-                <td class="${r.matched ? 'matched' : 'unmatched'}">${r.payerName || '-'}</td>
-            </tr>
-        `;
-    }).join('');
-
-    // 渲染PDF提取记录
-    const pdfBody = document.getElementById('pdfExtractBody');
-    pdfBody.innerHTML = appState.pdfExtracted.map(item => `
+    document.getElementById('resultTableBody').innerHTML = results.map(r => `
         <tr>
-            <td>${item.fileName}</td>
-            <td>${item.page}</td>
-            <td style="font-family:monospace;">${item.transactionRef}</td>
-            <td>${item.payerName || '-'}</td>
+            <td>${r.rowData[0] || ''}</td>
+            <td>${r.rowData[1] || ''}</td>
+            <td>${r.rowData[2] || ''}</td>
+            <td>${r.rowData[3] || ''}</td>
+            <td>${r.rowData[4] || ''}</td>
+            <td style="color:${r.matched?'#2e7d32':'#999'};font-weight:${r.matched?500:400};">${r.payerName || '-'}</td>
         </tr>
-    `).join('') || '<tr><td colspan="4" style="text-align:center;color:#999;">未提取到任何记录</td></tr>';
+    `).join('');
 }
 
-function togglePdfExtract() {
-    const panel = document.getElementById('pdfExtractPanel');
-    const arrow = document.getElementById('pdfExtractToggle');
-    if (panel.style.display === 'none') {
-        panel.style.display = 'block';
-        arrow.textContent = '▲';
-    } else {
-        panel.style.display = 'none';
-        arrow.textContent = '▼';
-    }
-}
-
-// ==================== 导出Excel ====================
 function exportExcel() {
     const workbook = appState.excelData;
     if (!workbook) return;
-
     const outputColName = document.getElementById('outputColName').value.trim() || '匹配对手';
     const insertPos = document.getElementById('insertPosition').value;
     const refColIndex = parseInt(document.getElementById('refColSelect').value) - 1;
     const startRow = parseInt(document.getElementById('startRow').value) - 1;
-
     const wbOut = XLSX.utils.book_new();
 
     for (const sheetName of workbook.SheetNames) {
         const ws = workbook.Sheets[sheetName];
         const data = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
-
         let insertColIndex;
         if (insertPos === 'last') {
             const maxCols = Math.max(...data.map(r => r.length), 0);
             insertColIndex = maxCols;
-        } else {
-            insertColIndex = refColIndex + 1;
-        }
+        } else insertColIndex = refColIndex + 1;
 
         for (let r = 0; r < data.length; r++) {
             const row = data[r];
             if (!row) continue;
-
             if (insertPos !== 'last') {
-                while (row.length < insertColIndex) {
-                    row.push('');
-                }
-                for (let c = row.length - 1; c >= insertColIndex; c--) {
-                    row[c + 1] = row[c];
-                }
-            } else {
-                while (row.length <= insertColIndex) {
-                    row.push('');
-                }
-            }
-
-            if (r === startRow - 1) {
-                row[insertColIndex] = outputColName;
-            } else if (r >= startRow) {
+                while (row.length < insertColIndex) row.push('');
+                for (let c = row.length - 1; c >= insertColIndex; c--) row[c+1] = row[c];
+            } else while (row.length <= insertColIndex) row.push('');
+            if (r === startRow - 1) row[insertColIndex] = outputColName;
+            else if (r >= startRow) {
                 const matchResult = appState.matchedResults.find(m => m.rowIndex === r);
                 row[insertColIndex] = matchResult && matchResult.matched ? matchResult.payerName : '';
-            } else {
-                row[insertColIndex] = '';
-            }
+            } else row[insertColIndex] = '';
         }
-
         const newWs = XLSX.utils.aoa_to_sheet(data);
         if (ws['!cols']) newWs['!cols'] = ws['!cols'];
         if (ws['!rows']) newWs['!rows'] = ws['!rows'];
-
         XLSX.utils.book_append_sheet(wbOut, newWs, sheetName);
     }
-
     const fileName = appState.excelFile.name.replace(/\.xlsx?$/i, '') + '_已匹配付款方.xlsx';
     XLSX.writeFile(wbOut, fileName);
+}
+
+// ==================== 客户消耗分析 ====================
+let consPieChart = null, consBarChart = null;
+
+function initConsumptionPage() {
+    document.getElementById('consDate').value = new Date().toISOString().slice(0,10);
+    renderConsumptionTable();
+    renderConsumptionCharts();
+}
+
+function addConsumptionRecord() {
+    const date = document.getElementById('consDate').value;
+    const customer = document.getElementById('consCustomer').value.trim();
+    const item = document.getElementById('consItem').value.trim();
+    const amount = parseFloat(document.getElementById('consAmount').value);
+    if (!date || !customer || isNaN(amount) || amount <= 0) { alert('请填写完整信息，金额需大于0'); return; }
+    const records = DB.getConsumptions();
+    records.push({ id: Date.now(), date, customer, item, amount });
+    DB.setConsumptions(records);
+    document.getElementById('consCustomer').value = '';
+    document.getElementById('consItem').value = '';
+    document.getElementById('consAmount').value = '';
+    renderConsumptionTable();
+    renderConsumptionCharts();
+}
+
+function deleteConsumption(id) {
+    if (!confirm('确定删除这条记录？')) return;
+    DB.setConsumptions(DB.getConsumptions().filter(r => r.id !== id));
+    renderConsumptionTable();
+    renderConsumptionCharts();
+}
+
+function renderConsumptionTable() {
+    const records = DB.getConsumptions().sort((a,b) => b.date.localeCompare(a.date));
+    document.getElementById('consTableBody').innerHTML = records.map(r => `
+        <tr>
+            <td>${r.date}</td>
+            <td>${r.customer}</td>
+            <td>${r.item || '-'}</td>
+            <td style="color:#d32f2f;">¥${r.amount.toLocaleString('zh-CN',{minimumFractionDigits:2})}</td>
+            <td><button class="btn btn-sm btn-danger" onclick="deleteConsumption(${r.id})">删除</button></td>
+        </tr>
+    `).join('') || '<tr><td colspan="5" style="text-align:center;color:#999;">暂无数据</td></tr>';
+}
+
+function renderConsumptionCharts() {
+    const records = DB.getConsumptions();
+    // 饼图：按客户统计
+    const custMap = {};
+    records.forEach(r => { custMap[r.customer] = (custMap[r.customer] || 0) + r.amount; });
+    const pieLabels = Object.keys(custMap);
+    const pieData = Object.values(custMap);
+
+    const pieCtx = document.getElementById('consPieChart').getContext('2d');
+    if (consPieChart) consPieChart.destroy();
+    consPieChart = new Chart(pieCtx, {
+        type: 'doughnut',
+        data: {
+            labels: pieLabels.length ? pieLabels : ['暂无数据'],
+            datasets: [{ data: pieData.length ? pieData : [1], backgroundColor: ['#1e3a5f','#d32f2f','#f57c00','#388e3c','#7b1fa2','#00796b'] }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+    });
+
+    // 柱状图：月度消耗
+    const monthMap = {};
+    records.forEach(r => { if (r.date) monthMap[r.date.slice(0,7)] = (monthMap[r.date.slice(0,7)] || 0) + r.amount; });
+    const barLabels = Object.keys(monthMap).sort().slice(-12);
+    const barData = barLabels.map(m => monthMap[m]);
+
+    const barCtx = document.getElementById('consBarChart').getContext('2d');
+    if (consBarChart) consBarChart.destroy();
+    consBarChart = new Chart(barCtx, {
+        type: 'bar',
+        data: {
+            labels: barLabels.length ? barLabels : ['暂无'],
+            datasets: [{ label: '客户消耗', data: barData.length ? barData : [0], backgroundColor: '#d32f2f', borderRadius: 6 }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true, ticks: { callback: v => '¥' + v } } }
+        }
+    });
+}
+
+// ==================== 发票管理 ====================
+function calcInvoiceTax() {
+    const amount = parseFloat(document.getElementById('invAmount').value) || 0;
+    const rate = parseFloat(document.getElementById('invTaxRate').value) || 0;
+    const tax = amount * (rate / 100);
+    const total = amount + tax;
+    document.getElementById('invTax').value = tax.toFixed(2);
+    document.getElementById('invTotal').value = total.toFixed(2);
+}
+
+function initInvoicePage() {
+    document.getElementById('invDate').value = new Date().toISOString().slice(0,10);
+    renderInvoiceTable();
+    renderInvoiceStats();
+}
+
+function addInvoiceRecord() {
+    const no = document.getElementById('invNo').value.trim();
+    const date = document.getElementById('invDate').value;
+    const customer = document.getElementById('invCustomer').value.trim();
+    const amount = parseFloat(document.getElementById('invAmount').value) || 0;
+    const taxRate = parseFloat(document.getElementById('invTaxRate').value) || 0;
+    const tax = parseFloat(document.getElementById('invTax').value) || 0;
+    const total = parseFloat(document.getElementById('invTotal').value) || 0;
+    const type = document.getElementById('invType').value;
+    if (!no || !date || !customer) { alert('请填写发票号码、日期和客户名称'); return; }
+
+    const invoices = DB.getInvoices();
+    if (invoices.find(i => i.no === no)) { alert('该发票号码已存在'); return; }
+    invoices.push({ id: Date.now(), no, date, customer, amount, taxRate, tax, total, type });
+    DB.setInvoices(invoices);
+
+    document.getElementById('invNo').value = '';
+    document.getElementById('invCustomer').value = '';
+    document.getElementById('invAmount').value = '';
+    document.getElementById('invTax').value = '';
+    document.getElementById('invTotal').value = '';
+    renderInvoiceTable();
+    renderInvoiceStats();
+}
+
+function deleteInvoice(id) {
+    if (!confirm('确定删除这张发票？')) return;
+    DB.setInvoices(DB.getInvoices().filter(i => i.id !== id));
+    renderInvoiceTable();
+    renderInvoiceStats();
+}
+
+function renderInvoiceTable() {
+    const invoices = DB.getInvoices().sort((a,b) => b.date.localeCompare(a.date));
+    document.getElementById('invoiceTableBody').innerHTML = invoices.map(i => `
+        <tr>
+            <td>${i.no}</td>
+            <td>${i.date}</td>
+            <td>${i.customer}</td>
+            <td>¥${i.amount.toLocaleString('zh-CN',{minimumFractionDigits:2})}</td>
+            <td>${i.taxRate}%</td>
+            <td>¥${i.tax.toLocaleString('zh-CN',{minimumFractionDigits:2})}</td>
+            <td>¥${i.total.toLocaleString('zh-CN',{minimumFractionDigits:2})}</td>
+            <td><span class="tag ${i.type==='专票'||i.type==='电子专票'?'tag-success':'tag-info'}">${i.type}</span></td>
+            <td><button class="btn btn-sm btn-danger" onclick="deleteInvoice(${i.id})">删除</button></td>
+        </tr>
+    `).join('') || '<tr><td colspan="9" style="text-align:center;color:#999;">暂无发票数据</td></tr>';
+}
+
+function renderInvoiceStats() {
+    const invoices = DB.getInvoices();
+    const now = new Date();
+    const ym = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+
+    let monthTotal = 0, allTotal = 0, allTax = 0;
+    invoices.forEach(i => {
+        allTotal += i.total;
+        allTax += i.tax;
+        if (i.date && i.date.startsWith(ym)) monthTotal += i.total;
+    });
+
+    document.getElementById('invStatMonth').textContent = '¥' + monthTotal.toLocaleString('zh-CN', {minimumFractionDigits:2});
+    document.getElementById('invStatTotal').textContent = '¥' + allTotal.toLocaleString('zh-CN', {minimumFractionDigits:2});
+    document.getElementById('invStatCount').textContent = invoices.length;
+    document.getElementById('invStatTax').textContent = '¥' + allTax.toLocaleString('zh-CN', {minimumFractionDigits:2});
 }
 </script>
 </body>

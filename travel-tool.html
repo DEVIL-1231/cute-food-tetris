@@ -1,0 +1,1763 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>旅行小助手 · Travel Mate</title>
+    <style>
+        :root {
+            --primary: #0d9488;
+            --primary-dark: #0f766e;
+            --secondary: #f97316;
+            --accent: #f59e0b;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --text: #1e293b;
+            --text-light: #64748b;
+            --border: #e2e8f0;
+            --shadow: 0 4px 20px rgba(0,0,0,0.06);
+            --radius: 16px;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        /* 布局 */
+        .app {
+            display: flex;
+            min-height: 100vh;
+        }
+        .sidebar {
+            width: 240px;
+            background: linear-gradient(180deg, #0f766e 0%, #115e59 100%);
+            color: white;
+            padding: 24px 0;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 100;
+            transition: transform .3s;
+        }
+        .brand {
+            padding: 0 24px 24px;
+            border-bottom: 1px solid rgba(255,255,255,0.12);
+            margin-bottom: 16px;
+        }
+        .brand h1 { font-size: 22px; font-weight: 700; }
+        .brand p { font-size: 12px; opacity: 0.75; margin-top: 4px; }
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 24px;
+            cursor: pointer;
+            transition: all .2s;
+            border-left: 3px solid transparent;
+            color: rgba(255,255,255,0.85);
+        }
+        .nav-item:hover { background: rgba(255,255,255,0.08); color: white; }
+        .nav-item.active { background: rgba(255,255,255,0.12); border-left-color: #fbbf24; color: white; }
+        .nav-item .icon { font-size: 20px; width: 26px; text-align: center; }
+
+        .main {
+            margin-left: 240px;
+            flex: 1;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .topbar {
+            background: var(--card);
+            padding: 16px 28px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+        .topbar h2 { font-size: 20px; color: var(--primary-dark); }
+        .topbar-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+
+        .content {
+            flex: 1;
+            padding: 24px 28px;
+        }
+        .page { display: none; }
+        .page.active { display: block; }
+
+        /* 按钮 */
+        .btn {
+            padding: 10px 18px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all .2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: var(--primary-dark); transform: translateY(-1px); }
+        .btn-secondary { background: #f1f5f9; color: var(--text); border: 1px solid var(--border); }
+        .btn-secondary:hover { background: #e2e8f0; }
+        .btn-success { background: #10b981; color: white; }
+        .btn-success:hover { background: #059669; }
+        .btn-warning { background: var(--secondary); color: white; }
+        .btn-warning:hover { background: #ea580c; }
+        .btn-danger { background: #ef4444; color: white; }
+        .btn-danger:hover { background: #dc2626; }
+        .btn-sm { padding: 6px 12px; font-size: 13px; border-radius: 8px; }
+        .btn-ghost { background: transparent; color: var(--text-light); }
+        .btn-ghost:hover { background: #f1f5f9; }
+
+        /* 卡片 */
+        .card {
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 22px;
+            box-shadow: var(--shadow);
+            margin-bottom: 20px;
+        }
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* KPI */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .kpi-card {
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
+            border-top: 4px solid var(--primary);
+        }
+        .kpi-card .num { font-size: 26px; font-weight: 700; color: var(--primary-dark); }
+        .kpi-card .label { font-size: 13px; color: var(--text-light); margin-top: 4px; }
+        .kpi-card.orange { border-top-color: var(--secondary); }
+        .kpi-card.orange .num { color: var(--secondary); }
+        .kpi-card.blue { border-top-color: #3b82f6; }
+        .kpi-card.blue .num { color: #2563eb; }
+        .kpi-card.purple { border-top-color: #8b5cf6; }
+        .kpi-card.purple .num { color: #7c3aed; }
+
+        /* 时间线 */
+        .timeline {
+            position: relative;
+            padding-left: 24px;
+        }
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 8px;
+            top: 8px;
+            bottom: 8px;
+            width: 2px;
+            background: linear-gradient(180deg, var(--primary), var(--accent));
+            border-radius: 2px;
+        }
+        .timeline-item {
+            position: relative;
+            padding-bottom: 20px;
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -20px;
+            top: 4px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--card);
+            border: 3px solid var(--primary);
+        }
+        .timeline-date { font-size: 13px; color: var(--primary); font-weight: 600; }
+        .timeline-title { font-weight: 600; margin-top: 2px; }
+        .timeline-desc { font-size: 13px; color: var(--text-light); margin-top: 4px; }
+
+        /* 表单 */
+        .form-row { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 14px; }
+        .form-group { flex: 1; min-width: 160px; }
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            color: var(--text-light);
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            font-size: 14px;
+            font-family: inherit;
+            transition: border .2s;
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        textarea { resize: vertical; min-height: 70px; }
+
+        /* 项目卡片 */
+        .items-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 18px;
+        }
+        .item-card {
+            background: var(--card);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            transition: transform .2s, box-shadow .2s;
+            border: 1px solid var(--border);
+        }
+        .item-card:hover { transform: translateY(-3px); box-shadow: 0 8px 30px rgba(0,0,0,0.1); }
+        .item-image {
+            width: 100%;
+            height: 170px;
+            object-fit: cover;
+            background: #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #94a3b8;
+            font-size: 14px;
+        }
+        .item-body { padding: 16px; }
+        .item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 8px;
+        }
+        .item-title { font-size: 16px; font-weight: 600; }
+        .item-meta { font-size: 12px; color: var(--text-light); margin-top: 4px; }
+        .item-desc { font-size: 13px; color: var(--text); margin-top: 8px; line-height: 1.5; }
+        .item-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+        .tag {
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            background: #ccfbf1;
+            color: #0f766e;
+        }
+        .tag.food { background: #ffedd5; color: #c2410c; }
+        .tag.trans { background: #dbeafe; color: #1d4ed8; }
+        .tag.stay { background: #f3e8ff; color: #7c3aed; }
+        .tag.attr { background: #dcfce7; color: #15803d; }
+        .item-actions { display: flex; gap: 8px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border); }
+
+        /* 图片上传 */
+        .photo-upload {
+            border: 2px dashed var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+            cursor: pointer;
+            transition: all .2s;
+            background: #f8fafc;
+        }
+        .photo-upload:hover { border-color: var(--primary); background: #f0fdfa; }
+        .photo-upload input { display: none; }
+        .photo-preview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+            gap: 10px;
+            margin-top: 12px;
+        }
+        .photo-preview {
+            position: relative;
+            aspect-ratio: 1;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+        .photo-preview img { width: 100%; height: 100%; object-fit: cover; }
+        .photo-preview .remove {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            width: 20px;
+            height: 20px;
+            background: rgba(0,0,0,0.5);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        /* 模态框 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .modal.active { display: flex; }
+        .modal-content {
+            background: white;
+            border-radius: var(--radius);
+            max-width: 620px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 24px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .modal-header h3 { font-size: 18px; }
+        .close-btn {
+            width: 32px; height: 32px;
+            border-radius: 50%;
+            border: none;
+            background: #f1f5f9;
+            cursor: pointer;
+            font-size: 18px;
+            color: var(--text-light);
+        }
+        .close-btn:hover { background: #e2e8f0; }
+
+        /* 共享面板 */
+        .share-box {
+            background: #f0fdfa;
+            border: 1px solid #99f6e4;
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 16px;
+        }
+        .share-code {
+            font-family: monospace;
+            font-size: 14px;
+            background: white;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            word-break: break-all;
+            margin: 10px 0;
+            color: var(--primary-dark);
+        }
+        .sync-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: var(--text-light);
+        }
+        .sync-dot { width: 8px; height: 8px; border-radius: 50%; background: #10b981; }
+        .sync-dot.off { background: #94a3b8; }
+
+        /* 空状态 */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-light);
+        }
+        .empty-state .icon { font-size: 56px; margin-bottom: 12px; opacity: 0.6; }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .main { margin-left: 0; }
+            .menu-toggle {
+                display: block;
+                position: fixed;
+                bottom: 20px; right: 20px;
+                z-index: 200;
+                width: 50px; height: 50px;
+                border-radius: 50%;
+                background: var(--primary);
+                color: white;
+                border: none;
+                font-size: 22px;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            }
+        }
+        @media (min-width: 769px) { .menu-toggle { display: none; } }
+
+        .hidden { display: none !important; }
+        .text-right { text-align: right; }
+        .text-center { text-align: center; }
+        .mb-0 { margin-bottom: 0; }
+
+        /* 评分星 */
+        .stars { color: var(--accent); font-size: 14px; letter-spacing: 1px; }
+
+        /* 图库 */
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 12px;
+        }
+        .gallery-item {
+            aspect-ratio: 1;
+            border-radius: 12px;
+            overflow: hidden;
+            cursor: pointer;
+            position: relative;
+        }
+        .gallery-item img { width: 100%; height: 100%; object-fit: cover; transition: transform .3s; }
+        .gallery-item:hover img { transform: scale(1.05); }
+        .gallery-caption {
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            background: linear-gradient(transparent, rgba(0,0,0,0.6));
+            color: white;
+            padding: 20px 10px 10px;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="app">
+    <!-- 侧边栏 -->
+    <aside class="sidebar" id="sidebar">
+        <div class="brand">
+            <h1>🌍 旅行小助手</h1>
+            <p>和好友一起规划完美旅程</p>
+        </div>
+        <nav>
+            <div class="nav-item active" onclick="navTo('dashboard')">
+                <span class="icon">📊</span>
+                <span>行程总览</span>
+            </div>
+            <div class="nav-item" onclick="navTo('locations')">
+                <span class="icon">📍</span>
+                <span>地点</span>
+            </div>
+            <div class="nav-item" onclick="navTo('food')">
+                <span class="icon">🍜</span>
+                <span>美食</span>
+            </div>
+            <div class="nav-item" onclick="navTo('transport')">
+                <span class="icon">🚄</span>
+                <span>交通</span>
+            </div>
+            <div class="nav-item" onclick="navTo('attractions')">
+                <span class="icon">🎡</span>
+                <span>景点</span>
+            </div>
+            <div class="nav-item" onclick="navTo('stay')">
+                <span class="icon">🏨</span>
+                <span>住宿</span>
+            </div>
+            <div class="nav-item" onclick="navTo('gallery')">
+                <span class="icon">📷</span>
+                <span>照片墙</span>
+            </div>
+            <div class="nav-item" onclick="navTo('share')">
+                <span class="icon">👥</span>
+                <span>好友共享</span>
+            </div>
+        </nav>
+    </aside>
+
+    <div class="main">
+        <header class="topbar">
+            <h2 id="pageTitle">行程总览</h2>
+            <div class="topbar-actions">
+                <span class="sync-status" id="syncStatus">
+                    <span class="sync-dot" id="syncDot"></span>
+                    <span id="syncText">本地模式</span>
+                </span>
+                <button class="btn btn-secondary btn-sm" onclick="exportData()">💾 导出备份</button>
+                <button class="btn btn-secondary btn-sm" onclick="document.getElementById('importFile').click()">📥 导入备份</button>
+                <input type="file" id="importFile" class="hidden" accept=".json" onchange="importData(event)">
+                <button class="btn btn-primary btn-sm" onclick="openShareModal()">👥 邀请好友</button>
+            </div>
+        </header>
+
+        <div class="content">
+            <!-- 总览 -->
+            <div class="page active" id="page-dashboard">
+                <div class="kpi-grid">
+                    <div class="kpi-card">
+                        <div class="num" id="kpiDays">0</div>
+                        <div class="label">旅行天数</div>
+                    </div>
+                    <div class="kpi-card orange">
+                        <div class="num" id="kpiCost">¥0</div>
+                        <div class="label">预计总花费</div>
+                    </div>
+                    <div class="kpi-card blue">
+                        <div class="num" id="kpiSpots">0</div>
+                        <div class="label">想去景点</div>
+                    </div>
+                    <div class="kpi-card purple">
+                        <div class="num" id="kpiFood">0</div>
+                        <div class="label">美食打卡</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">🗓️ 行程时间线</div>
+                    <div class="timeline" id="timeline"></div>
+                    <div class="empty-state hidden" id="emptyTimeline">
+                        <div class="icon">🗺️</div>
+                        <p>还没有行程，去“地点”添加第一站吧！</p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">💰 预算分配</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>交通预算</label>
+                            <input type="number" id="budgetTransport" placeholder="0" onchange="saveBudget()">
+                        </div>
+                        <div class="form-group">
+                            <label>住宿预算</label>
+                            <input type="number" id="budgetStay" placeholder="0" onchange="saveBudget()">
+                        </div>
+                        <div class="form-group">
+                            <label>餐饮预算</label>
+                            <input type="number" id="budgetFood" placeholder="0" onchange="saveBudget()">
+                        </div>
+                        <div class="form-group">
+                            <label>景点/娱乐预算</label>
+                            <input type="number" id="budgetAttr" placeholder="0" onchange="saveBudget()">
+                        </div>
+                    </div>
+                    <div id="budgetChart" style="margin-top: 16px;"></div>
+                </div>
+            </div>
+
+            <!-- 地点 -->
+            <div class="page" id="page-locations">
+                <div class="card">
+                    <div class="card-title">➕ 添加/编辑地点</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>地点名称</label>
+                            <input type="text" id="locName" placeholder="如：大理古城">
+                        </div>
+                        <div class="form-group">
+                            <label>到达日期</label>
+                            <input type="date" id="locDate">
+                        </div>
+                        <div class="form-group">
+                            <label>离开日期</label>
+                            <input type="date" id="locEndDate">
+                        </div>
+                        <div class="form-group">
+                            <label>住宿/落脚点</label>
+                            <input type="text" id="locBase" placeholder="住哪里">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>地点简介 / 备忘录</label>
+                        <textarea id="locNote" placeholder="写下对这个地方的期待或攻略..."></textarea>
+                    </div>
+                    <div class="photo-upload" onclick="document.getElementById('locPhoto').click()">
+                        <div>📷 点击上传地点照片</div>
+                        <input type="file" id="locPhoto" accept="image/*" multiple onchange="handlePhotoUpload(this, 'locPhotos')">
+                    </div>
+                    <div class="photo-preview-grid" id="locPhotos"></div>
+                    <div style="margin-top: 16px; text-align: right;">
+                        <button class="btn btn-primary" onclick="saveLocation()">💾 保存地点</button>
+                    </div>
+                </div>
+                <div class="items-grid" id="locationsList"></div>
+            </div>
+
+            <!-- 美食 -->
+            <div class="page" id="page-food">
+                <div class="card">
+                    <div class="card-title">➕ 添加美食</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>店名 / 美食名称</label>
+                            <input type="text" id="foodName" placeholder="如：过桥米线">
+                        </div>
+                        <div class="form-group">
+                            <label>所在地点</label>
+                            <select id="foodLocation"></select>
+                        </div>
+                        <div class="form-group">
+                            <label>人均消费</label>
+                            <input type="number" id="foodCost" placeholder="0">
+                        </div>
+                        <div class="form-group">
+                            <label>评分</label>
+                            <select id="foodRate">
+                                <option value="5">⭐⭐⭐⭐⭐</option>
+                                <option value="4">⭐⭐⭐⭐</option>
+                                <option value="3">⭐⭐⭐</option>
+                                <option value="2">⭐⭐</option>
+                                <option value="1">⭐</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>推荐菜 / 备注</label>
+                        <textarea id="foodNote" placeholder="必点、排队提示、营业时间..."></textarea>
+                    </div>
+                    <div class="photo-upload" onclick="document.getElementById('foodPhoto').click()">
+                        <div>📷 点击上传美食照片</div>
+                        <input type="file" id="foodPhoto" accept="image/*" multiple onchange="handlePhotoUpload(this, 'foodPhotos')">
+                    </div>
+                    <div class="photo-preview-grid" id="foodPhotos"></div>
+                    <div style="margin-top: 16px; text-align: right;">
+                        <button class="btn btn-primary" onclick="saveFood()">💾 保存美食</button>
+                    </div>
+                </div>
+                <div class="items-grid" id="foodList"></div>
+            </div>
+
+            <!-- 交通 -->
+            <div class="page" id="page-transport">
+                <div class="card">
+                    <div class="card-title">➕ 添加交通</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>交通方式</label>
+                            <select id="transType">
+                                <option value="飞机">✈️ 飞机</option>
+                                <option value="高铁">🚄 高铁</option>
+                                <option value="火车">🚂 火车</option>
+                                <option value="大巴">🚌 大巴</option>
+                                <option value="租车">🚗 租车</option>
+                                <option value="网约车">🚕 网约车</option>
+                                <option value="地铁">🚇 地铁</option>
+                                <option value="船">🚢 船</option>
+                                <option value="其他">🛴 其他</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>出发地</label>
+                            <input type="text" id="transFrom" placeholder="出发城市/地点">
+                        </div>
+                        <div class="form-group">
+                            <label>目的地</label>
+                            <input type="text" id="transTo" placeholder="到达城市/地点">
+                        </div>
+                        <div class="form-group">
+                            <label>费用</label>
+                            <input type="number" id="transCost" placeholder="0">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>出发时间</label>
+                            <input type="datetime-local" id="transStart">
+                        </div>
+                        <div class="form-group">
+                            <label>到达时间</label>
+                            <input type="datetime-local" id="transEnd">
+                        </div>
+                        <div class="form-group">
+                            <label>班次/航班号</label>
+                            <input type="text" id="transNo" placeholder="如 CA1234">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>备注</label>
+                        <textarea id="transNote" placeholder="订票平台、座位号、航站楼..."></textarea>
+                    </div>
+                    <div style="text-align: right;">
+                        <button class="btn btn-primary" onclick="saveTransport()">💾 保存交通</button>
+                    </div>
+                </div>
+                <div class="items-grid" id="transportList"></div>
+            </div>
+
+            <!-- 景点 -->
+            <div class="page" id="page-attractions">
+                <div class="card">
+                    <div class="card-title">➕ 添加景点</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>景点名称</label>
+                            <input type="text" id="attrName" placeholder="如：洱海">
+                        </div>
+                        <div class="form-group">
+                            <label>所在地点</label>
+                            <select id="attrLocation"></select>
+                        </div>
+                        <div class="form-group">
+                            <label>门票/费用</label>
+                            <input type="number" id="attrCost" placeholder="0">
+                        </div>
+                        <div class="form-group">
+                            <label>预计游玩时长</label>
+                            <input type="text" id="attrDuration" placeholder="如 3小时">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>计划日期</label>
+                            <input type="date" id="attrDate">
+                        </div>
+                        <div class="form-group">
+                            <label>推荐指数</label>
+                            <select id="attrRate">
+                                <option value="5">⭐⭐⭐⭐⭐ 必去</option>
+                                <option value="4">⭐⭐⭐⭐ 推荐</option>
+                                <option value="3">⭐⭐⭐ 一般</option>
+                                <option value="2">⭐⭐ 可去可不去</option>
+                                <option value="1">⭐ 避雷</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>游玩攻略 / 注意事项</label>
+                        <textarea id="attrNote" placeholder="开放时间、预约方式、拍照机位..."></textarea>
+                    </div>
+                    <div class="photo-upload" onclick="document.getElementById('attrPhoto').click()">
+                        <div>📷 点击上传景点照片</div>
+                        <input type="file" id="attrPhoto" accept="image/*" multiple onchange="handlePhotoUpload(this, 'attrPhotos')">
+                    </div>
+                    <div class="photo-preview-grid" id="attrPhotos"></div>
+                    <div style="margin-top: 16px; text-align: right;">
+                        <button class="btn btn-primary" onclick="saveAttraction()">💾 保存景点</button>
+                    </div>
+                </div>
+                <div class="items-grid" id="attractionsList"></div>
+            </div>
+
+            <!-- 住宿 -->
+            <div class="page" id="page-stay">
+                <div class="card">
+                    <div class="card-title">➕ 添加住宿</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>住宿名称</label>
+                            <input type="text" id="stayName" placeholder="如：洱海边的民宿">
+                        </div>
+                        <div class="form-group">
+                            <label>所在地点</label>
+                            <select id="stayLocation"></select>
+                        </div>
+                        <div class="form-group">
+                            <label>类型</label>
+                            <select id="stayType">
+                                <option value="酒店">🏨 酒店</option>
+                                <option value="民宿">🏡 民宿</option>
+                                <option value="青旅">🛏️ 青旅</option>
+                                <option value="露营">⛺ 露营</option>
+                                <option value="其他">🧳 其他</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>每晚价格</label>
+                            <input type="number" id="stayPrice" placeholder="0">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>入住日期</label>
+                            <input type="date" id="stayCheckin">
+                        </div>
+                        <div class="form-group">
+                            <label>退房日期</label>
+                            <input type="date" id="stayCheckout">
+                        </div>
+                        <div class="form-group">
+                            <label>预订平台</label>
+                            <input type="text" id="stayPlatform" placeholder="如 Booking">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>地址 / 入住提示</label>
+                        <textarea id="stayNote" placeholder="详细地址、联系电话、入住时间..."></textarea>
+                    </div>
+                    <div class="photo-upload" onclick="document.getElementById('stayPhoto').click()">
+                        <div>📷 点击上传住宿照片</div>
+                        <input type="file" id="stayPhoto" accept="image/*" multiple onchange="handlePhotoUpload(this, 'stayPhotos')">
+                    </div>
+                    <div class="photo-preview-grid" id="stayPhotos"></div>
+                    <div style="margin-top: 16px; text-align: right;">
+                        <button class="btn btn-primary" onclick="saveStay()">💾 保存住宿</button>
+                    </div>
+                </div>
+                <div class="items-grid" id="stayList"></div>
+            </div>
+
+            <!-- 照片墙 -->
+            <div class="page" id="page-gallery">
+                <div class="card">
+                    <div class="card-title">📷 旅程照片墙</div>
+                    <div class="gallery-grid" id="galleryGrid"></div>
+                    <div class="empty-state hidden" id="emptyGallery">
+                        <div class="icon">📷</div>
+                        <p>还没有照片，快去各地点、美食、景点上传吧！</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 共享 -->
+            <div class="page" id="page-share">
+                <div class="card">
+                    <div class="card-title">👥 与好友共同编辑</div>
+                    <p style="color: var(--text-light); margin-bottom: 16px;">
+                        生成共享码或二维码，好友打开同一页面并粘贴共享码即可实时同步数据。所有数据都保存在本地浏览器中。
+                    </p>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>你的名字</label>
+                            <input type="text" id="userName" placeholder="如：小明" onchange="saveUserName()">
+                        </div>
+                        <div class="form-group">
+                            <label>房间号 / 共享码</label>
+                            <input type="text" id="roomCode" placeholder="点击生成共享码">
+                        </div>
+                    </div>
+                    <div class="share-box">
+                        <div style="display:flex; gap: 10px; flex-wrap: wrap;">
+                            <button class="btn btn-primary" onclick="createShareCode()">🔑 生成共享码</button>
+                            <button class="btn btn-secondary" onclick="copyShareCode()">📋 复制共享码</button>
+                            <button class="btn btn-success" onclick="joinRoom()">🔗 加入房间</button>
+                            <button class="btn btn-warning" onclick="broadcastUpdate()">🔄 手动同步</button>
+                        </div>
+                        <div style="margin-top: 12px; font-size: 13px; color: var(--text-light);">
+                            共享码（可扫码或复制）：
+                        </div>
+                        <div class="share-code" id="shareCodeDisplay">点击“生成共享码”开始共享</div>
+                        <div id="qrcode" class="text-center" style="margin-top: 12px;"></div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">📤 导出 / 导入备份</div>
+                    <p style="color: var(--text-light); margin-bottom: 16px;">
+                        也可以通过 JSON 文件与好友交换完整行程数据。
+                    </p>
+                    <div style="display:flex; gap: 12px; flex-wrap: wrap;">
+                        <button class="btn btn-primary" onclick="exportData()">📤 导出 JSON 备份</button>
+                        <button class="btn btn-secondary" onclick="document.getElementById('importFile2').click()">📥 导入 JSON 备份</button>
+                        <input type="file" id="importFile2" class="hidden" accept=".json" onchange="importData(event)">
+                        <button class="btn btn-danger" onclick="clearAllData()">🗑️ 清空所有数据</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+
+<!-- 图片预览模态框 -->
+<div class="modal" id="imageModal" onclick="closeImageModal()">
+    <div class="modal-content" style="max-width: 900px; padding: 0; background: transparent;" onclick="event.stopPropagation()">
+        <img id="modalImage" src="" style="width: 100%; border-radius: 12px;">
+    </div>
+</div>
+
+<!-- 共享码模态框 -->
+<div class="modal" id="shareModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>👥 邀请好友共同编辑</h3>
+            <button class="close-btn" onclick="closeShareModal()">×</button>
+        </div>
+        <div class="form-group">
+            <label>你的名字</label>
+            <input type="text" id="modalUserName" placeholder="如：小明" onchange="saveUserName(true)">
+        </div>
+        <div class="form-group">
+            <label>房间号 / 共享码</label>
+            <input type="text" id="modalRoomCode" placeholder="点击生成">
+        </div>
+        <div style="display:flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px;">
+            <button class="btn btn-primary" onclick="createShareCode(true)">🔑 生成共享码</button>
+            <button class="btn btn-secondary" onclick="copyShareCode(true)">📋 复制</button>
+            <button class="btn btn-success" onclick="joinRoom(true)">🔗 加入</button>
+        </div>
+        <div class="share-code" id="modalShareCodeDisplay">点击“生成共享码”开始共享</div>
+        <div id="modalQrcode" class="text-center" style="margin-top: 12px;"></div>
+    </div>
+</div>
+
+<script>
+// ================= 数据层 =================
+const STORE_KEY = 'travelMate_v1';
+const SHARE_PREFIX = 'TRMATE:';
+
+let data = {
+    userName: '',
+    roomCode: '',
+    budget: { transport: 0, stay: 0, food: 0, attr: 0 },
+    locations: [],
+    food: [],
+    transport: [],
+    attractions: [],
+    stay: []
+};
+
+let tempPhotos = {
+    locPhotos: [],
+    foodPhotos: [],
+    attrPhotos: [],
+    stayPhotos: []
+};
+
+let bc = null;
+
+try {
+    bc = new BroadcastChannel('travel_mate_channel');
+    bc.onmessage = (e) => {
+        if (e.data && e.data.type === 'sync' && e.data.roomCode === data.roomCode && e.data.roomCode) {
+            mergeData(e.data.payload);
+            showToast('🔄 收到好友同步数据');
+            renderAll();
+        }
+    };
+} catch(e) { console.log('BroadcastChannel not supported'); }
+
+function loadData() {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (raw) {
+        try {
+            const parsed = JSON.parse(raw);
+            data = { ...data, ...parsed };
+        } catch(e) { console.error(e); }
+    }
+    // 加载示例数据（仅首次）
+    if (!raw) loadSampleData();
+}
+
+function saveData() {
+    localStorage.setItem(STORE_KEY, JSON.stringify(data));
+}
+
+function loadSampleData() {
+    data.locations = [
+        { id: uid(), name: '大理', date: '2026-08-01', endDate: '2026-08-03', base: '大理古城客栈', note: '风花雪月，去洱海边骑行。', photos: [] },
+        { id: uid(), name: '丽江', date: '2026-08-03', endDate: '2026-08-05', base: '丽江古城民宿', note: '玉龙雪山、蓝月谷。', photos: [] }
+    ];
+    data.food = [
+        { id: uid(), name: '过桥米线', location: data.locations[0]?.id || '', cost: 35, rate: 5, note: '古城南门老字号，排队约20分钟。', photos: [] }
+    ];
+    data.transport = [
+        { id: uid(), type: '飞机', from: '上海', to: '昆明', cost: 980, start: '2026-07-31T08:00', end: '2026-07-31T12:00', no: 'MU1234', note: '提前2小时到机场' }
+    ];
+    data.attractions = [
+        { id: uid(), name: '洱海', location: data.locations[0]?.id || '', cost: 0, duration: '半天', date: '2026-08-02', rate: 5, note: '建议租电瓶车环湖，注意防晒。', photos: [] }
+    ];
+    data.stay = [
+        { id: uid(), name: '洱海边的民宿', location: data.locations[0]?.id || '', type: '民宿', price: 280, checkin: '2026-08-01', checkout: '2026-08-03', platform: '美团', note: '带阳台可看日出。', photos: [] }
+    ];
+    data.budget = { transport: 2000, stay: 1500, food: 1000, attr: 800 };
+    saveData();
+}
+
+function uid() { return Date.now().toString(36) + Math.random().toString(36).substr(2, 5); }
+
+function mergeData(incoming) {
+    // 简单合并：按 id 去重，新的覆盖旧的
+    const mergeList = (key) => {
+        const map = new Map(data[key].map(i => [i.id, i]));
+        (incoming[key] || []).forEach(i => map.set(i.id, i));
+        data[key] = Array.from(map.values());
+    };
+    ['locations','food','transport','attractions','stay'].forEach(mergeList);
+    if (incoming.budget) data.budget = { ...data.budget, ...incoming.budget };
+}
+
+// ================= 渲染 =================
+function navTo(page) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('page-' + page).classList.add('active');
+    const nav = document.querySelector(`.nav-item[onclick="navTo('${page}')"]`);
+    if (nav) nav.classList.add('active');
+    const titles = {
+        dashboard: '行程总览', locations: '地点', food: '美食',
+        transport: '交通', attractions: '景点', stay: '住宿',
+        gallery: '照片墙', share: '好友共享'
+    };
+    document.getElementById('pageTitle').textContent = titles[page];
+    if (window.innerWidth < 769) document.getElementById('sidebar').classList.remove('open');
+    renderAll();
+}
+
+function renderAll() {
+    renderDashboard();
+    renderLocationSelects();
+    renderLocations();
+    renderFood();
+    renderTransport();
+    renderAttractions();
+    renderStay();
+    renderGallery();
+    renderBudgetInputs();
+    renderShareInputs();
+}
+
+function renderDashboard() {
+    // KPI
+    const days = data.locations.reduce((sum, l) => {
+        if (!l.date || !l.endDate) return sum;
+        const d1 = new Date(l.date), d2 = new Date(l.endDate);
+        return sum + Math.max(1, Math.round((d2 - d1) / 86400000));
+    }, 0);
+    const cost = calcTotalCost();
+    document.getElementById('kpiDays').textContent = days || data.locations.length || 0;
+    document.getElementById('kpiCost').textContent = '¥' + cost.toLocaleString();
+    document.getElementById('kpiSpots').textContent = data.attractions.length;
+    document.getElementById('kpiFood').textContent = data.food.length;
+
+    // 时间线
+    const timeline = document.getElementById('timeline');
+    const allEvents = [
+        ...data.locations.map(l => ({ date: l.date, title: `📍 到达 ${l.name}`, desc: l.note?.slice(0, 60) + (l.note?.length > 60 ? '...' : '') || '无备注' })),
+        ...data.transport.map(t => ({ date: t.start, title: `${t.type} ${t.from} → ${t.to}`, desc: `航班/班次：${t.no || '无'} · ¥${t.cost || 0}` })),
+        ...data.attractions.map(a => ({ date: a.date, title: `🎡 游玩 ${a.name}`, desc: `预计 ${a.duration || '未知'} · ¥${a.cost || 0}` }))
+    ].filter(e => e.date).sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    if (allEvents.length === 0) {
+        timeline.innerHTML = '';
+        document.getElementById('emptyTimeline').classList.remove('hidden');
+    } else {
+        document.getElementById('emptyTimeline').classList.add('hidden');
+        timeline.innerHTML = allEvents.map(e => `
+            <div class="timeline-item">
+                <div class="timeline-date">${formatDate(e.date)}</div>
+                <div class="timeline-title">${e.title}</div>
+                <div class="timeline-desc">${e.desc}</div>
+            </div>
+        `).join('');
+    }
+
+    renderBudgetChart();
+}
+
+function calcTotalCost() {
+    let total = 0;
+    data.transport.forEach(t => total += Number(t.cost) || 0);
+    data.stay.forEach(s => {
+        const nights = s.checkin && s.checkout ? Math.max(1, Math.round((new Date(s.checkout) - new Date(s.checkin)) / 86400000)) : 1;
+        total += (Number(s.price) || 0) * nights;
+    });
+    data.food.forEach(f => total += Number(f.cost) || 0);
+    data.attractions.forEach(a => total += Number(a.cost) || 0);
+    return Math.round(total);
+}
+
+function renderBudgetInputs() {
+    document.getElementById('budgetTransport').value = data.budget.transport || '';
+    document.getElementById('budgetStay').value = data.budget.stay || '';
+    document.getElementById('budgetFood').value = data.budget.food || '';
+    document.getElementById('budgetAttr').value = data.budget.attr || '';
+}
+
+function saveBudget() {
+    data.budget = {
+        transport: Number(document.getElementById('budgetTransport').value) || 0,
+        stay: Number(document.getElementById('budgetStay').value) || 0,
+        food: Number(document.getElementById('budgetFood').value) || 0,
+        attr: Number(document.getElementById('budgetAttr').value) || 0
+    };
+    saveData();
+    renderBudgetChart();
+    broadcastUpdate();
+}
+
+function renderBudgetChart() {
+    const actual = {
+        transport: data.transport.reduce((s, t) => s + (Number(t.cost) || 0), 0),
+        stay: data.stay.reduce((s, x) => {
+            const nights = x.checkin && x.checkout ? Math.max(1, Math.round((new Date(x.checkout) - new Date(x.checkin)) / 86400000)) : 1;
+            return s + (Number(x.price) || 0) * nights;
+        }, 0),
+        food: data.food.reduce((s, f) => s + (Number(f.cost) || 0), 0),
+        attr: data.attractions.reduce((s, a) => s + (Number(a.cost) || 0), 0)
+    };
+    const labels = { transport: '交通', stay: '住宿', food: '餐饮', attr: '景点' };
+    const colors = { transport: '#3b82f6', stay: '#8b5cf6', food: '#f97316', attr: '#10b981' };
+
+    let html = '<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap: 16px; margin-top: 16px;">';
+    Object.keys(labels).forEach(k => {
+        const budget = data.budget[k] || 1;
+        const pct = Math.min(100, Math.round((actual[k] / budget) * 100));
+        let barColor = colors[k];
+        if (pct > 100) barColor = '#ef4444';
+        else if (pct > 80) barColor = '#f59e0b';
+        html += `
+            <div style="background:#f8fafc; border-radius:12px; padding:14px;">
+                <div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:13px;">
+                    <span>${labels[k]}</span>
+                    <span style="font-weight:600;">¥${actual[k]} / ¥${budget}</span>
+                </div>
+                <div style="height:8px; background:#e2e8f0; border-radius:4px; overflow:hidden;">
+                    <div style="height:100%; width:${pct}%; background:${barColor}; transition: width .4s;"></div>
+                </div>
+                <div style="font-size:12px; color:#94a3b8; margin-top:6px;">已用 ${pct}%</div>
+            </div>
+        `;
+    });
+    html += '</div>';
+    document.getElementById('budgetChart').innerHTML = html;
+}
+
+function renderLocationSelects() {
+    const selects = ['foodLocation', 'attrLocation', 'stayLocation'];
+    selects.forEach(id => {
+        const sel = document.getElementById(id);
+        const val = sel.value;
+        sel.innerHTML = '<option value="">请选择地点</option>' + data.locations.map(l =>
+            `<option value="${l.id}">${l.name}</option>`
+        ).join('');
+        if (val) sel.value = val;
+    });
+}
+
+function renderLocations() {
+    const container = document.getElementById('locationsList');
+    if (data.locations.length === 0) {
+        container.innerHTML = emptyCard('还没有地点，添加第一站吧！', '📍');
+        return;
+    }
+    container.innerHTML = data.locations.map(l => `
+        <div class="item-card">
+            <div class="item-image">${l.photos?.length ? `<img src="${l.photos[0]}" style="width:100%;height:100%;object-fit:cover;">` : '📍 暂无照片'}</div>
+            <div class="item-body">
+                <div class="item-header">
+                    <div>
+                        <div class="item-title">${l.name}</div>
+                        <div class="item-meta">${formatDate(l.date)} - ${formatDate(l.endDate)} · ${l.base || '未填写住宿'}</div>
+                    </div>
+                </div>
+                <div class="item-desc">${l.note || '无备注'}</div>
+                <div class="item-actions">
+                    <button class="btn btn-sm btn-secondary" onclick="editLocation('${l.id}')">✏️ 编辑</button>
+                    <button class="btn btn-sm btn-danger" onclick="deleteItem('locations','${l.id}')">🗑️ 删除</button>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function renderFood() {
+    const container = document.getElementById('foodList');
+    if (data.food.length === 0) {
+        container.innerHTML = emptyCard('还没有美食记录。', '🍜');
+        return;
+    }
+    container.innerHTML = data.food.map(f => `
+        <div class="item-card">
+            <div class="item-image">${f.photos?.length ? `<img src="${f.photos[0]}" style="width:100%;height:100%;object-fit:cover;">` : '🍜 暂无照片'}</div>
+            <div class="item-body">
+                <div class="item-header">
+                    <div>
+                        <div class="item-title">${f.name}</div>
+                        <div class="item-meta">${getLocName(f.location)} · 人均 ¥${f.cost || 0}</div>
+                    </div>
+                    <div class="stars">${'⭐'.repeat(f.rate || 0)}</div>
+                </div>
+                <div class="item-desc">${f.note || '无备注'}</div>
+                <div class="item-actions">
+                    <button class="btn btn-sm btn-secondary" onclick="editFood('${f.id}')">✏️ 编辑</button>
+                    <button class="btn btn-sm btn-danger" onclick="deleteItem('food','${f.id}')">🗑️ 删除</button>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function renderTransport() {
+    const container = document.getElementById('transportList');
+    if (data.transport.length === 0) {
+        container.innerHTML = emptyCard('还没有交通安排。', '🚄');
+        return;
+    }
+    container.innerHTML = data.transport.map(t => `
+        <div class="item-card">
+            <div class="item-image" style="background: linear-gradient(135deg, #dbeafe, #eff6ff); display:flex; align-items:center; justify-content:center; font-size:48px;">
+                ${transportIcon(t.type)}
+            </div>
+            <div class="item-body">
+                <div class="item-header">
+                    <div>
+                        <div class="item-title">${t.from} → ${t.to}</div>
+                        <div class="item-meta">${t.type} · ${t.no || '无班次'} · ¥${t.cost || 0}</div>
+                    </div>
+                </div>
+                <div class="item-desc">
+                    出发：${formatDateTime(t.start)}<br>
+                    到达：${formatDateTime(t.end)}<br>
+                    ${t.note || ''}
+                </div>
+                <div class="item-actions">
+                    <button class="btn btn-sm btn-secondary" onclick="editTransport('${t.id}')">✏️ 编辑</button>
+                    <button class="btn btn-sm btn-danger" onclick="deleteItem('transport','${t.id}')">🗑️ 删除</button>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function renderAttractions() {
+    const container = document.getElementById('attractionsList');
+    if (data.attractions.length === 0) {
+        container.innerHTML = emptyCard('还没有景点安排。', '🎡');
+        return;
+    }
+    container.innerHTML = data.attractions.map(a => `
+        <div class="item-card">
+            <div class="item-image">${a.photos?.length ? `<img src="${a.photos[0]}" style="width:100%;height:100%;object-fit:cover;">` : '🎡 暂无照片'}</div>
+            <div class="item-body">
+                <div class="item-header">
+                    <div>
+                        <div class="item-title">${a.name}</div>
+                        <div class="item-meta">${getLocName(a.location)} · ${formatDate(a.date)}</div>
+                    </div>
+                    <div class="stars">${'⭐'.repeat(a.rate || 0)}</div>
+                </div>
+                <div class="item-desc">
+                    门票 ¥${a.cost || 0} · 预计 ${a.duration || '未知'}<br>
+                    ${a.note || '无备注'}
+                </div>
+                <div class="item-actions">
+                    <button class="btn btn-sm btn-secondary" onclick="editAttraction('${a.id}')">✏️ 编辑</button>
+                    <button class="btn btn-sm btn-danger" onclick="deleteItem('attractions','${a.id}')">🗑️ 删除</button>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function renderStay() {
+    const container = document.getElementById('stayList');
+    if (data.stay.length === 0) {
+        container.innerHTML = emptyCard('还没有住宿安排。', '🏨');
+        return;
+    }
+    container.innerHTML = data.stay.map(s => {
+        const nights = s.checkin && s.checkout ? Math.max(1, Math.round((new Date(s.checkout) - new Date(s.checkin)) / 86400000)) : 1;
+        return `
+        <div class="item-card">
+            <div class="item-image">${s.photos?.length ? `<img src="${s.photos[0]}" style="width:100%;height:100%;object-fit:cover;">` : '🏨 暂无照片'}</div>
+            <div class="item-body">
+                <div class="item-header">
+                    <div>
+                        <div class="item-title">${s.name}</div>
+                        <div class="item-meta">${getLocName(s.location)} · ${s.type}</div>
+                    </div>
+                </div>
+                <div class="item-desc">
+                    ${formatDate(s.checkin)} - ${formatDate(s.checkout)} · ${nights}晚<br>
+                    ¥${s.price || 0}/晚 · 合计 ¥${(s.price || 0) * nights}<br>
+                    ${s.platform ? '预订：' + s.platform + '<br>' : ''}${s.note || ''}
+                </div>
+                <div class="item-actions">
+                    <button class="btn btn-sm btn-secondary" onclick="editStay('${s.id}')">✏️ 编辑</button>
+                    <button class="btn btn-sm btn-danger" onclick="deleteItem('stay','${s.id}')">🗑️ 删除</button>
+                </div>
+            </div>
+        </div>
+    `}).join('');
+}
+
+function renderGallery() {
+    const allPhotos = [];
+    data.locations.forEach(l => (l.photos || []).forEach(p => allPhotos.push({ src: p, caption: l.name })));
+    data.food.forEach(f => (f.photos || []).forEach(p => allPhotos.push({ src: p, caption: f.name })));
+    data.attractions.forEach(a => (a.photos || []).forEach(p => allPhotos.push({ src: p, caption: a.name })));
+    data.stay.forEach(s => (s.photos || []).forEach(p => allPhotos.push({ src: p, caption: s.name })));
+
+    const grid = document.getElementById('galleryGrid');
+    if (allPhotos.length === 0) {
+        grid.innerHTML = '';
+        document.getElementById('emptyGallery').classList.remove('hidden');
+    } else {
+        document.getElementById('emptyGallery').classList.add('hidden');
+        grid.innerHTML = allPhotos.map(p => `
+            <div class="gallery-item" onclick="openImage('${p.src}')">
+                <img src="${p.src}">
+                <div class="gallery-caption">${p.caption}</div>
+            </div>
+        `).join('');
+    }
+}
+
+function emptyCard(text, icon) {
+    return `<div class="item-card"><div class="empty-state"><div class="icon">${icon}</div><p>${text}</p></div></div>`;
+}
+
+function transportIcon(type) {
+    const map = { '飞机':'✈️','高铁':'🚄','火车':'🚂','大巴':'🚌','租车':'🚗','网约车':'🚕','地铁':'🚇','船':'🚢','其他':'🛴' };
+    return map[type] || '🚗';
+}
+
+function getLocName(id) {
+    const l = data.locations.find(x => x.id === id);
+    return l ? l.name : '未指定';
+}
+
+function formatDate(d) {
+    if (!d) return '未指定';
+    const date = new Date(d);
+    if (isNaN(date)) return d;
+    return `${date.getMonth()+1}月${date.getDate()}日`;
+}
+
+function formatDateTime(d) {
+    if (!d) return '未指定';
+    const date = new Date(d);
+    if (isNaN(date)) return d;
+    return `${date.getMonth()+1}月${date.getDate()}日 ${String(date.getHours()).padStart(2,'0')}:${String(date.getMinutes()).padStart(2,'0')}`;
+}
+
+// ================= 增删改查 =================
+function clearTempPhotos(key) { tempPhotos[key] = []; renderPhotoPreview(key); }
+
+function handlePhotoUpload(input, key) {
+    Array.from(input.files).forEach(file => {
+        if (!file.type.startsWith('image/')) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            compressImage(e.target.result, 1200, 0.8).then(compressed => {
+                tempPhotos[key].push(compressed);
+                renderPhotoPreview(key);
+            });
+        };
+        reader.readAsDataURL(file);
+    });
+    input.value = '';
+}
+
+function compressImage(src, maxWidth, quality) {
+    return new Promise(resolve => {
+        const img = new Image();
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const scale = Math.min(1, maxWidth / img.width);
+            canvas.width = img.width * scale;
+            canvas.height = img.height * scale;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            resolve(canvas.toDataURL('image/jpeg', quality));
+        };
+        img.src = src;
+    });
+}
+
+function renderPhotoPreview(key) {
+    const container = document.getElementById(key);
+    container.innerHTML = tempPhotos[key].map((p, i) => `
+        <div class="photo-preview">
+            <img src="${p}" onclick="openImage('${p}')">
+            <span class="remove" onclick="removeTempPhoto('${key}',${i})">×</span>
+        </div>
+    `).join('');
+}
+
+function removeTempPhoto(key, idx) {
+    tempPhotos[key].splice(idx, 1);
+    renderPhotoPreview(key);
+}
+
+function saveLocation() {
+    const name = document.getElementById('locName').value.trim();
+    if (!name) return showToast('请填写地点名称');
+    const item = {
+        id: uid(),
+        name,
+        date: document.getElementById('locDate').value,
+        endDate: document.getElementById('locEndDate').value,
+        base: document.getElementById('locBase').value,
+        note: document.getElementById('locNote').value,
+        photos: [...tempPhotos.locPhotos]
+    };
+    data.locations.push(item);
+    saveData(); clearLocationForm(); renderAll(); broadcastUpdate();
+    showToast('地点已保存');
+}
+
+function clearLocationForm() {
+    document.getElementById('locName').value = '';
+    document.getElementById('locDate').value = '';
+    document.getElementById('locEndDate').value = '';
+    document.getElementById('locBase').value = '';
+    document.getElementById('locNote').value = '';
+    clearTempPhotos('locPhotos');
+}
+
+function saveFood() {
+    const name = document.getElementById('foodName').value.trim();
+    if (!name) return showToast('请填写美食名称');
+    data.food.push({
+        id: uid(),
+        name,
+        location: document.getElementById('foodLocation').value,
+        cost: Number(document.getElementById('foodCost').value) || 0,
+        rate: Number(document.getElementById('foodRate').value),
+        note: document.getElementById('foodNote').value,
+        photos: [...tempPhotos.foodPhotos]
+    });
+    saveData();
+    ['foodName','foodCost','foodNote'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('foodRate').value = '5';
+    clearTempPhotos('foodPhotos');
+    renderAll(); broadcastUpdate();
+    showToast('美食已保存');
+}
+
+function saveTransport() {
+    const from = document.getElementById('transFrom').value.trim();
+    const to = document.getElementById('transTo').value.trim();
+    if (!from || !to) return showToast('请填写出发地和目的地');
+    data.transport.push({
+        id: uid(),
+        type: document.getElementById('transType').value,
+        from, to,
+        cost: Number(document.getElementById('transCost').value) || 0,
+        start: document.getElementById('transStart').value,
+        end: document.getElementById('transEnd').value,
+        no: document.getElementById('transNo').value,
+        note: document.getElementById('transNote').value
+    });
+    saveData();
+    ['transFrom','transTo','transCost','transStart','transEnd','transNo','transNote'].forEach(id => document.getElementById(id).value = '');
+    renderAll(); broadcastUpdate();
+    showToast('交通已保存');
+}
+
+function saveAttraction() {
+    const name = document.getElementById('attrName').value.trim();
+    if (!name) return showToast('请填写景点名称');
+    data.attractions.push({
+        id: uid(),
+        name,
+        location: document.getElementById('attrLocation').value,
+        cost: Number(document.getElementById('attrCost').value) || 0,
+        duration: document.getElementById('attrDuration').value,
+        date: document.getElementById('attrDate').value,
+        rate: Number(document.getElementById('attrRate').value),
+        note: document.getElementById('attrNote').value,
+        photos: [...tempPhotos.attrPhotos]
+    });
+    saveData();
+    ['attrName','attrCost','attrDuration','attrDate','attrNote'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('attrRate').value = '5';
+    clearTempPhotos('attrPhotos');
+    renderAll(); broadcastUpdate();
+    showToast('景点已保存');
+}
+
+function saveStay() {
+    const name = document.getElementById('stayName').value.trim();
+    if (!name) return showToast('请填写住宿名称');
+    data.stay.push({
+        id: uid(),
+        name,
+        location: document.getElementById('stayLocation').value,
+        type: document.getElementById('stayType').value,
+        price: Number(document.getElementById('stayPrice').value) || 0,
+        checkin: document.getElementById('stayCheckin').value,
+        checkout: document.getElementById('stayCheckout').value,
+        platform: document.getElementById('stayPlatform').value,
+        note: document.getElementById('stayNote').value,
+        photos: [...tempPhotos.stayPhotos]
+    });
+    saveData();
+    ['stayName','stayPrice','stayCheckin','stayCheckout','stayPlatform','stayNote'].forEach(id => document.getElementById(id).value = '');
+    clearTempPhotos('stayPhotos');
+    renderAll(); broadcastUpdate();
+    showToast('住宿已保存');
+}
+
+function deleteItem(key, id) {
+    if (!confirm('确定删除这条记录吗？')) return;
+    data[key] = data[key].filter(i => i.id !== id);
+    saveData(); renderAll(); broadcastUpdate();
+    showToast('已删除');
+}
+
+// 编辑（简化版：填充表单并删除旧记录）
+function editLocation(id) {
+    const l = data.locations.find(x => x.id === id);
+    if (!l) return;
+    document.getElementById('locName').value = l.name;
+    document.getElementById('locDate').value = l.date;
+    document.getElementById('locEndDate').value = l.endDate;
+    document.getElementById('locBase').value = l.base;
+    document.getElementById('locNote').value = l.note;
+    tempPhotos.locPhotos = [...(l.photos || [])];
+    renderPhotoPreview('locPhotos');
+    data.locations = data.locations.filter(x => x.id !== id);
+    navTo('locations');
+}
+function editFood(id) {
+    const f = data.food.find(x => x.id === id);
+    if (!f) return;
+    document.getElementById('foodName').value = f.name;
+    document.getElementById('foodLocation').value = f.location;
+    document.getElementById('foodCost').value = f.cost;
+    document.getElementById('foodRate').value = f.rate;
+    document.getElementById('foodNote').value = f.note;
+    tempPhotos.foodPhotos = [...(f.photos || [])];
+    renderPhotoPreview('foodPhotos');
+    data.food = data.food.filter(x => x.id !== id);
+    navTo('food');
+}
+function editTransport(id) {
+    const t = data.transport.find(x => x.id === id);
+    if (!t) return;
+    document.getElementById('transType').value = t.type;
+    document.getElementById('transFrom').value = t.from;
+    document.getElementById('transTo').value = t.to;
+    document.getElementById('transCost').value = t.cost;
+    document.getElementById('transStart').value = t.start;
+    document.getElementById('transEnd').value = t.end;
+    document.getElementById('transNo').value = t.no;
+    document.getElementById('transNote').value = t.note;
+    data.transport = data.transport.filter(x => x.id !== id);
+    navTo('transport');
+}
+function editAttraction(id) {
+    const a = data.attractions.find(x => x.id === id);
+    if (!a) return;
+    document.getElementById('attrName').value = a.name;
+    document.getElementById('attrLocation').value = a.location;
+    document.getElementById('attrCost').value = a.cost;
+    document.getElementById('attrDuration').value = a.duration;
+    document.getElementById('attrDate').value = a.date;
+    document.getElementById('attrRate').value = a.rate;
+    document.getElementById('attrNote').value = a.note;
+    tempPhotos.attrPhotos = [...(a.photos || [])];
+    renderPhotoPreview('attrPhotos');
+    data.attractions = data.attractions.filter(x => x.id !== id);
+    navTo('attractions');
+}
+function editStay(id) {
+    const s = data.stay.find(x => x.id === id);
+    if (!s) return;
+    document.getElementById('stayName').value = s.name;
+    document.getElementById('stayLocation').value = s.location;
+    document.getElementById('stayType').value = s.type;
+    document.getElementById('stayPrice').value = s.price;
+    document.getElementById('stayCheckin').value = s.checkin;
+    document.getElementById('stayCheckout').value = s.checkout;
+    document.getElementById('stayPlatform').value = s.platform;
+    document.getElementById('stayNote').value = s.note;
+    tempPhotos.stayPhotos = [...(s.photos || [])];
+    renderPhotoPreview('stayPhotos');
+    data.stay = data.stay.filter(x => x.id !== id);
+    navTo('stay');
+}
+
+// ================= 图片弹窗 =================
+function openImage(src) {
+    document.getElementById('modalImage').src = src;
+    document.getElementById('imageModal').classList.add('active');
+}
+function closeImageModal() {
+    document.getElementById('imageModal').classList.remove('active');
+}
+
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+}
+
+// ================= 共享与同步 =================
+function saveUserName(fromModal) {
+    const name = document.getElementById(fromModal ? 'modalUserName' : 'userName').value.trim();
+    data.userName = name;
+    saveData();
+    renderShareInputs();
+}
+
+function renderShareInputs() {
+    document.getElementById('userName').value = data.userName || '';
+    document.getElementById('modalUserName').value = data.userName || '';
+    document.getElementById('roomCode').value = data.roomCode || '';
+    document.getElementById('modalRoomCode').value = data.roomCode || '';
+
+    const dot = document.getElementById('syncDot');
+    const txt = document.getElementById('syncText');
+    if (data.roomCode) {
+        dot.classList.remove('off');
+        txt.textContent = '房间：' + data.roomCode;
+    } else {
+        dot.classList.add('off');
+        txt.textContent = '本地模式';
+    }
+}
+
+function createShareCode(fromModal) {
+    data.roomCode = 'TRVL-' + Math.random().toString(36).substr(2, 6).toUpperCase();
+    saveData();
+    renderShareInputs();
+    const display = fromModal ? 'modalShareCodeDisplay' : 'shareCodeDisplay';
+    const qr = fromModal ? 'modalQrcode' : 'qrcode';
+    const code = SHARE_PREFIX + btoa(encodeURIComponent(JSON.stringify({
+        roomCode: data.roomCode,
+        payload: data
+    })));
+    document.getElementById(display).textContent = code;
+    document.getElementById(qr).innerHTML = renderQr(code);
+    showToast('共享码已生成');
+}
+
+function copyShareCode(fromModal) {
+    const text = document.getElementById(fromModal ? 'modalShareCodeDisplay' : 'shareCodeDisplay').textContent;
+    if (!text || text.includes('点击')) return showToast('先生成共享码');
+    navigator.clipboard.writeText(text).then(() => showToast('已复制共享码'));
+}
+
+function joinRoom(fromModal) {
+    const code = document.getElementById(fromModal ? 'modalRoomCode' : 'roomCode').value.trim();
+    if (!code) return showToast('请输入共享码');
+    try {
+        if (code.startsWith(SHARE_PREFIX)) {
+            const decoded = JSON.parse(decodeURIComponent(atob(code.replace(SHARE_PREFIX, ''))));
+            data.roomCode = decoded.roomCode;
+            mergeData(decoded.payload);
+        } else {
+            data.roomCode = code;
+        }
+        saveData();
+        renderShareInputs();
+        renderAll();
+        showToast('已加入房间，开始共同编辑');
+        broadcastUpdate();
+    } catch(e) {
+        showToast('共享码格式错误');
+    }
+}
+
+function broadcastUpdate() {
+    if (!data.roomCode || !bc) return;
+    bc.postMessage({ type: 'sync', roomCode: data.roomCode, payload: data });
+}
+
+function openShareModal() {
+    document.getElementById('shareModal').classList.add('active');
+}
+function closeShareModal() {
+    document.getElementById('shareModal').classList.remove('active');
+}
+
+// 简单二维码占位（用表格渲染）
+function renderQr(text) {
+    // 使用简易二维码：这里用 data URI 显示一个二维码图片 API 的占位
+    // 由于没有网络，使用 canvas 绘制一个伪二维码
+    const size = 160;
+    const cells = 25;
+    const cellSize = size / cells;
+    const canvas = document.createElement('canvas');
+    canvas.width = canvas.height = size;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = 'white'; ctx.fillRect(0, 0, size, size);
+    ctx.fillStyle = '#0f766e';
+    for (let i = 0; i < cells; i++) {
+        for (let j = 0; j < cells; j++) {
+            const hash = text.charCodeAt((i * cells + j) % text.length) + i * 7 + j * 13;
+            if (hash % 2 === 0) ctx.fillRect(j * cellSize, i * cellSize, cellSize, cellSize);
+        }
+    }
+    // 画三个定位角
+    ctx.fillStyle = 'white';
+    [[2,2],[2,18],[18,2]].forEach(([x,y]) => {
+        ctx.fillRect(x*cellSize, y*cellSize, 7*cellSize, 7*cellSize);
+        ctx.strokeRect(x*cellSize, y*cellSize, 7*cellSize, 7*cellSize);
+    });
+    ctx.fillStyle = '#0f766e';
+    [[3,3],[3,19],[19,3]].forEach(([x,y]) => {
+        ctx.fillRect(x*cellSize, y*cellSize, 5*cellSize, 5*cellSize);
+        ctx.clearRect((x+1)*cellSize, (y+1)*cellSize, 3*cellSize, 3*cellSize);
+    });
+    return `<img src="${canvas.toDataURL()}" style="width:160px;height:160px;">`;
+}
+
+// ================= 导入导出 =================
+function exportData() {
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `旅行计划_${new Date().toLocaleDateString()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('已导出备份');
+}
+
+function importData(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+        try {
+            const imported = JSON.parse(ev.target.result);
+            mergeData(imported);
+            if (imported.userName) data.userName = imported.userName;
+            if (imported.roomCode) data.roomCode = imported.roomCode;
+            if (imported.budget) data.budget = imported.budget;
+            saveData();
+            renderAll();
+            showToast('导入成功');
+            broadcastUpdate();
+        } catch(err) {
+            showToast('文件格式错误');
+        }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+}
+
+function clearAllData() {
+    if (!confirm('确定清空所有旅行数据？此操作不可恢复。')) return;
+    data = {
+        userName: data.userName,
+        roomCode: '',
+        budget: { transport: 0, stay: 0, food: 0, attr: 0 },
+        locations: [], food: [], transport: [], attractions: [], stay: []
+    };
+    saveData();
+    renderAll();
+    showToast('已清空');
+}
+
+// ================= Toast =================
+function showToast(msg) {
+    const div = document.createElement('div');
+    div.textContent = msg;
+    div.style.cssText = 'position:fixed; bottom:30px; left:50%; transform:translateX(-50%); background:#1e293b; color:white; padding:12px 24px; border-radius:10px; font-size:14px; z-index:9999; box-shadow:0 4px 20px rgba(0,0,0,0.2);';
+    document.body.appendChild(div);
+    setTimeout(() => div.remove(), 2500);
+}
+
+// ================= 初始化 =================
+window.onload = () => {
+    loadData();
+    renderAll();
+};
+</script>
+</body>
+</html>

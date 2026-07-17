@@ -3,120 +3,129 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#2dd4bf">
-    <title>旅行小助手 · Travel Mate</title>
+    <meta name="theme-color" content="#7c9885">
+    <title>羊的旅行日志</title>
+    <!-- 手写体 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Indie+Flower&family=Ma+Shan+Zheng&family=ZCOOL+KuaiLe&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary: #2dd4bf;
-            --primary-dark: #0d9488;
-            --primary-light: #f0fdfa;
-            --coral: #ff7b7b;
-            --coral-light: #fff1f1;
-            --amber: #fbbf24;
-            --amber-light: #fffbeb;
-            --sky: #38bdf8;
-            --sky-light: #f0f9ff;
-            --purple: #a78bfa;
-            --purple-light: #f5f3ff;
-            --bg: #f8fafc;
-            --card: #ffffff;
-            --text: #1e293b;
-            --text-secondary: #64748b;
-            --text-tertiary: #94a3b8;
-            --border: #f1f5f9;
-            --shadow-sm: 0 2px 8px rgba(0,0,0,0.04);
-            --shadow: 0 8px 30px rgba(0,0,0,0.06);
-            --shadow-lg: 0 20px 50px rgba(0,0,0,0.1);
-            --radius: 20px;
-            --radius-lg: 28px;
-            --radius-sm: 14px;
+            --paper: #faf6f1;
+            --paper-dark: #f5efe7;
+            --sage: #7c9885;
+            --sage-dark: #5a7a64;
+            --sage-light: #e8f0ea;
+            --brown: #a67c52;
+            --brown-dark: #7d5e3d;
+            --brown-light: #f0e6d8;
+            --blue: #8faec4;
+            --blue-light: #e8f1f6;
+            --coral: #d98c7e;
+            --coral-light: #f9e6e3;
+            --ink: #4a4036;
+            --ink-light: #7d7268;
+            --pencil: #b8a99a;
+            --dash: #d4c8b8;
+            --shadow: 0 6px 20px rgba(74, 64, 54, 0.08);
+            --shadow-lg: 0 12px 35px rgba(74, 64, 54, 0.12);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            line-height: 1.6;
+            background-color: var(--paper);
+            background-image:
+                radial-gradient(#e8dfd3 1px, transparent 1px),
+                radial-gradient(#e8dfd3 1px, transparent 1px);
+            background-size: 40px 40px;
+            background-position: 0 0, 20px 20px;
+            color: var(--ink);
+            line-height: 1.7;
             min-height: 100vh;
             -webkit-font-smoothing: antialiased;
         }
 
-        /* 滚动条美化 */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        ::-webkit-scrollbar-thumb { background: #d4c8b8; border-radius: 3px; }
+
+        .hand-title { font-family: 'Ma Shan Zheng', cursive; }
+        .hand-text { font-family: 'ZCOOL KuaiLe', cursive; }
+        .hand-en { font-family: 'Indie Flower', cursive; }
 
         .app {
             display: flex;
             min-height: 100vh;
-            padding-bottom: 0;
         }
 
         /* 侧边栏 */
         .sidebar {
-            width: 250px;
-            background: linear-gradient(180deg, #0f766e 0%, #115e59 100%);
-            color: white;
+            width: 240px;
+            background: var(--paper-dark);
+            border-right: 2px dashed var(--dash);
             padding: 28px 0;
             position: fixed;
             height: 100vh;
             overflow-y: auto;
             z-index: 100;
-            transition: transform .35s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: transform .35s ease;
         }
         .brand {
-            padding: 0 24px 28px;
-            margin-bottom: 12px;
+            padding: 0 22px 24px;
+            text-align: center;
+        }
+        .brand-sheep {
+            font-size: 48px;
+            line-height: 1;
+            margin-bottom: 8px;
         }
         .brand h1 {
-            font-size: 24px;
-            font-weight: 800;
-            letter-spacing: -0.5px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
+            font-family: 'Ma Shan Zheng', cursive;
+            font-size: 26px;
+            color: var(--sage-dark);
+            letter-spacing: 2px;
         }
         .brand p {
-            font-size: 13px;
-            opacity: 0.75;
-            margin-top: 6px;
-            padding-left: 34px;
+            font-size: 12px;
+            color: var(--ink-light);
+            margin-top: 4px;
+            font-family: 'ZCOOL KuaiLe', cursive;
         }
         .nav-section {
-            padding: 0 16px;
-            margin-bottom: 8px;
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-            opacity: 0.5;
-            font-weight: 600;
+            padding: 0 22px;
+            margin: 16px 0 8px;
+            font-size: 12px;
+            color: var(--pencil);
+            font-family: 'ZCOOL KuaiLe', cursive;
+            letter-spacing: 1px;
         }
         .nav-item {
             display: flex;
             align-items: center;
-            gap: 14px;
-            margin: 6px 14px;
-            padding: 12px 16px;
+            gap: 12px;
+            margin: 8px 16px;
+            padding: 11px 16px;
             cursor: pointer;
             transition: all .25s;
-            border-radius: 14px;
-            color: rgba(255,255,255,0.78);
+            border-radius: 16px;
+            color: var(--ink-light);
             font-size: 15px;
-            font-weight: 500;
+            font-family: 'ZCOOL KuaiLe', cursive;
+            border: 2px solid transparent;
         }
-        .nav-item:hover { background: rgba(255,255,255,0.1); color: white; transform: translateX(3px); }
+        .nav-item:hover { background: rgba(124,152,133,0.1); color: var(--sage-dark); transform: translateX(4px); }
         .nav-item.active {
-            background: rgba(255,255,255,0.15);
-            color: white;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            background: white;
+            color: var(--sage-dark);
+            border: 2px dashed var(--sage);
+            box-shadow: var(--shadow);
         }
-        .nav-item .icon { font-size: 20px; width: 26px; text-align: center; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1)); }
+        .nav-item .icon { font-size: 20px; width: 28px; text-align: center; }
 
         .main {
-            margin-left: 250px;
+            margin-left: 240px;
             flex: 1;
             min-height: 100vh;
             display: flex;
@@ -125,103 +134,101 @@
 
         /* 顶部栏 */
         .topbar {
-            background: rgba(255,255,255,0.85);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            padding: 16px 32px;
+            background: rgba(250,246,241,0.92);
+            backdrop-filter: blur(16px);
+            padding: 14px 28px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             position: sticky;
             top: 0;
             z-index: 40;
-            border-bottom: 1px solid rgba(241,245,249,0.8);
+            border-bottom: 2px dashed var(--dash);
         }
-        .topbar h2 { font-size: 22px; font-weight: 700; color: var(--text); letter-spacing: -0.3px; }
+        .topbar h2 { font-family: 'Ma Shan Zheng', cursive; font-size: 24px; color: var(--brown-dark); letter-spacing: 1px; }
         .topbar-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 
         .content {
             flex: 1;
-            padding: 28px 32px 40px;
-            max-width: 1400px;
+            padding: 24px 28px 40px;
+            max-width: 1200px;
         }
-        .page { display: none; animation: fadeIn 0.35s ease; }
+        .page { display: none; animation: fadeIn 0.4s ease; }
         .page.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* 按钮 */
+        /* 手绘按钮 */
         .btn {
             padding: 10px 18px;
             border: none;
-            border-radius: 12px;
+            border-radius: 16px;
             font-size: 14px;
             font-weight: 600;
             cursor: pointer;
-            transition: all .2s;
+            transition: all .25s;
             display: inline-flex;
             align-items: center;
             justify-content: center;
             gap: 6px;
             white-space: nowrap;
+            font-family: 'ZCOOL KuaiLe', cursive;
+            box-shadow: 3px 4px 0 rgba(74,64,54,0.12);
         }
-        .btn:active { transform: scale(0.97); }
+        .btn:active { transform: scale(0.96) rotate(-1deg); }
         .btn-primary {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            background: var(--sage);
             color: white;
-            box-shadow: 0 4px 14px rgba(13,148,136,0.25);
+            border: 2px solid var(--sage-dark);
         }
-        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(13,148,136,0.35); }
+        .btn-primary:hover { background: var(--sage-dark); transform: translateY(-2px) rotate(-1deg); }
         .btn-secondary {
             background: white;
-            color: var(--text-secondary);
-            border: 1px solid var(--border);
-            box-shadow: var(--shadow-sm);
+            color: var(--ink-light);
+            border: 2px dashed var(--dash);
         }
-        .btn-secondary:hover { background: #f8fafc; color: var(--text); transform: translateY(-1px); }
-        .btn-success { background: linear-gradient(135deg, #34d399 0%, #10b981 100%); color: white; box-shadow: 0 4px 14px rgba(16,185,129,0.25); }
-        .btn-success:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(16,185,129,0.35); }
-        .btn-warning { background: linear-gradient(135deg, #fb923c 0%, #f97316 100%); color: white; box-shadow: 0 4px 14px rgba(249,115,22,0.25); }
-        .btn-warning:hover { transform: translateY(-2px); }
-        .btn-danger { background: linear-gradient(135deg, #f87171 0%, #ef4444 100%); color: white; box-shadow: 0 4px 14px rgba(239,68,68,0.25); }
-        .btn-danger:hover { transform: translateY(-2px); }
-        .btn-sm { padding: 7px 14px; font-size: 13px; border-radius: 10px; }
-        .btn-ghost { background: transparent; color: var(--text-secondary); }
-        .btn-ghost:hover { background: #f1f5f9; }
-        .btn-fab {
-            width: 52px; height: 52px;
-            border-radius: 50%;
-            position: fixed;
-            bottom: 90px; right: 20px;
-            z-index: 90;
-            box-shadow: 0 6px 24px rgba(13,148,136,0.35);
-            font-size: 24px;
-            padding: 0;
-        }
+        .btn-secondary:hover { background: var(--paper-dark); transform: translateY(-2px) rotate(1deg); }
+        .btn-success { background: var(--blue); color: white; border: 2px solid #6d8fa8; }
+        .btn-success:hover { background: #6d8fa8; transform: translateY(-2px) rotate(-1deg); }
+        .btn-warning { background: var(--coral); color: white; border: 2px solid #b86e61; }
+        .btn-warning:hover { background: #b86e61; transform: translateY(-2px) rotate(1deg); }
+        .btn-danger { background: #d98c7e; color: white; border: 2px solid #b06a5d; }
+        .btn-danger:hover { background: #b06a5d; }
+        .btn-sm { padding: 7px 13px; font-size: 13px; border-radius: 12px; }
 
-        /* 卡片 */
+        /* 手绘卡片 */
         .card {
-            background: var(--card);
-            border-radius: var(--radius);
-            padding: 24px;
+            background: white;
+            border-radius: 20px;
+            padding: 22px;
             box-shadow: var(--shadow);
             margin-bottom: 20px;
-            border: 1px solid var(--border);
-            transition: transform .2s, box-shadow .2s;
+            border: 2px dashed var(--dash);
+            position: relative;
+            transition: transform .25s, box-shadow .25s;
         }
-        .card:hover { box-shadow: var(--shadow-lg); }
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 4px; left: 4px; right: -4px; bottom: -4px;
+            background: rgba(124,152,133,0.05);
+            border-radius: 20px;
+            z-index: -1;
+        }
+        .card:hover { transform: translateY(-3px) rotate(0.3deg); box-shadow: var(--shadow-lg); }
         .card-title {
-            font-size: 17px;
-            font-weight: 700;
+            font-family: 'Ma Shan Zheng', cursive;
+            font-size: 20px;
+            color: var(--brown-dark);
             margin-bottom: 18px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            color: var(--text);
         }
         .card-title .subtitle {
+            font-family: 'ZCOOL KuaiLe', cursive;
             font-size: 13px;
-            color: var(--text-tertiary);
-            font-weight: 500;
+            color: var(--ink-light);
+            font-weight: normal;
         }
 
         /* KPI 卡片 */
@@ -232,56 +239,46 @@
             margin-bottom: 24px;
         }
         .kpi-card {
-            background: var(--card);
-            border-radius: var(--radius);
-            padding: 22px;
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
             box-shadow: var(--shadow);
-            border: 1px solid var(--border);
+            border: 2px dashed var(--dash);
             position: relative;
-            overflow: hidden;
             transition: transform .25s;
+            transform: rotate(-0.5deg);
         }
-        .kpi-card:hover { transform: translateY(-4px); }
-        .kpi-card::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0;
-            height: 4px;
-            background: var(--primary);
-        }
-        .kpi-card.orange::before { background: var(--coral); }
-        .kpi-card.blue::before { background: var(--sky); }
-        .kpi-card.purple::before { background: var(--purple); }
-        .kpi-card .label {
-            font-size: 13px;
-            color: var(--text-secondary);
-            font-weight: 500;
-            margin-bottom: 6px;
-        }
-        .kpi-card .num {
-            font-size: 32px;
-            font-weight: 800;
-            color: var(--text);
-            letter-spacing: -1px;
-        }
+        .kpi-card:nth-child(even) { transform: rotate(0.5deg); }
+        .kpi-card:hover { transform: rotate(0deg) translateY(-4px); }
         .kpi-card .icon-bg {
-            position: absolute;
-            right: 14px; top: 14px;
             width: 44px; height: 44px;
-            border-radius: 14px;
-            background: var(--primary-light);
+            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 22px;
+            margin-bottom: 10px;
+            border: 2px dashed var(--sage);
+            background: var(--sage-light);
         }
-        .kpi-card.orange .icon-bg { background: var(--coral-light); }
-        .kpi-card.blue .icon-bg { background: var(--sky-light); }
-        .kpi-card.purple .icon-bg { background: var(--purple-light); }
+        .kpi-card.orange .icon-bg { border-color: var(--coral); background: var(--coral-light); }
+        .kpi-card.blue .icon-bg { border-color: var(--blue); background: var(--blue-light); }
+        .kpi-card.purple .icon-bg { border-color: #b8a9c9; background: #f0ebf5; }
+        .kpi-card .label {
+            font-family: 'ZCOOL KuaiLe', cursive;
+            font-size: 13px;
+            color: var(--ink-light);
+        }
+        .kpi-card .num {
+            font-family: 'Ma Shan Zheng', cursive;
+            font-size: 34px;
+            color: var(--ink);
+            letter-spacing: 1px;
+            margin-top: 2px;
+        }
 
-        /* 两栏布局 */
+        /* 两栏 */
         .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .three-col { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
 
         /* 时间线 */
         .timeline {
@@ -291,199 +288,179 @@
         .timeline::before {
             content: '';
             position: absolute;
-            left: 10px;
-            top: 10px;
-            bottom: 10px;
+            left: 9px;
+            top: 8px;
+            bottom: 8px;
             width: 2px;
-            background: linear-gradient(180deg, var(--primary), var(--sky), var(--coral));
-            border-radius: 2px;
+            border-left: 2px dashed var(--sage);
         }
         .timeline-item {
             position: relative;
-            padding-bottom: 22px;
+            padding-bottom: 20px;
         }
         .timeline-item::before {
             content: '';
             position: absolute;
-            left: -24px;
+            left: -23px;
             top: 3px;
             width: 14px;
             height: 14px;
             border-radius: 50%;
-            background: var(--card);
-            border: 3px solid var(--primary);
-            box-shadow: 0 0 0 4px rgba(45,212,191,0.15);
+            background: white;
+            border: 2px solid var(--sage);
         }
-        .timeline-item.transport::before { border-color: var(--sky); box-shadow: 0 0 0 4px rgba(56,189,248,0.15); }
-        .timeline-item.attraction::before { border-color: var(--coral); box-shadow: 0 0 0 4px rgba(255,123,123,0.15); }
+        .timeline-item.transport::before { border-color: var(--blue); }
+        .timeline-item.attraction::before { border-color: var(--coral); }
         .timeline-date {
+            font-family: 'ZCOOL KuaiLe', cursive;
             font-size: 12px;
-            color: var(--primary-dark);
-            font-weight: 700;
-            background: var(--primary-light);
+            color: var(--sage-dark);
+            background: var(--sage-light);
             display: inline-block;
             padding: 3px 10px;
-            border-radius: 20px;
-            margin-bottom: 6px;
+            border-radius: 12px;
+            margin-bottom: 4px;
+            border: 1px dashed var(--sage);
         }
-        .timeline-title { font-weight: 700; font-size: 15px; }
-        .timeline-desc { font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
+        .timeline-title { font-family: 'Ma Shan Zheng', cursive; font-size: 17px; color: var(--ink); }
+        .timeline-desc { font-size: 13px; color: var(--ink-light); margin-top: 3px; }
 
         /* 表单 */
         .form-row { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
         .form-group { flex: 1; min-width: 170px; }
         .form-group label {
             display: block;
-            font-size: 13px;
-            color: var(--text-secondary);
+            font-family: 'ZCOOL KuaiLe', cursive;
+            font-size: 14px;
+            color: var(--ink-light);
             margin-bottom: 7px;
-            font-weight: 600;
         }
         input, select, textarea {
             width: 100%;
             padding: 12px 14px;
-            border: 1.5px solid #e2e8f0;
+            border: 2px dashed var(--dash);
             border-radius: 14px;
             font-size: 15px;
             font-family: inherit;
-            background: #fafafa;
+            background: var(--paper);
+            color: var(--ink);
             transition: all .2s;
         }
         input:focus, select:focus, textarea:focus {
             outline: none;
-            border-color: var(--primary);
+            border-color: var(--sage);
             background: white;
-            box-shadow: 0 0 0 4px rgba(45,212,191,0.1);
+            box-shadow: 0 0 0 4px rgba(124,152,133,0.1);
         }
         textarea { resize: vertical; min-height: 80px; }
-        select { cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2394a3b8' viewBox='0 0 16 16'%3E%3Cpath d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 36px; }
+        select { cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='%23a67c52' viewBox='0 0 16 16'%3E%3Cpath d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 34px; }
 
         /* 项目卡片 */
         .items-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
             gap: 20px;
         }
         .item-card {
-            background: var(--card);
-            border-radius: var(--radius);
+            background: white;
+            border-radius: 20px;
             box-shadow: var(--shadow);
             overflow: hidden;
-            transition: all .3s cubic-bezier(0.4, 0, 0.2, 1);
-            border: 1px solid var(--border);
+            transition: all .3s ease;
+            border: 2px dashed var(--dash);
             display: flex;
             flex-direction: column;
+            transform: rotate(-0.3deg);
         }
-        .item-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-lg); }
+        .item-card:nth-child(even) { transform: rotate(0.3deg); }
+        .item-card:hover { transform: rotate(0deg) translateY(-5px); box-shadow: var(--shadow-lg); }
         .item-image {
             width: 100%;
-            height: 190px;
+            height: 180px;
             object-fit: cover;
-            background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+            background: linear-gradient(135deg, var(--paper-dark) 0%, #ebe4da 100%);
             display: flex;
             align-items: center;
             justify-content: center;
-            color: #cbd5e1;
+            color: var(--pencil);
             font-size: 14px;
             position: relative;
             overflow: hidden;
+            font-family: 'ZCOOL KuaiLe', cursive;
         }
         .item-image img { width: 100%; height: 100%; object-fit: cover; transition: transform .5s; }
         .item-card:hover .item-image img { transform: scale(1.05); }
         .item-image-badge {
             position: absolute;
             top: 12px; left: 12px;
-            background: rgba(255,255,255,0.92);
-            backdrop-filter: blur(8px);
+            background: rgba(255,255,255,0.95);
             padding: 5px 12px;
-            border-radius: 20px;
+            border-radius: 16px;
             font-size: 12px;
-            font-weight: 700;
-            color: var(--text);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            font-family: 'ZCOOL KuaiLe', cursive;
+            color: var(--brown-dark);
+            border: 1.5px dashed var(--brown);
         }
-        .item-body { padding: 18px; flex: 1; display: flex; flex-direction: column; }
+        .item-body { padding: 16px; flex: 1; display: flex; flex-direction: column; }
         .item-header {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
             gap: 10px;
         }
-        .item-title { font-size: 17px; font-weight: 700; color: var(--text); line-height: 1.3; }
-        .item-meta { font-size: 12px; color: var(--text-secondary); margin-top: 5px; display: flex; align-items: center; gap: 6px; }
-        .item-desc {
-            font-size: 14px;
-            color: var(--text-secondary);
-            margin-top: 10px;
-            line-height: 1.6;
-            flex: 1;
-        }
-        .item-tags { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
-        .tag {
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            background: var(--primary-light);
-            color: var(--primary-dark);
-        }
-        .tag.food { background: var(--coral-light); color: #dc2626; }
-        .tag.trans { background: var(--sky-light); color: #0369a1; }
-        .tag.stay { background: var(--purple-light); color: #6d28d9; }
-        .tag.attr { background: #dcfce7; color: #15803d; }
-        .item-actions {
-            display: flex;
-            gap: 8px;
-            margin-top: 16px;
-            padding-top: 14px;
-            border-top: 1px solid var(--border);
-        }
-        .stars { color: var(--amber); font-size: 14px; letter-spacing: 1px; }
+        .item-title { font-family: 'Ma Shan Zheng', cursive; font-size: 19px; color: var(--ink); }
+        .item-meta { font-size: 12px; color: var(--ink-light); margin-top: 4px; font-family: 'ZCOOL KuaiLe', cursive; }
+        .item-desc { font-size: 14px; color: var(--ink-light); margin-top: 8px; line-height: 1.6; flex: 1; }
+        .item-actions { display: flex; gap: 8px; margin-top: 14px; padding-top: 12px; border-top: 2px dashed var(--border); }
+        .stars { color: #e6a93f; font-size: 14px; letter-spacing: 1px; }
 
         /* 图片上传 */
         .photo-upload {
-            border: 2px dashed #cbd5e1;
-            border-radius: var(--radius-sm);
-            padding: 32px 24px;
+            border: 2px dashed var(--dash);
+            border-radius: 16px;
+            padding: 30px 24px;
             text-align: center;
             cursor: pointer;
             transition: all .25s;
-            background: #fafafa;
-            color: var(--text-secondary);
+            background: var(--paper);
+            color: var(--ink-light);
+            font-family: 'ZCOOL KuaiLe', cursive;
         }
-        .photo-upload:hover { border-color: var(--primary); background: var(--primary-light); color: var(--primary-dark); }
-        .photo-upload .upload-icon { font-size: 36px; margin-bottom: 8px; }
-        .photo-upload .upload-text { font-size: 14px; font-weight: 600; }
-        .photo-upload .upload-hint { font-size: 12px; margin-top: 4px; opacity: 0.7; }
+        .photo-upload:hover { border-color: var(--sage); background: var(--sage-light); color: var(--sage-dark); }
+        .photo-upload .upload-icon { font-size: 36px; margin-bottom: 6px; }
+        .photo-upload .upload-text { font-size: 15px; }
+        .photo-upload .upload-hint { font-size: 12px; opacity: 0.7; }
         .photo-upload input { display: none; }
         .photo-preview-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-            gap: 12px;
-            margin-top: 16px;
+            grid-template-columns: repeat(auto-fill, minmax(95px, 1fr));
+            gap: 10px;
+            margin-top: 14px;
         }
         .photo-preview {
             position: relative;
             aspect-ratio: 1;
-            border-radius: 14px;
+            border-radius: 12px;
             overflow: hidden;
-            border: 1px solid var(--border);
+            border: 2px dashed var(--dash);
             cursor: pointer;
+            transform: rotate(-1deg);
         }
+        .photo-preview:nth-child(even) { transform: rotate(1deg); }
         .photo-preview img { width: 100%; height: 100%; object-fit: cover; }
         .photo-preview .remove {
             position: absolute;
-            top: 6px; right: 6px;
-            width: 24px;
-            height: 24px;
+            top: 5px; right: 5px;
+            width: 22px;
+            height: 22px;
             background: rgba(0,0,0,0.5);
             color: white;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 14px;
+            font-size: 13px;
             cursor: pointer;
             opacity: 0;
             transition: opacity .2s;
@@ -495,160 +472,208 @@
             display: none;
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(15,23,42,0.55);
+            background: rgba(74,64,54,0.45);
             z-index: 1000;
             align-items: center;
             justify-content: center;
             padding: 20px;
-            backdrop-filter: blur(4px);
         }
         .modal.active { display: flex; animation: modalIn 0.3s ease; }
         @keyframes modalIn { from { opacity: 0; } to { opacity: 1; } }
         .modal-content {
-            background: white;
-            border-radius: var(--radius-lg);
-            max-width: 640px;
+            background: var(--paper);
+            border-radius: 24px;
+            max-width: 620px;
             width: 100%;
             max-height: 90vh;
             overflow-y: auto;
-            padding: 28px;
+            padding: 26px;
             box-shadow: var(--shadow-lg);
+            border: 2px dashed var(--dash);
             animation: modalSlide 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
-        @keyframes modalSlide { from { opacity: 0; transform: scale(0.92) translateY(20px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+        @keyframes modalSlide { from { opacity: 0; transform: scale(0.92) rotate(-2deg); } to { opacity: 1; transform: scale(1) rotate(0); } }
         .modal-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 22px;
+            margin-bottom: 20px;
         }
-        .modal-header h3 { font-size: 20px; font-weight: 700; }
+        .modal-header h3 { font-family: 'Ma Shan Zheng', cursive; font-size: 22px; color: var(--brown-dark); }
         .close-btn {
             width: 36px; height: 36px;
             border-radius: 12px;
-            border: none;
-            background: #f1f5f9;
+            border: 2px dashed var(--dash);
+            background: white;
             cursor: pointer;
             font-size: 20px;
-            color: var(--text-secondary);
+            color: var(--ink-light);
             transition: all .2s;
         }
-        .close-btn:hover { background: #e2e8f0; transform: rotate(90deg); }
+        .close-btn:hover { background: var(--coral-light); transform: rotate(90deg); }
 
         /* 共享面板 */
         .share-box {
-            background: linear-gradient(135deg, var(--primary-light) 0%, #ffffff 100%);
-            border: 1.5px solid #99f6e4;
-            border-radius: var(--radius);
-            padding: 22px;
+            background: linear-gradient(135deg, var(--sage-light) 0%, #ffffff 100%);
+            border: 2px dashed var(--sage);
+            border-radius: 20px;
+            padding: 20px;
         }
         .share-code {
-            font-family: 'SF Mono', monospace;
-            font-size: 13px;
+            font-family: 'Indie Flower', cursive;
+            font-size: 14px;
             background: white;
             padding: 14px;
-            border-radius: 12px;
-            border: 1.5px solid var(--border);
+            border-radius: 14px;
+            border: 2px dashed var(--dash);
             word-break: break-all;
             margin: 12px 0;
-            color: var(--primary-dark);
-            line-height: 1.5;
+            color: var(--sage-dark);
         }
         .sync-status {
             display: inline-flex;
             align-items: center;
             gap: 8px;
             font-size: 13px;
-            color: var(--text-secondary);
-            background: #f1f5f9;
+            color: var(--ink-light);
+            background: white;
             padding: 6px 12px;
             border-radius: 20px;
-            font-weight: 600;
+            border: 2px dashed var(--dash);
+            font-family: 'ZCOOL KuaiLe', cursive;
         }
-        .sync-dot { width: 8px; height: 8px; border-radius: 50%; background: #10b981; animation: pulse 2s infinite; }
-        .sync-dot.off { background: #94a3b8; animation: none; }
+        .sync-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--sage); animation: pulse 2s infinite; }
+        .sync-dot.off { background: var(--pencil); animation: none; }
         @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
 
         /* 空状态 */
         .empty-state {
             text-align: center;
-            padding: 60px 20px;
-            color: var(--text-secondary);
+            padding: 50px 20px;
+            color: var(--ink-light);
         }
-        .empty-state .icon { font-size: 64px; margin-bottom: 16px; opacity: 0.5; }
-        .empty-state p { font-size: 15px; }
+        .empty-state .icon { font-size: 60px; margin-bottom: 14px; opacity: 0.6; }
+        .empty-state p { font-size: 15px; font-family: 'ZCOOL KuaiLe', cursive; }
 
         /* 预算图表 */
         .budget-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 18px;
-            margin-top: 18px;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-top: 16px;
         }
         .budget-item {
-            background: #fafafa;
+            background: var(--paper);
             border-radius: 16px;
-            padding: 18px;
-            border: 1px solid var(--border);
+            padding: 16px;
+            border: 2px dashed var(--dash);
         }
         .budget-item-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 12px;
+            margin-bottom: 10px;
         }
-        .budget-item-name { font-weight: 700; font-size: 14px; }
-        .budget-item-amount { font-size: 13px; color: var(--text-secondary); font-weight: 600; }
+        .budget-item-name { font-family: 'ZCOOL KuaiLe', cursive; font-size: 14px; color: var(--ink); }
+        .budget-item-amount { font-size: 13px; color: var(--ink-light); font-family: 'ZCOOL KuaiLe', cursive; }
         .progress-bar {
             height: 10px;
-            background: #e2e8f0;
+            background: #e8dfd3;
             border-radius: 5px;
             overflow: hidden;
+            border: 1px solid rgba(74,64,54,0.08);
         }
         .progress-fill {
             height: 100%;
             border-radius: 5px;
-            transition: width .5s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: width .5s ease;
+            background: repeating-linear-gradient(45deg, var(--sage), var(--sage) 8px, var(--sage-dark) 8px, var(--sage-dark) 16px);
         }
-        .budget-percent { font-size: 12px; color: var(--text-tertiary); margin-top: 8px; font-weight: 600; }
+        .budget-percent { font-size: 12px; color: var(--ink-light); margin-top: 8px; font-family: 'ZCOOL KuaiLe', cursive; }
 
         /* 图库 */
         .gallery-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
             gap: 14px;
         }
         .gallery-item {
             aspect-ratio: 1;
-            border-radius: var(--radius-sm);
+            border-radius: 14px;
             overflow: hidden;
             cursor: pointer;
             position: relative;
+            border: 2px dashed var(--dash);
             box-shadow: var(--shadow-sm);
+            transform: rotate(-1deg);
         }
+        .gallery-item:nth-child(even) { transform: rotate(1deg); }
         .gallery-item img { width: 100%; height: 100%; object-fit: cover; transition: transform .4s; }
         .gallery-item:hover img { transform: scale(1.08); }
         .gallery-caption {
             position: absolute;
             bottom: 0; left: 0; right: 0;
-            background: linear-gradient(transparent, rgba(15,23,42,0.7));
+            background: linear-gradient(transparent, rgba(74,64,54,0.7));
             color: white;
-            padding: 28px 12px 12px;
+            padding: 26px 10px 10px;
             font-size: 13px;
-            font-weight: 600;
+            font-family: 'ZCOOL KuaiLe', cursive;
+        }
+
+        /* 顶部 Banner */
+        .hero-banner {
+            background: linear-gradient(180deg, #f0ebe3 0%, var(--paper) 100%);
+            border-radius: 24px;
+            padding: 28px;
+            margin-bottom: 24px;
+            border: 2px dashed var(--dash);
+            position: relative;
+            overflow: hidden;
+        }
+        .hero-content {
+            position: relative;
+            z-index: 2;
+        }
+        .hero-greeting {
+            font-family: 'Ma Shan Zheng', cursive;
+            font-size: 36px;
+            color: var(--brown-dark);
+            margin-bottom: 6px;
+        }
+        .hero-date {
+            font-family: 'ZCOOL KuaiLe', cursive;
+            font-size: 15px;
+            color: var(--ink-light);
+            margin-bottom: 4px;
+        }
+        .hero-quote {
+            font-family: 'ZCOOL KuaiLe', cursive;
+            font-size: 14px;
+            color: var(--sage-dark);
+        }
+        .hero-illustration {
+            position: absolute;
+            right: 20px;
+            bottom: 0;
+            width: 180px;
+            height: 140px;
+            z-index: 1;
+            opacity: 0.85;
         }
 
         /* 底部导航（手机） */
         .bottom-nav {
             display: none;
             position: fixed;
-            bottom: 0; left: 0; right: 0;
-            background: rgba(255,255,255,0.95);
-            backdrop-filter: blur(20px);
-            border-top: 1px solid var(--border);
+            bottom: 12px;
+            left: 12px;
+            right: 12px;
+            background: white;
+            border-radius: 24px;
+            border: 2px dashed var(--dash);
             z-index: 100;
             padding: 8px 0 calc(8px + env(safe-area-inset-bottom));
-            box-shadow: 0 -4px 20px rgba(0,0,0,0.05);
+            box-shadow: var(--shadow-lg);
         }
         .bottom-nav-inner {
             display: flex;
@@ -660,58 +685,60 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 3px;
+            gap: 2px;
             padding: 6px 0;
             cursor: pointer;
-            color: var(--text-tertiary);
+            color: var(--ink-light);
             font-size: 11px;
-            font-weight: 600;
+            font-family: 'ZCOOL KuaiLe', cursive;
             transition: all .2s;
         }
-        .bottom-nav-item.active { color: var(--primary-dark); }
+        .bottom-nav-item.active { color: var(--sage-dark); transform: translateY(-2px); }
         .bottom-nav-item .icon { font-size: 22px; }
 
-        /* 菜单按钮 */
         .menu-toggle {
             display: none;
             position: fixed;
-            top: 14px; left: 16px;
+            top: 12px; left: 14px;
             z-index: 110;
-            width: 42px; height: 42px;
+            width: 40px; height: 40px;
             border-radius: 12px;
             background: white;
-            border: 1px solid var(--border);
-            font-size: 20px;
+            border: 2px dashed var(--dash);
+            font-size: 18px;
             box-shadow: var(--shadow);
             align-items: center;
             justify-content: center;
             cursor: pointer;
+            color: var(--brown-dark);
         }
 
         /* 响应式 */
         @media (max-width: 1100px) {
             .kpi-grid { grid-template-columns: repeat(2, 1fr); }
             .two-col { grid-template-columns: 1fr; }
-            .three-col { grid-template-columns: 1fr; }
+            .hero-illustration { width: 140px; height: 110px; right: 10px; }
         }
         @media (max-width: 768px) {
-            .sidebar { transform: translateX(-100%); box-shadow: 10px 0 40px rgba(0,0,0,0.2); }
+            .sidebar { transform: translateX(-100%); box-shadow: 10px 0 40px rgba(0,0,0,0.15); }
             .sidebar.open { transform: translateX(0); }
             .main { margin-left: 0; }
             .menu-toggle { display: flex; }
-            .topbar { padding: 14px 16px 14px 68px; }
-            .topbar h2 { font-size: 18px; }
+            .topbar { padding: 12px 16px 12px 64px; border-bottom-width: 2px; }
+            .topbar h2 { font-size: 20px; }
             .topbar-actions { display: none; }
-            .content { padding: 16px; padding-bottom: 90px; }
+            .content { padding: 16px; padding-bottom: 100px; }
             .kpi-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
             .kpi-card { padding: 16px; }
-            .kpi-card .num { font-size: 24px; }
-            .kpi-card .icon-bg { display: none; }
+            .kpi-card .num { font-size: 28px; }
+            .kpi-card .icon-bg { width: 38px; height: 38px; font-size: 18px; }
             .items-grid { grid-template-columns: 1fr; }
-            .card { padding: 18px; border-radius: var(--radius-sm); }
+            .card { padding: 18px; }
             .form-group { min-width: 100%; }
             .bottom-nav { display: block; }
-            .btn-fab { bottom: 80px; right: 16px; }
+            .hero-banner { padding: 22px 18px; }
+            .hero-greeting { font-size: 28px; }
+            .hero-illustration { width: 120px; height: 95px; }
             .gallery-grid { grid-template-columns: repeat(2, 1fr); }
         }
 
@@ -720,12 +747,11 @@
         .text-center { text-align: center; }
         .mb-0 { margin-bottom: 0; }
 
-        /* 遮罩 */
         .overlay {
             display: none;
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.4);
+            background: rgba(74,64,54,0.35);
             z-index: 95;
         }
         .overlay.active { display: block; }
@@ -739,14 +765,15 @@
 <div class="app">
     <aside class="sidebar" id="sidebar">
         <div class="brand">
-            <h1>🌍 旅行小助手</h1>
-            <p>和好友一起规划完美旅程</p>
+            <div class="brand-sheep">🐑</div>
+            <h1>羊的旅行日志</h1>
+            <p>记录每一步风景</p>
         </div>
         <nav>
-            <div class="nav-section">行程</div>
+            <div class="nav-section">我的行程</div>
             <div class="nav-item active" onclick="navTo('dashboard')">
-                <span class="icon">📊</span>
-                <span>行程总览</span>
+                <span class="icon">📔</span>
+                <span>日志首页</span>
             </div>
             <div class="nav-item" onclick="navTo('locations')">
                 <span class="icon">📍</span>
@@ -782,7 +809,7 @@
 
     <div class="main">
         <header class="topbar">
-            <h2 id="pageTitle">行程总览</h2>
+            <h2 id="pageTitle">日志首页</h2>
             <div class="topbar-actions">
                 <span class="sync-status" id="syncStatus">
                     <span class="sync-dot off" id="syncDot"></span>
@@ -798,6 +825,40 @@
         <div class="content">
             <!-- 总览 -->
             <div class="page active" id="page-dashboard">
+                <div class="hero-banner">
+                    <div class="hero-content">
+                        <div class="hero-greeting">Hi，旅人 🐑</div>
+                        <div class="hero-date" id="heroDate"></div>
+                        <div class="hero-quote">今天适合出去走一走</div>
+                    </div>
+                    <!-- 手绘风 SVG：山川、河流、小羊 -->
+                    <svg class="hero-illustration" viewBox="0 0 200 150" xmlns="http://www.w3.org/2000/svg">
+                        <!-- 太阳 -->
+                        <circle cx="165" cy="28" r="14" fill="#f4d03f" stroke="#a67c52" stroke-width="2" stroke-dasharray="3,2"/>
+                        <!-- 远山 -->
+                        <polygon points="10,120 50,45 90,120" fill="#e8f0ea" stroke="#7c9885" stroke-width="2" stroke-linejoin="round"/>
+                        <polygon points="60,130 110,55 160,130" fill="#d4e5d9" stroke="#5a7a64" stroke-width="2" stroke-linejoin="round"/>
+                        <polygon points="130,125 170,65 210,125" fill="#e8f0ea" stroke="#7c9885" stroke-width="2" stroke-linejoin="round"/>
+                        <!-- 河流 -->
+                        <path d="M0,130 Q50,125 90,135 T180,130 T220,138" fill="none" stroke="#8faec4" stroke-width="4" stroke-linecap="round" stroke-dasharray="6,4"/>
+                        <!-- 小羊 -->
+                        <ellipse cx="85" cy="112" rx="18" ry="14" fill="white" stroke="#4a4036" stroke-width="2"/>
+                        <circle cx="85" cy="100" r="10" fill="white" stroke="#4a4036" stroke-width="2"/>
+                        <circle cx="82" cy="98" r="1.5" fill="#4a4036"/>
+                        <circle cx="90" cy="98" r="1.5" fill="#4a4036"/>
+                        <path d="M82,103 Q86,106 90,103" fill="none" stroke="#4a4036" stroke-width="1.5" stroke-linecap="round"/>
+                        <ellipse cx="73" cy="95" rx="4" ry="7" fill="white" stroke="#4a4036" stroke-width="1.5" transform="rotate(-20 73 95)"/>
+                        <ellipse cx="97" cy="95" rx="4" ry="7" fill="white" stroke="#4a4036" stroke-width="1.5" transform="rotate(20 97 95)"/>
+                        <!-- 背包小人 -->
+                        <circle cx="145" cy="92" r="8" fill="#f5efe7" stroke="#4a4036" stroke-width="1.5"/>
+                        <path d="M137,100 L137,118 M153,100 L153,118 M137,110 L153,110" fill="none" stroke="#4a4036" stroke-width="1.5" stroke-linecap="round"/>
+                        <rect x="150" y="102" width="10" height="12" rx="2" fill="#d98c7e" stroke="#4a4036" stroke-width="1.5"/>
+                        <!-- 小树 -->
+                        <line x1="30" y1="125" x2="30" y2="110" stroke="#a67c52" stroke-width="2" stroke-linecap="round"/>
+                        <circle cx="30" cy="106" r="8" fill="#c8ddd0" stroke="#7c9885" stroke-width="1.5"/>
+                    </svg>
+                </div>
+
                 <div class="kpi-grid">
                     <div class="kpi-card">
                         <div class="icon-bg">📅</div>
@@ -826,31 +887,18 @@
                         <div class="card-title">🗓️ 行程时间线</div>
                         <div class="timeline" id="timeline"></div>
                         <div class="empty-state hidden" id="emptyTimeline">
-                            <div class="icon">🗺️</div>
-                            <p>还没有行程，去“地点”添加第一站吧！</p>
+                            <div class="icon">🐑</div>
+                            <p>小羊还没有目的地，快去添加第一站吧~</p>
                         </div>
                     </div>
 
                     <div class="card">
-                        <div class="card-title">💰 预算分配</div>
+                        <div class="card-title">💰 旅行预算</div>
                         <div class="form-row">
-                            <div class="form-group">
-                                <label>交通预算</label>
-                                <input type="number" id="budgetTransport" placeholder="0" onchange="saveBudget()">
-                            </div>
-                            <div class="form-group">
-                                <label>住宿预算</label>
-                                <input type="number" id="budgetStay" placeholder="0" onchange="saveBudget()">
-                            </div>
-                            <div class="form-group">
-                                <label>餐饮预算</label>
-                                <input type="number" id="budgetFood" placeholder="0" onchange="saveBudget()">
-                            </div>
-                            <div class="form-group">
-                                <label>景点/娱乐预算</label>
-                                <input type="number" id="budgetAttr" placeholder="0" onchange="saveBudget()">
-                            </div>
-                        </div>
+                            <div class="form-group"><label>交通预算</label><input type="number" id="budgetTransport" placeholder="0" onchange="saveBudget()"></div>
+                            <div class="form-group"><label>住宿预算</label><input type="number" id="budgetStay" placeholder="0" onchange="saveBudget()"></div>
+                            <div class="form-group"><label>餐饮预算</label><input type="number" id="budgetFood" placeholder="0" onchange="saveBudget()"></div>
+                            <div class="form-group"><label>景点预算</label><input type="number" id="budgetAttr" placeholder="0" onchange="saveBudget()"></div>
                         <div id="budgetChart"></div>
                     </div>
                 </div>
@@ -859,26 +907,26 @@
             <!-- 地点 -->
             <div class="page" id="page-locations">
                 <div class="card">
-                    <div class="card-title">➕ 添加地点 <span class="subtitle">记录每一站落脚点</span></div>
+                    <div class="card-title">📍 添加地点 <span class="subtitle">记录每一站</span></div>
                     <div class="form-row">
                         <div class="form-group"><label>地点名称</label><input type="text" id="locName" placeholder="如：大理古城"></div>
                         <div class="form-group"><label>到达日期</label><input type="date" id="locDate"></div>
                         <div class="form-group"><label>离开日期</label><input type="date" id="locEndDate"></div>
-                        <div class="form-group"><label>住宿/落脚点</label><input type="text" id="locBase" placeholder="住哪里"></div>
+                        <div class="form-group"><label>落脚点</label><input type="text" id="locBase" placeholder="住哪里"></div>
                     </div>
                     <div class="form-group">
-                        <label>地点简介 / 备忘录</label>
-                        <textarea id="locNote" placeholder="写下对这个地方的期待或攻略..."></textarea>
+                        <label>旅行手记</label>
+                        <textarea id="locNote" placeholder="写下对这个地方的期待..."></textarea>
                     </div>
                     <div class="photo-upload" onclick="document.getElementById('locPhoto').click()">
                         <div class="upload-icon">📷</div>
-                        <div class="upload-text">点击上传地点照片</div>
+                        <div class="upload-text">贴一张地点照片</div>
                         <div class="upload-hint">支持多张，自动压缩</div>
                         <input type="file" id="locPhoto" accept="image/*" multiple onchange="handlePhotoUpload(this, 'locPhotos')">
                     </div>
                     <div class="photo-preview-grid" id="locPhotos"></div>
                     <div class="text-right" style="margin-top: 18px;">
-                        <button class="btn btn-primary" onclick="saveLocation()">💾 保存地点</button>
+                        <button class="btn btn-primary" onclick="saveLocation()">📝 记一笔</button>
                     </div>
                 </div>
                 <div class="items-grid" id="locationsList"></div>
@@ -887,9 +935,9 @@
             <!-- 美食 -->
             <div class="page" id="page-food">
                 <div class="card">
-                    <div class="card-title">➕ 添加美食 <span class="subtitle">记录必吃清单</span></div>
+                    <div class="card-title">🍜 添加美食 <span class="subtitle">记录味蕾记忆</span></div>
                     <div class="form-row">
-                        <div class="form-group"><label>店名 / 美食名称</label><input type="text" id="foodName" placeholder="如：过桥米线"></div>
+                        <div class="form-group"><label>美食名称</label><input type="text" id="foodName" placeholder="如：过桥米线"></div>
                         <div class="form-group"><label>所在地点</label><select id="foodLocation"></select></div>
                         <div class="form-group"><label>人均消费</label><input type="number" id="foodCost" placeholder="0"></div>
                         <div class="form-group"><label>评分</label>
@@ -908,12 +956,12 @@
                     </div>
                     <div class="photo-upload" onclick="document.getElementById('foodPhoto').click()">
                         <div class="upload-icon">📷</div>
-                        <div class="upload-text">点击上传美食照片</div>
+                        <div class="upload-text">贴一张美食照片</div>
                         <input type="file" id="foodPhoto" accept="image/*" multiple onchange="handlePhotoUpload(this, 'foodPhotos')">
                     </div>
                     <div class="photo-preview-grid" id="foodPhotos"></div>
                     <div class="text-right" style="margin-top: 18px;">
-                        <button class="btn btn-primary" onclick="saveFood()">💾 保存美食</button>
+                        <button class="btn btn-primary" onclick="saveFood()">📝 记一笔</button>
                     </div>
                 </div>
                 <div class="items-grid" id="foodList"></div>
@@ -922,7 +970,7 @@
             <!-- 交通 -->
             <div class="page" id="page-transport">
                 <div class="card">
-                    <div class="card-title">➕ 添加交通 <span class="subtitle">航班、高铁、租车都记下</span></div>
+                    <div class="card-title">🚄 添加交通 <span class="subtitle">航班、高铁、租车都记下</span></div>
                     <div class="form-row">
                         <div class="form-group"><label>交通方式</label>
                             <select id="transType">
@@ -951,7 +999,7 @@
                         <textarea id="transNote" placeholder="订票平台、座位号、航站楼..."></textarea>
                     </div>
                     <div class="text-right">
-                        <button class="btn btn-primary" onclick="saveTransport()">💾 保存交通</button>
+                        <button class="btn btn-primary" onclick="saveTransport()">📝 记一笔</button>
                     </div>
                 </div>
                 <div class="items-grid" id="transportList"></div>
@@ -960,7 +1008,7 @@
             <!-- 景点 -->
             <div class="page" id="page-attractions">
                 <div class="card">
-                    <div class="card-title">➕ 添加景点 <span class="subtitle">标记想去和必去</span></div>
+                    <div class="card-title">🎡 添加景点 <span class="subtitle">标记想去和必去</span></div>
                     <div class="form-row">
                         <div class="form-group"><label>景点名称</label><input type="text" id="attrName" placeholder="如：洱海"></div>
                         <div class="form-group"><label>所在地点</label><select id="attrLocation"></select></div>
@@ -985,12 +1033,12 @@
                     </div>
                     <div class="photo-upload" onclick="document.getElementById('attrPhoto').click()">
                         <div class="upload-icon">📷</div>
-                        <div class="upload-text">点击上传景点照片</div>
+                        <div class="upload-text">贴一张景点照片</div>
                         <input type="file" id="attrPhoto" accept="image/*" multiple onchange="handlePhotoUpload(this, 'attrPhotos')">
                     </div>
                     <div class="photo-preview-grid" id="attrPhotos"></div>
                     <div class="text-right" style="margin-top: 18px;">
-                        <button class="btn btn-primary" onclick="saveAttraction()">💾 保存景点</button>
+                        <button class="btn btn-primary" onclick="saveAttraction()">📝 记一笔</button>
                     </div>
                 </div>
                 <div class="items-grid" id="attractionsList"></div>
@@ -999,7 +1047,7 @@
             <!-- 住宿 -->
             <div class="page" id="page-stay">
                 <div class="card">
-                    <div class="card-title">➕ 添加住宿 <span class="subtitle">酒店、民宿、青旅</span></div>
+                    <div class="card-title">🏨 添加住宿 <span class="subtitle">酒店、民宿、青旅</span></div>
                     <div class="form-row">
                         <div class="form-group"><label>住宿名称</label><input type="text" id="stayName" placeholder="如：洱海边的民宿"></div>
                         <div class="form-group"><label>所在地点</label><select id="stayLocation"></select></div>
@@ -1025,12 +1073,12 @@
                     </div>
                     <div class="photo-upload" onclick="document.getElementById('stayPhoto').click()">
                         <div class="upload-icon">📷</div>
-                        <div class="upload-text">点击上传住宿照片</div>
+                        <div class="upload-text">贴一张住宿照片</div>
                         <input type="file" id="stayPhoto" accept="image/*" multiple onchange="handlePhotoUpload(this, 'stayPhotos')">
                     </div>
                     <div class="photo-preview-grid" id="stayPhotos"></div>
                     <div class="text-right" style="margin-top: 18px;">
-                        <button class="btn btn-primary" onclick="saveStay()">💾 保存住宿</button>
+                        <button class="btn btn-primary" onclick="saveStay()">📝 记一笔</button>
                     </div>
                 </div>
                 <div class="items-grid" id="stayList"></div>
@@ -1039,11 +1087,11 @@
             <!-- 照片墙 -->
             <div class="page" id="page-gallery">
                 <div class="card">
-                    <div class="card-title">📷 旅程照片墙 <span class="subtitle">所有美好瞬间</span></div>
+                    <div class="card-title">📷 回忆相册 <span class="subtitle">所有美好瞬间</span></div>
                     <div class="gallery-grid" id="galleryGrid"></div>
                     <div class="empty-state hidden" id="emptyGallery">
                         <div class="icon">📷</div>
-                        <p>还没有照片，快去各地点、美食、景点上传吧！</p>
+                        <p>还没有照片，快去各地点、美食、景点上传吧~</p>
                     </div>
                 </div>
             </div>
@@ -1051,12 +1099,12 @@
             <!-- 共享 -->
             <div class="page" id="page-share">
                 <div class="card">
-                    <div class="card-title">👥 与好友共同编辑</div>
-                    <p style="color: var(--text-secondary); margin-bottom: 18px; line-height: 1.7;">
-                        生成共享码或二维码，好友打开同一页面并粘贴共享码即可实时同步数据。所有数据都保存在本地浏览器中。
+                    <div class="card-title">👥 和旅伴一起写</div>
+                    <p style="color: var(--ink-light); margin-bottom: 18px; line-height: 1.7;">
+                        生成共享码或二维码，好友打开同一页面并粘贴共享码即可实时同步。所有数据都保存在本地浏览器中。
                     </p>
                     <div class="form-row">
-                        <div class="form-group"><label>你的名字</label><input type="text" id="userName" placeholder="如：小明" onchange="saveUserName()"></div>
+                        <div class="form-group"><label>你的名字</label><input type="text" id="userName" placeholder="如：小羊" onchange="saveUserName()"></div>
                         <div class="form-group"><label>房间号 / 共享码</label><input type="text" id="roomCode" placeholder="点击生成共享码"></div>
                     </div>
                     <div class="share-box">
@@ -1066,7 +1114,7 @@
                             <button class="btn btn-success" onclick="joinRoom()">🔗 加入房间</button>
                             <button class="btn btn-warning" onclick="broadcastUpdate()">🔄 手动同步</button>
                         </div>
-                        <div style="margin-top: 14px; font-size: 13px; color: var(--text-secondary); font-weight: 600;">共享码（可扫码或复制）：</div>
+                        <div style="margin-top: 14px; font-size: 13px; color: var(--ink-light); font-family: 'ZCOOL KuaiLe', cursive;">共享码（可扫码或复制）：</div>
                         <div class="share-code" id="shareCodeDisplay">点击“生成共享码”开始共享</div>
                         <div id="qrcode" class="text-center"></div>
                     </div>
@@ -1074,7 +1122,7 @@
 
                 <div class="card">
                     <div class="card-title">📤 导出 / 导入备份</div>
-                    <p style="color: var(--text-secondary); margin-bottom: 18px;">也可以通过 JSON 文件与好友交换完整行程数据。</p>
+                    <p style="color: var(--ink-light); margin-bottom: 18px;">也可以通过 JSON 文件与好友交换完整行程数据。</p>
                     <div style="display:flex; gap: 12px; flex-wrap: wrap;">
                         <button class="btn btn-primary" onclick="exportData()">📤 导出 JSON 备份</button>
                         <button class="btn btn-secondary" onclick="document.getElementById('importFile2').click()">📥 导入 JSON 备份</button>
@@ -1090,7 +1138,7 @@
 <!-- 底部导航（手机） -->
 <nav class="bottom-nav" id="bottomNav">
     <div class="bottom-nav-inner">
-        <div class="bottom-nav-item active" onclick="navTo('dashboard')" data-page="dashboard"><span class="icon">📊</span><span>总览</span></div>
+        <div class="bottom-nav-item active" onclick="navTo('dashboard')" data-page="dashboard"><span class="icon">📔</span><span>首页</span></div>
         <div class="bottom-nav-item" onclick="navTo('locations')" data-page="locations"><span class="icon">📍</span><span>地点</span></div>
         <div class="bottom-nav-item" onclick="navTo('food')" data-page="food"><span class="icon">🍜</span><span>美食</span></div>
         <div class="bottom-nav-item" onclick="navTo('transport')" data-page="transport"><span class="icon">🚄</span><span>交通</span></div>
@@ -1100,8 +1148,8 @@
 
 <!-- 图片预览模态框 -->
 <div class="modal" id="imageModal" onclick="closeImageModal()">
-    <div class="modal-content" style="max-width: 900px; padding: 0; background: transparent; box-shadow: none;" onclick="event.stopPropagation()">
-        <img id="modalImage" src="" style="width: 100%; border-radius: 16px; box-shadow: 0 30px 80px rgba(0,0,0,0.4);">
+    <div class="modal-content" style="max-width: 880px; padding: 0; background: transparent; border: none; box-shadow: none;" onclick="event.stopPropagation()">
+        <img id="modalImage" src="" style="width: 100%; border-radius: 20px; box-shadow: 0 25px 70px rgba(0,0,0,0.35); border: 4px solid white;">
     </div>
 </div>
 
@@ -1109,12 +1157,12 @@
 <div class="modal" id="shareModal">
     <div class="modal-content">
         <div class="modal-header">
-            <h3>👥 邀请好友共同编辑</h3>
+            <h3>👥 邀请旅伴</h3>
             <button class="close-btn" onclick="closeShareModal()">×</button>
         </div>
         <div class="form-group">
             <label>你的名字</label>
-            <input type="text" id="modalUserName" placeholder="如：小明" onchange="saveUserName(true)">
+            <input type="text" id="modalUserName" placeholder="如：小羊" onchange="saveUserName(true)">
         </div>
         <div class="form-group">
             <label>房间号 / 共享码</label>
@@ -1227,7 +1275,7 @@ function navTo(page) {
     if (bnav) bnav.classList.add('active');
 
     const titles = {
-        dashboard: '行程总览', locations: '地点', food: '美食',
+        dashboard: '日志首页', locations: '地点', food: '美食',
         transport: '交通', attractions: '景点', stay: '住宿',
         gallery: '照片墙', share: '好友共享'
     };
@@ -1250,6 +1298,11 @@ function renderAll() {
 }
 
 function renderDashboard() {
+    // 更新 Hero 日期
+    const now = new Date();
+    const weekdays = ['周日','周一','周二','周三','周四','周五','周六'];
+    document.getElementById('heroDate').textContent = `${now.getMonth()+1}月${now.getDate()}日 · ${weekdays[now.getDay()]}`;
+
     const days = data.locations.reduce((sum, l) => {
         if (!l.date || !l.endDate) return sum;
         const d1 = new Date(l.date), d2 = new Date(l.endDate);
@@ -1327,16 +1380,16 @@ function renderBudgetChart() {
         attr: data.attractions.reduce((s, a) => s + (Number(a.cost) || 0), 0)
     };
     const labels = { transport: '✈️ 交通', stay: '🏨 住宿', food: '🍜 餐饮', attr: '🎡 景点' };
-    const colors = { transport: '#3b82f6', stay: '#8b5cf6', food: '#ff7b7b', attr: '#10b981' };
-    const lightColors = { transport: '#dbeafe', stay: '#f5f3ff', food: '#fff1f1', attr: '#dcfce7' };
+    const colors = { transport: '#7c9885', stay: '#a78bfa', food: '#d98c7e', attr: '#8faec4' };
+    const lightColors = { transport: '#e8f0ea', stay: '#f0ebf5', food: '#f9e6e3', attr: '#e8f1f6' };
 
     let html = '<div class="budget-grid">';
     Object.keys(labels).forEach(k => {
         const budget = data.budget[k] || 1;
         const pct = Math.min(100, Math.round((actual[k] / budget) * 100));
         let barColor = colors[k];
-        if (pct > 100) barColor = '#ef4444';
-        else if (pct > 80) barColor = '#f59e0b';
+        if (pct > 100) barColor = '#c45a4a';
+        else if (pct > 80) barColor = '#d4a03f';
         html += `
             <div class="budget-item">
                 <div class="budget-item-header">
@@ -1369,7 +1422,7 @@ function renderLocationSelects() {
 function renderLocations() {
     const container = document.getElementById('locationsList');
     if (data.locations.length === 0) {
-        container.innerHTML = emptyCard('还没有地点，添加第一站吧！', '📍');
+        container.innerHTML = emptyCard('还没有地点，添加第一站吧！', '🐑');
         return;
     }
     container.innerHTML = data.locations.map(l => `
@@ -1432,7 +1485,7 @@ function renderTransport() {
     }
     container.innerHTML = data.transport.map(t => `
         <div class="item-card">
-            <div class="item-image" style="background: linear-gradient(135deg, #dbeafe, #eff6ff); display:flex; align-items:center; justify-content:center; font-size:56px;">
+            <div class="item-image" style="background: linear-gradient(135deg, #e8f1f6 0%, #f0f5f9 100%); display:flex; align-items:center; justify-content:center; font-size:52px;">
                 ${transportIcon(t.type)}
             </div>
             <div class="item-body">
@@ -1917,7 +1970,7 @@ function renderQr(text) {
     canvas.width = canvas.height = size;
     const ctx = canvas.getContext('2d');
     ctx.fillStyle = 'white'; ctx.fillRect(0, 0, size, size);
-    ctx.fillStyle = '#0f766e';
+    ctx.fillStyle = '#5a7a64';
     for (let i = 0; i < cells; i++) {
         for (let j = 0; j < cells; j++) {
             const hash = text.charCodeAt((i * cells + j) % text.length) + i * 7 + j * 13;
@@ -1928,12 +1981,12 @@ function renderQr(text) {
     [[2,2],[2,18],[18,2]].forEach(([x,y]) => {
         ctx.fillRect(x*cellSize, y*cellSize, 7*cellSize, 7*cellSize);
     });
-    ctx.fillStyle = '#0f766e';
+    ctx.fillStyle = '#5a7a64';
     [[3,3],[3,19],[19,3]].forEach(([x,y]) => {
         ctx.fillRect(x*cellSize, y*cellSize, 5*cellSize, 5*cellSize);
         ctx.clearRect((x+1)*cellSize, (y+1)*cellSize, 3*cellSize, 3*cellSize);
     });
-    return `<img src="${canvas.toDataURL()}" style="width:170px;height:170px;border-radius:12px;box-shadow:var(--shadow);">`;
+    return `<img src="${canvas.toDataURL()}" style="width:170px;height:170px;border-radius:14px;border:2px dashed var(--dash);box-shadow:var(--shadow);">`;
 }
 
 // ================= 导入导出 =================
@@ -1942,7 +1995,7 @@ function exportData() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `旅行计划_${new Date().toLocaleDateString()}.json`;
+    a.download = `羊的旅行日志_${new Date().toLocaleDateString()}.json`;
     a.click();
     URL.revokeObjectURL(url);
     showToast('已导出备份');
@@ -1988,7 +2041,7 @@ function clearAllData() {
 function showToast(msg) {
     const div = document.createElement('div');
     div.textContent = msg;
-    div.style.cssText = 'position:fixed; bottom:100px; left:50%; transform:translateX(-50%); background:#1e293b; color:white; padding:12px 24px; border-radius:12px; font-size:14px; z-index:9999; box-shadow:0 8px 30px rgba(0,0,0,0.2); font-weight:600;';
+    div.style.cssText = 'position:fixed; bottom:110px; left:50%; transform:translateX(-50%); background:#4a4036; color:white; padding:12px 24px; border-radius:16px; font-size:14px; z-index:9999; box-shadow:0 8px 30px rgba(0,0,0,0.2); font-family: "ZCOOL KuaiLe", cursive;';
     document.body.appendChild(div);
     setTimeout(() => div.remove(), 2500);
 }

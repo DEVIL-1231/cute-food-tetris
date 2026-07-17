@@ -2,455 +2,748 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#2dd4bf">
     <title>旅行小助手 · Travel Mate</title>
     <style>
         :root {
-            --primary: #0d9488;
-            --primary-dark: #0f766e;
-            --secondary: #f97316;
-            --accent: #f59e0b;
+            --primary: #2dd4bf;
+            --primary-dark: #0d9488;
+            --primary-light: #f0fdfa;
+            --coral: #ff7b7b;
+            --coral-light: #fff1f1;
+            --amber: #fbbf24;
+            --amber-light: #fffbeb;
+            --sky: #38bdf8;
+            --sky-light: #f0f9ff;
+            --purple: #a78bfa;
+            --purple-light: #f5f3ff;
             --bg: #f8fafc;
             --card: #ffffff;
             --text: #1e293b;
-            --text-light: #64748b;
-            --border: #e2e8f0;
-            --shadow: 0 4px 20px rgba(0,0,0,0.06);
-            --radius: 16px;
+            --text-secondary: #64748b;
+            --text-tertiary: #94a3b8;
+            --border: #f1f5f9;
+            --shadow-sm: 0 2px 8px rgba(0,0,0,0.04);
+            --shadow: 0 8px 30px rgba(0,0,0,0.06);
+            --shadow-lg: 0 20px 50px rgba(0,0,0,0.1);
+            --radius: 20px;
+            --radius-lg: 28px;
+            --radius-sm: 14px;
         }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
             background: var(--bg);
             color: var(--text);
             line-height: 1.6;
             min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
         }
 
-        /* 布局 */
+        /* 滚动条美化 */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
         .app {
             display: flex;
             min-height: 100vh;
+            padding-bottom: 0;
         }
+
+        /* 侧边栏 */
         .sidebar {
-            width: 240px;
+            width: 250px;
             background: linear-gradient(180deg, #0f766e 0%, #115e59 100%);
             color: white;
-            padding: 24px 0;
+            padding: 28px 0;
             position: fixed;
             height: 100vh;
             overflow-y: auto;
             z-index: 100;
-            transition: transform .3s;
+            transition: transform .35s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .brand {
-            padding: 0 24px 24px;
-            border-bottom: 1px solid rgba(255,255,255,0.12);
-            margin-bottom: 16px;
+            padding: 0 24px 28px;
+            margin-bottom: 12px;
         }
-        .brand h1 { font-size: 22px; font-weight: 700; }
-        .brand p { font-size: 12px; opacity: 0.75; margin-top: 4px; }
+        .brand h1 {
+            font-size: 24px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .brand p {
+            font-size: 13px;
+            opacity: 0.75;
+            margin-top: 6px;
+            padding-left: 34px;
+        }
+        .nav-section {
+            padding: 0 16px;
+            margin-bottom: 8px;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            opacity: 0.5;
+            font-weight: 600;
+        }
         .nav-item {
             display: flex;
             align-items: center;
-            gap: 12px;
-            padding: 12px 24px;
+            gap: 14px;
+            margin: 6px 14px;
+            padding: 12px 16px;
             cursor: pointer;
-            transition: all .2s;
-            border-left: 3px solid transparent;
-            color: rgba(255,255,255,0.85);
+            transition: all .25s;
+            border-radius: 14px;
+            color: rgba(255,255,255,0.78);
+            font-size: 15px;
+            font-weight: 500;
         }
-        .nav-item:hover { background: rgba(255,255,255,0.08); color: white; }
-        .nav-item.active { background: rgba(255,255,255,0.12); border-left-color: #fbbf24; color: white; }
-        .nav-item .icon { font-size: 20px; width: 26px; text-align: center; }
+        .nav-item:hover { background: rgba(255,255,255,0.1); color: white; transform: translateX(3px); }
+        .nav-item.active {
+            background: rgba(255,255,255,0.15);
+            color: white;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        }
+        .nav-item .icon { font-size: 20px; width: 26px; text-align: center; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1)); }
 
         .main {
-            margin-left: 240px;
+            margin-left: 250px;
             flex: 1;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
         }
+
+        /* 顶部栏 */
         .topbar {
-            background: var(--card);
-            padding: 16px 28px;
+            background: rgba(255,255,255,0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            padding: 16px 32px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: var(--shadow);
             position: sticky;
             top: 0;
-            z-index: 50;
+            z-index: 40;
+            border-bottom: 1px solid rgba(241,245,249,0.8);
         }
-        .topbar h2 { font-size: 20px; color: var(--primary-dark); }
+        .topbar h2 { font-size: 22px; font-weight: 700; color: var(--text); letter-spacing: -0.3px; }
         .topbar-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 
         .content {
             flex: 1;
-            padding: 24px 28px;
+            padding: 28px 32px 40px;
+            max-width: 1400px;
         }
-        .page { display: none; }
+        .page { display: none; animation: fadeIn 0.35s ease; }
         .page.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         /* 按钮 */
         .btn {
             padding: 10px 18px;
             border: none;
-            border-radius: 10px;
+            border-radius: 12px;
             font-size: 14px;
-            font-weight: 500;
+            font-weight: 600;
             cursor: pointer;
             transition: all .2s;
             display: inline-flex;
             align-items: center;
+            justify-content: center;
             gap: 6px;
+            white-space: nowrap;
         }
-        .btn-primary { background: var(--primary); color: white; }
-        .btn-primary:hover { background: var(--primary-dark); transform: translateY(-1px); }
-        .btn-secondary { background: #f1f5f9; color: var(--text); border: 1px solid var(--border); }
-        .btn-secondary:hover { background: #e2e8f0; }
-        .btn-success { background: #10b981; color: white; }
-        .btn-success:hover { background: #059669; }
-        .btn-warning { background: var(--secondary); color: white; }
-        .btn-warning:hover { background: #ea580c; }
-        .btn-danger { background: #ef4444; color: white; }
-        .btn-danger:hover { background: #dc2626; }
-        .btn-sm { padding: 6px 12px; font-size: 13px; border-radius: 8px; }
-        .btn-ghost { background: transparent; color: var(--text-light); }
+        .btn:active { transform: scale(0.97); }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            box-shadow: 0 4px 14px rgba(13,148,136,0.25);
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(13,148,136,0.35); }
+        .btn-secondary {
+            background: white;
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-sm);
+        }
+        .btn-secondary:hover { background: #f8fafc; color: var(--text); transform: translateY(-1px); }
+        .btn-success { background: linear-gradient(135deg, #34d399 0%, #10b981 100%); color: white; box-shadow: 0 4px 14px rgba(16,185,129,0.25); }
+        .btn-success:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(16,185,129,0.35); }
+        .btn-warning { background: linear-gradient(135deg, #fb923c 0%, #f97316 100%); color: white; box-shadow: 0 4px 14px rgba(249,115,22,0.25); }
+        .btn-warning:hover { transform: translateY(-2px); }
+        .btn-danger { background: linear-gradient(135deg, #f87171 0%, #ef4444 100%); color: white; box-shadow: 0 4px 14px rgba(239,68,68,0.25); }
+        .btn-danger:hover { transform: translateY(-2px); }
+        .btn-sm { padding: 7px 14px; font-size: 13px; border-radius: 10px; }
+        .btn-ghost { background: transparent; color: var(--text-secondary); }
         .btn-ghost:hover { background: #f1f5f9; }
+        .btn-fab {
+            width: 52px; height: 52px;
+            border-radius: 50%;
+            position: fixed;
+            bottom: 90px; right: 20px;
+            z-index: 90;
+            box-shadow: 0 6px 24px rgba(13,148,136,0.35);
+            font-size: 24px;
+            padding: 0;
+        }
 
         /* 卡片 */
         .card {
             background: var(--card);
             border-radius: var(--radius);
-            padding: 22px;
+            padding: 24px;
             box-shadow: var(--shadow);
             margin-bottom: 20px;
+            border: 1px solid var(--border);
+            transition: transform .2s, box-shadow .2s;
         }
+        .card:hover { box-shadow: var(--shadow-lg); }
         .card-title {
-            font-size: 16px;
-            font-weight: 600;
-            margin-bottom: 16px;
+            font-size: 17px;
+            font-weight: 700;
+            margin-bottom: 18px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            color: var(--text);
+        }
+        .card-title .subtitle {
+            font-size: 13px;
+            color: var(--text-tertiary);
+            font-weight: 500;
         }
 
-        /* KPI */
+        /* KPI 卡片 */
         .kpi-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 16px;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 18px;
             margin-bottom: 24px;
         }
         .kpi-card {
             background: var(--card);
             border-radius: var(--radius);
-            padding: 20px;
+            padding: 22px;
             box-shadow: var(--shadow);
-            border-top: 4px solid var(--primary);
+            border: 1px solid var(--border);
+            position: relative;
+            overflow: hidden;
+            transition: transform .25s;
         }
-        .kpi-card .num { font-size: 26px; font-weight: 700; color: var(--primary-dark); }
-        .kpi-card .label { font-size: 13px; color: var(--text-light); margin-top: 4px; }
-        .kpi-card.orange { border-top-color: var(--secondary); }
-        .kpi-card.orange .num { color: var(--secondary); }
-        .kpi-card.blue { border-top-color: #3b82f6; }
-        .kpi-card.blue .num { color: #2563eb; }
-        .kpi-card.purple { border-top-color: #8b5cf6; }
-        .kpi-card.purple .num { color: #7c3aed; }
+        .kpi-card:hover { transform: translateY(-4px); }
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 4px;
+            background: var(--primary);
+        }
+        .kpi-card.orange::before { background: var(--coral); }
+        .kpi-card.blue::before { background: var(--sky); }
+        .kpi-card.purple::before { background: var(--purple); }
+        .kpi-card .label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            font-weight: 500;
+            margin-bottom: 6px;
+        }
+        .kpi-card .num {
+            font-size: 32px;
+            font-weight: 800;
+            color: var(--text);
+            letter-spacing: -1px;
+        }
+        .kpi-card .icon-bg {
+            position: absolute;
+            right: 14px; top: 14px;
+            width: 44px; height: 44px;
+            border-radius: 14px;
+            background: var(--primary-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+        }
+        .kpi-card.orange .icon-bg { background: var(--coral-light); }
+        .kpi-card.blue .icon-bg { background: var(--sky-light); }
+        .kpi-card.purple .icon-bg { background: var(--purple-light); }
+
+        /* 两栏布局 */
+        .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .three-col { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
 
         /* 时间线 */
         .timeline {
             position: relative;
-            padding-left: 24px;
+            padding-left: 28px;
         }
         .timeline::before {
             content: '';
             position: absolute;
-            left: 8px;
-            top: 8px;
-            bottom: 8px;
+            left: 10px;
+            top: 10px;
+            bottom: 10px;
             width: 2px;
-            background: linear-gradient(180deg, var(--primary), var(--accent));
+            background: linear-gradient(180deg, var(--primary), var(--sky), var(--coral));
             border-radius: 2px;
         }
         .timeline-item {
             position: relative;
-            padding-bottom: 20px;
+            padding-bottom: 22px;
         }
         .timeline-item::before {
             content: '';
             position: absolute;
-            left: -20px;
-            top: 4px;
-            width: 12px;
-            height: 12px;
+            left: -24px;
+            top: 3px;
+            width: 14px;
+            height: 14px;
             border-radius: 50%;
             background: var(--card);
             border: 3px solid var(--primary);
+            box-shadow: 0 0 0 4px rgba(45,212,191,0.15);
         }
-        .timeline-date { font-size: 13px; color: var(--primary); font-weight: 600; }
-        .timeline-title { font-weight: 600; margin-top: 2px; }
-        .timeline-desc { font-size: 13px; color: var(--text-light); margin-top: 4px; }
+        .timeline-item.transport::before { border-color: var(--sky); box-shadow: 0 0 0 4px rgba(56,189,248,0.15); }
+        .timeline-item.attraction::before { border-color: var(--coral); box-shadow: 0 0 0 4px rgba(255,123,123,0.15); }
+        .timeline-date {
+            font-size: 12px;
+            color: var(--primary-dark);
+            font-weight: 700;
+            background: var(--primary-light);
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 20px;
+            margin-bottom: 6px;
+        }
+        .timeline-title { font-weight: 700; font-size: 15px; }
+        .timeline-desc { font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
 
         /* 表单 */
-        .form-row { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 14px; }
-        .form-group { flex: 1; min-width: 160px; }
+        .form-row { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
+        .form-group { flex: 1; min-width: 170px; }
         .form-group label {
             display: block;
             font-size: 13px;
-            color: var(--text-light);
-            margin-bottom: 6px;
-            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 7px;
+            font-weight: 600;
         }
         input, select, textarea {
             width: 100%;
-            padding: 10px 12px;
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            font-size: 14px;
+            padding: 12px 14px;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 14px;
+            font-size: 15px;
             font-family: inherit;
-            transition: border .2s;
+            background: #fafafa;
+            transition: all .2s;
         }
         input:focus, select:focus, textarea:focus {
             outline: none;
             border-color: var(--primary);
+            background: white;
+            box-shadow: 0 0 0 4px rgba(45,212,191,0.1);
         }
-        textarea { resize: vertical; min-height: 70px; }
+        textarea { resize: vertical; min-height: 80px; }
+        select { cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2394a3b8' viewBox='0 0 16 16'%3E%3Cpath d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 36px; }
 
         /* 项目卡片 */
         .items-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 18px;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
         }
         .item-card {
             background: var(--card);
             border-radius: var(--radius);
             box-shadow: var(--shadow);
             overflow: hidden;
-            transition: transform .2s, box-shadow .2s;
+            transition: all .3s cubic-bezier(0.4, 0, 0.2, 1);
             border: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
         }
-        .item-card:hover { transform: translateY(-3px); box-shadow: 0 8px 30px rgba(0,0,0,0.1); }
+        .item-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-lg); }
         .item-image {
             width: 100%;
-            height: 170px;
+            height: 190px;
             object-fit: cover;
-            background: #e2e8f0;
+            background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
             display: flex;
             align-items: center;
             justify-content: center;
-            color: #94a3b8;
+            color: #cbd5e1;
             font-size: 14px;
+            position: relative;
+            overflow: hidden;
         }
-        .item-body { padding: 16px; }
+        .item-image img { width: 100%; height: 100%; object-fit: cover; transition: transform .5s; }
+        .item-card:hover .item-image img { transform: scale(1.05); }
+        .item-image-badge {
+            position: absolute;
+            top: 12px; left: 12px;
+            background: rgba(255,255,255,0.92);
+            backdrop-filter: blur(8px);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .item-body { padding: 18px; flex: 1; display: flex; flex-direction: column; }
         .item-header {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
             margin-bottom: 8px;
+            gap: 10px;
         }
-        .item-title { font-size: 16px; font-weight: 600; }
-        .item-meta { font-size: 12px; color: var(--text-light); margin-top: 4px; }
-        .item-desc { font-size: 13px; color: var(--text); margin-top: 8px; line-height: 1.5; }
-        .item-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+        .item-title { font-size: 17px; font-weight: 700; color: var(--text); line-height: 1.3; }
+        .item-meta { font-size: 12px; color: var(--text-secondary); margin-top: 5px; display: flex; align-items: center; gap: 6px; }
+        .item-desc {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-top: 10px;
+            line-height: 1.6;
+            flex: 1;
+        }
+        .item-tags { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
         .tag {
-            padding: 3px 10px;
+            padding: 5px 12px;
             border-radius: 20px;
             font-size: 12px;
-            background: #ccfbf1;
-            color: #0f766e;
+            font-weight: 600;
+            background: var(--primary-light);
+            color: var(--primary-dark);
         }
-        .tag.food { background: #ffedd5; color: #c2410c; }
-        .tag.trans { background: #dbeafe; color: #1d4ed8; }
-        .tag.stay { background: #f3e8ff; color: #7c3aed; }
+        .tag.food { background: var(--coral-light); color: #dc2626; }
+        .tag.trans { background: var(--sky-light); color: #0369a1; }
+        .tag.stay { background: var(--purple-light); color: #6d28d9; }
         .tag.attr { background: #dcfce7; color: #15803d; }
-        .item-actions { display: flex; gap: 8px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border); }
+        .item-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 16px;
+            padding-top: 14px;
+            border-top: 1px solid var(--border);
+        }
+        .stars { color: var(--amber); font-size: 14px; letter-spacing: 1px; }
 
         /* 图片上传 */
         .photo-upload {
-            border: 2px dashed var(--border);
-            border-radius: 12px;
-            padding: 24px;
+            border: 2px dashed #cbd5e1;
+            border-radius: var(--radius-sm);
+            padding: 32px 24px;
             text-align: center;
             cursor: pointer;
-            transition: all .2s;
-            background: #f8fafc;
+            transition: all .25s;
+            background: #fafafa;
+            color: var(--text-secondary);
         }
-        .photo-upload:hover { border-color: var(--primary); background: #f0fdfa; }
+        .photo-upload:hover { border-color: var(--primary); background: var(--primary-light); color: var(--primary-dark); }
+        .photo-upload .upload-icon { font-size: 36px; margin-bottom: 8px; }
+        .photo-upload .upload-text { font-size: 14px; font-weight: 600; }
+        .photo-upload .upload-hint { font-size: 12px; margin-top: 4px; opacity: 0.7; }
         .photo-upload input { display: none; }
         .photo-preview-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
-            gap: 10px;
-            margin-top: 12px;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 12px;
+            margin-top: 16px;
         }
         .photo-preview {
             position: relative;
             aspect-ratio: 1;
-            border-radius: 10px;
+            border-radius: 14px;
             overflow: hidden;
             border: 1px solid var(--border);
+            cursor: pointer;
         }
         .photo-preview img { width: 100%; height: 100%; object-fit: cover; }
         .photo-preview .remove {
             position: absolute;
-            top: 4px;
-            right: 4px;
-            width: 20px;
-            height: 20px;
+            top: 6px; right: 6px;
+            width: 24px;
+            height: 24px;
             background: rgba(0,0,0,0.5);
             color: white;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 12px;
+            font-size: 14px;
             cursor: pointer;
+            opacity: 0;
+            transition: opacity .2s;
         }
+        .photo-preview:hover .remove { opacity: 1; }
 
         /* 模态框 */
         .modal {
             display: none;
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5);
+            background: rgba(15,23,42,0.55);
             z-index: 1000;
             align-items: center;
             justify-content: center;
             padding: 20px;
+            backdrop-filter: blur(4px);
         }
-        .modal.active { display: flex; }
+        .modal.active { display: flex; animation: modalIn 0.3s ease; }
+        @keyframes modalIn { from { opacity: 0; } to { opacity: 1; } }
         .modal-content {
             background: white;
-            border-radius: var(--radius);
-            max-width: 620px;
+            border-radius: var(--radius-lg);
+            max-width: 640px;
             width: 100%;
             max-height: 90vh;
             overflow-y: auto;
-            padding: 24px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+            padding: 28px;
+            box-shadow: var(--shadow-lg);
+            animation: modalSlide 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
+        @keyframes modalSlide { from { opacity: 0; transform: scale(0.92) translateY(20px); } to { opacity: 1; transform: scale(1) translateY(0); } }
         .modal-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
+            margin-bottom: 22px;
         }
-        .modal-header h3 { font-size: 18px; }
+        .modal-header h3 { font-size: 20px; font-weight: 700; }
         .close-btn {
-            width: 32px; height: 32px;
-            border-radius: 50%;
+            width: 36px; height: 36px;
+            border-radius: 12px;
             border: none;
             background: #f1f5f9;
             cursor: pointer;
-            font-size: 18px;
-            color: var(--text-light);
+            font-size: 20px;
+            color: var(--text-secondary);
+            transition: all .2s;
         }
-        .close-btn:hover { background: #e2e8f0; }
+        .close-btn:hover { background: #e2e8f0; transform: rotate(90deg); }
 
         /* 共享面板 */
         .share-box {
-            background: #f0fdfa;
-            border: 1px solid #99f6e4;
-            border-radius: 12px;
-            padding: 16px;
-            margin-top: 16px;
+            background: linear-gradient(135deg, var(--primary-light) 0%, #ffffff 100%);
+            border: 1.5px solid #99f6e4;
+            border-radius: var(--radius);
+            padding: 22px;
         }
         .share-code {
-            font-family: monospace;
-            font-size: 14px;
+            font-family: 'SF Mono', monospace;
+            font-size: 13px;
             background: white;
-            padding: 12px;
-            border-radius: 8px;
-            border: 1px solid var(--border);
+            padding: 14px;
+            border-radius: 12px;
+            border: 1.5px solid var(--border);
             word-break: break-all;
-            margin: 10px 0;
+            margin: 12px 0;
             color: var(--primary-dark);
+            line-height: 1.5;
         }
         .sync-status {
             display: inline-flex;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
             font-size: 13px;
-            color: var(--text-light);
+            color: var(--text-secondary);
+            background: #f1f5f9;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: 600;
         }
-        .sync-dot { width: 8px; height: 8px; border-radius: 50%; background: #10b981; }
-        .sync-dot.off { background: #94a3b8; }
+        .sync-dot { width: 8px; height: 8px; border-radius: 50%; background: #10b981; animation: pulse 2s infinite; }
+        .sync-dot.off { background: #94a3b8; animation: none; }
+        @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
 
         /* 空状态 */
         .empty-state {
             text-align: center;
             padding: 60px 20px;
-            color: var(--text-light);
+            color: var(--text-secondary);
         }
-        .empty-state .icon { font-size: 56px; margin-bottom: 12px; opacity: 0.6; }
+        .empty-state .icon { font-size: 64px; margin-bottom: 16px; opacity: 0.5; }
+        .empty-state p { font-size: 15px; }
+
+        /* 预算图表 */
+        .budget-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 18px;
+            margin-top: 18px;
+        }
+        .budget-item {
+            background: #fafafa;
+            border-radius: 16px;
+            padding: 18px;
+            border: 1px solid var(--border);
+        }
+        .budget-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .budget-item-name { font-weight: 700; font-size: 14px; }
+        .budget-item-amount { font-size: 13px; color: var(--text-secondary); font-weight: 600; }
+        .progress-bar {
+            height: 10px;
+            background: #e2e8f0;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            border-radius: 5px;
+            transition: width .5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .budget-percent { font-size: 12px; color: var(--text-tertiary); margin-top: 8px; font-weight: 600; }
+
+        /* 图库 */
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 14px;
+        }
+        .gallery-item {
+            aspect-ratio: 1;
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+            cursor: pointer;
+            position: relative;
+            box-shadow: var(--shadow-sm);
+        }
+        .gallery-item img { width: 100%; height: 100%; object-fit: cover; transition: transform .4s; }
+        .gallery-item:hover img { transform: scale(1.08); }
+        .gallery-caption {
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            background: linear-gradient(transparent, rgba(15,23,42,0.7));
+            color: white;
+            padding: 28px 12px 12px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        /* 底部导航（手机） */
+        .bottom-nav {
+            display: none;
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid var(--border);
+            z-index: 100;
+            padding: 8px 0 calc(8px + env(safe-area-inset-bottom));
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.05);
+        }
+        .bottom-nav-inner {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+        }
+        .bottom-nav-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+            padding: 6px 0;
+            cursor: pointer;
+            color: var(--text-tertiary);
+            font-size: 11px;
+            font-weight: 600;
+            transition: all .2s;
+        }
+        .bottom-nav-item.active { color: var(--primary-dark); }
+        .bottom-nav-item .icon { font-size: 22px; }
+
+        /* 菜单按钮 */
+        .menu-toggle {
+            display: none;
+            position: fixed;
+            top: 14px; left: 16px;
+            z-index: 110;
+            width: 42px; height: 42px;
+            border-radius: 12px;
+            background: white;
+            border: 1px solid var(--border);
+            font-size: 20px;
+            box-shadow: var(--shadow);
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
 
         /* 响应式 */
+        @media (max-width: 1100px) {
+            .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+            .two-col { grid-template-columns: 1fr; }
+            .three-col { grid-template-columns: 1fr; }
+        }
         @media (max-width: 768px) {
-            .sidebar { transform: translateX(-100%); }
+            .sidebar { transform: translateX(-100%); box-shadow: 10px 0 40px rgba(0,0,0,0.2); }
             .sidebar.open { transform: translateX(0); }
             .main { margin-left: 0; }
-            .menu-toggle {
-                display: block;
-                position: fixed;
-                bottom: 20px; right: 20px;
-                z-index: 200;
-                width: 50px; height: 50px;
-                border-radius: 50%;
-                background: var(--primary);
-                color: white;
-                border: none;
-                font-size: 22px;
-                box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-            }
+            .menu-toggle { display: flex; }
+            .topbar { padding: 14px 16px 14px 68px; }
+            .topbar h2 { font-size: 18px; }
+            .topbar-actions { display: none; }
+            .content { padding: 16px; padding-bottom: 90px; }
+            .kpi-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+            .kpi-card { padding: 16px; }
+            .kpi-card .num { font-size: 24px; }
+            .kpi-card .icon-bg { display: none; }
+            .items-grid { grid-template-columns: 1fr; }
+            .card { padding: 18px; border-radius: var(--radius-sm); }
+            .form-group { min-width: 100%; }
+            .bottom-nav { display: block; }
+            .btn-fab { bottom: 80px; right: 16px; }
+            .gallery-grid { grid-template-columns: repeat(2, 1fr); }
         }
-        @media (min-width: 769px) { .menu-toggle { display: none; } }
 
         .hidden { display: none !important; }
         .text-right { text-align: right; }
         .text-center { text-align: center; }
         .mb-0 { margin-bottom: 0; }
 
-        /* 评分星 */
-        .stars { color: var(--accent); font-size: 14px; letter-spacing: 1px; }
-
-        /* 图库 */
-        .gallery-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-            gap: 12px;
+        /* 遮罩 */
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.4);
+            z-index: 95;
         }
-        .gallery-item {
-            aspect-ratio: 1;
-            border-radius: 12px;
-            overflow: hidden;
-            cursor: pointer;
-            position: relative;
-        }
-        .gallery-item img { width: 100%; height: 100%; object-fit: cover; transition: transform .3s; }
-        .gallery-item:hover img { transform: scale(1.05); }
-        .gallery-caption {
-            position: absolute;
-            bottom: 0; left: 0; right: 0;
-            background: linear-gradient(transparent, rgba(0,0,0,0.6));
-            color: white;
-            padding: 20px 10px 10px;
-            font-size: 12px;
-        }
+        .overlay.active { display: block; }
     </style>
 </head>
 <body>
 
+<div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+<button class="menu-toggle" id="menuToggle" onclick="toggleSidebar()">☰</button>
+
 <div class="app">
-    <!-- 侧边栏 -->
     <aside class="sidebar" id="sidebar">
         <div class="brand">
             <h1>🌍 旅行小助手</h1>
             <p>和好友一起规划完美旅程</p>
         </div>
         <nav>
+            <div class="nav-section">行程</div>
             <div class="nav-item active" onclick="navTo('dashboard')">
                 <span class="icon">📊</span>
                 <span>行程总览</span>
@@ -475,6 +768,7 @@
                 <span class="icon">🏨</span>
                 <span>住宿</span>
             </div>
+            <div class="nav-section">更多</div>
             <div class="nav-item" onclick="navTo('gallery')">
                 <span class="icon">📷</span>
                 <span>照片墙</span>
@@ -491,13 +785,13 @@
             <h2 id="pageTitle">行程总览</h2>
             <div class="topbar-actions">
                 <span class="sync-status" id="syncStatus">
-                    <span class="sync-dot" id="syncDot"></span>
+                    <span class="sync-dot off" id="syncDot"></span>
                     <span id="syncText">本地模式</span>
                 </span>
-                <button class="btn btn-secondary btn-sm" onclick="exportData()">💾 导出备份</button>
-                <button class="btn btn-secondary btn-sm" onclick="document.getElementById('importFile').click()">📥 导入备份</button>
+                <button class="btn btn-secondary btn-sm" onclick="exportData()">💾 导出</button>
+                <button class="btn btn-secondary btn-sm" onclick="document.getElementById('importFile').click()">📥 导入</button>
                 <input type="file" id="importFile" class="hidden" accept=".json" onchange="importData(event)">
-                <button class="btn btn-primary btn-sm" onclick="openShareModal()">👥 邀请好友</button>
+                <button class="btn btn-primary btn-sm" onclick="openShareModal()">👥 邀请</button>
             </div>
         </header>
 
@@ -506,88 +800,84 @@
             <div class="page active" id="page-dashboard">
                 <div class="kpi-grid">
                     <div class="kpi-card">
-                        <div class="num" id="kpiDays">0</div>
+                        <div class="icon-bg">📅</div>
                         <div class="label">旅行天数</div>
+                        <div class="num" id="kpiDays">0</div>
                     </div>
                     <div class="kpi-card orange">
-                        <div class="num" id="kpiCost">¥0</div>
+                        <div class="icon-bg">💰</div>
                         <div class="label">预计总花费</div>
+                        <div class="num" id="kpiCost">¥0</div>
                     </div>
                     <div class="kpi-card blue">
-                        <div class="num" id="kpiSpots">0</div>
+                        <div class="icon-bg">🎡</div>
                         <div class="label">想去景点</div>
+                        <div class="num" id="kpiSpots">0</div>
                     </div>
                     <div class="kpi-card purple">
-                        <div class="num" id="kpiFood">0</div>
+                        <div class="icon-bg">🍜</div>
                         <div class="label">美食打卡</div>
+                        <div class="num" id="kpiFood">0</div>
                     </div>
                 </div>
 
-                <div class="card">
-                    <div class="card-title">🗓️ 行程时间线</div>
-                    <div class="timeline" id="timeline"></div>
-                    <div class="empty-state hidden" id="emptyTimeline">
-                        <div class="icon">🗺️</div>
-                        <p>还没有行程，去“地点”添加第一站吧！</p>
+                <div class="two-col">
+                    <div class="card">
+                        <div class="card-title">🗓️ 行程时间线</div>
+                        <div class="timeline" id="timeline"></div>
+                        <div class="empty-state hidden" id="emptyTimeline">
+                            <div class="icon">🗺️</div>
+                            <p>还没有行程，去“地点”添加第一站吧！</p>
+                        </div>
                     </div>
-                </div>
 
-                <div class="card">
-                    <div class="card-title">💰 预算分配</div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>交通预算</label>
-                            <input type="number" id="budgetTransport" placeholder="0" onchange="saveBudget()">
+                    <div class="card">
+                        <div class="card-title">💰 预算分配</div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>交通预算</label>
+                                <input type="number" id="budgetTransport" placeholder="0" onchange="saveBudget()">
+                            </div>
+                            <div class="form-group">
+                                <label>住宿预算</label>
+                                <input type="number" id="budgetStay" placeholder="0" onchange="saveBudget()">
+                            </div>
+                            <div class="form-group">
+                                <label>餐饮预算</label>
+                                <input type="number" id="budgetFood" placeholder="0" onchange="saveBudget()">
+                            </div>
+                            <div class="form-group">
+                                <label>景点/娱乐预算</label>
+                                <input type="number" id="budgetAttr" placeholder="0" onchange="saveBudget()">
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label>住宿预算</label>
-                            <input type="number" id="budgetStay" placeholder="0" onchange="saveBudget()">
-                        </div>
-                        <div class="form-group">
-                            <label>餐饮预算</label>
-                            <input type="number" id="budgetFood" placeholder="0" onchange="saveBudget()">
-                        </div>
-                        <div class="form-group">
-                            <label>景点/娱乐预算</label>
-                            <input type="number" id="budgetAttr" placeholder="0" onchange="saveBudget()">
-                        </div>
+                        <div id="budgetChart"></div>
                     </div>
-                    <div id="budgetChart" style="margin-top: 16px;"></div>
                 </div>
             </div>
 
             <!-- 地点 -->
             <div class="page" id="page-locations">
                 <div class="card">
-                    <div class="card-title">➕ 添加/编辑地点</div>
+                    <div class="card-title">➕ 添加地点 <span class="subtitle">记录每一站落脚点</span></div>
                     <div class="form-row">
-                        <div class="form-group">
-                            <label>地点名称</label>
-                            <input type="text" id="locName" placeholder="如：大理古城">
-                        </div>
-                        <div class="form-group">
-                            <label>到达日期</label>
-                            <input type="date" id="locDate">
-                        </div>
-                        <div class="form-group">
-                            <label>离开日期</label>
-                            <input type="date" id="locEndDate">
-                        </div>
-                        <div class="form-group">
-                            <label>住宿/落脚点</label>
-                            <input type="text" id="locBase" placeholder="住哪里">
-                        </div>
+                        <div class="form-group"><label>地点名称</label><input type="text" id="locName" placeholder="如：大理古城"></div>
+                        <div class="form-group"><label>到达日期</label><input type="date" id="locDate"></div>
+                        <div class="form-group"><label>离开日期</label><input type="date" id="locEndDate"></div>
+                        <div class="form-group"><label>住宿/落脚点</label><input type="text" id="locBase" placeholder="住哪里"></div>
                     </div>
                     <div class="form-group">
                         <label>地点简介 / 备忘录</label>
                         <textarea id="locNote" placeholder="写下对这个地方的期待或攻略..."></textarea>
                     </div>
                     <div class="photo-upload" onclick="document.getElementById('locPhoto').click()">
-                        <div>📷 点击上传地点照片</div>
+                        <div class="upload-icon">📷</div>
+                        <div class="upload-text">点击上传地点照片</div>
+                        <div class="upload-hint">支持多张，自动压缩</div>
                         <input type="file" id="locPhoto" accept="image/*" multiple onchange="handlePhotoUpload(this, 'locPhotos')">
                     </div>
                     <div class="photo-preview-grid" id="locPhotos"></div>
-                    <div style="margin-top: 16px; text-align: right;">
+                    <div class="text-right" style="margin-top: 18px;">
                         <button class="btn btn-primary" onclick="saveLocation()">💾 保存地点</button>
                     </div>
                 </div>
@@ -597,22 +887,12 @@
             <!-- 美食 -->
             <div class="page" id="page-food">
                 <div class="card">
-                    <div class="card-title">➕ 添加美食</div>
+                    <div class="card-title">➕ 添加美食 <span class="subtitle">记录必吃清单</span></div>
                     <div class="form-row">
-                        <div class="form-group">
-                            <label>店名 / 美食名称</label>
-                            <input type="text" id="foodName" placeholder="如：过桥米线">
-                        </div>
-                        <div class="form-group">
-                            <label>所在地点</label>
-                            <select id="foodLocation"></select>
-                        </div>
-                        <div class="form-group">
-                            <label>人均消费</label>
-                            <input type="number" id="foodCost" placeholder="0">
-                        </div>
-                        <div class="form-group">
-                            <label>评分</label>
+                        <div class="form-group"><label>店名 / 美食名称</label><input type="text" id="foodName" placeholder="如：过桥米线"></div>
+                        <div class="form-group"><label>所在地点</label><select id="foodLocation"></select></div>
+                        <div class="form-group"><label>人均消费</label><input type="number" id="foodCost" placeholder="0"></div>
+                        <div class="form-group"><label>评分</label>
                             <select id="foodRate">
                                 <option value="5">⭐⭐⭐⭐⭐</option>
                                 <option value="4">⭐⭐⭐⭐</option>
@@ -627,11 +907,12 @@
                         <textarea id="foodNote" placeholder="必点、排队提示、营业时间..."></textarea>
                     </div>
                     <div class="photo-upload" onclick="document.getElementById('foodPhoto').click()">
-                        <div>📷 点击上传美食照片</div>
+                        <div class="upload-icon">📷</div>
+                        <div class="upload-text">点击上传美食照片</div>
                         <input type="file" id="foodPhoto" accept="image/*" multiple onchange="handlePhotoUpload(this, 'foodPhotos')">
                     </div>
                     <div class="photo-preview-grid" id="foodPhotos"></div>
-                    <div style="margin-top: 16px; text-align: right;">
+                    <div class="text-right" style="margin-top: 18px;">
                         <button class="btn btn-primary" onclick="saveFood()">💾 保存美食</button>
                     </div>
                 </div>
@@ -641,10 +922,9 @@
             <!-- 交通 -->
             <div class="page" id="page-transport">
                 <div class="card">
-                    <div class="card-title">➕ 添加交通</div>
+                    <div class="card-title">➕ 添加交通 <span class="subtitle">航班、高铁、租车都记下</span></div>
                     <div class="form-row">
-                        <div class="form-group">
-                            <label>交通方式</label>
+                        <div class="form-group"><label>交通方式</label>
                             <select id="transType">
                                 <option value="飞机">✈️ 飞机</option>
                                 <option value="高铁">🚄 高铁</option>
@@ -657,38 +937,20 @@
                                 <option value="其他">🛴 其他</option>
                             </select>
                         </div>
-                        <div class="form-group">
-                            <label>出发地</label>
-                            <input type="text" id="transFrom" placeholder="出发城市/地点">
-                        </div>
-                        <div class="form-group">
-                            <label>目的地</label>
-                            <input type="text" id="transTo" placeholder="到达城市/地点">
-                        </div>
-                        <div class="form-group">
-                            <label>费用</label>
-                            <input type="number" id="transCost" placeholder="0">
-                        </div>
+                        <div class="form-group"><label>出发地</label><input type="text" id="transFrom" placeholder="出发城市"></div>
+                        <div class="form-group"><label>目的地</label><input type="text" id="transTo" placeholder="到达城市"></div>
+                        <div class="form-group"><label>费用</label><input type="number" id="transCost" placeholder="0"></div>
                     </div>
                     <div class="form-row">
-                        <div class="form-group">
-                            <label>出发时间</label>
-                            <input type="datetime-local" id="transStart">
-                        </div>
-                        <div class="form-group">
-                            <label>到达时间</label>
-                            <input type="datetime-local" id="transEnd">
-                        </div>
-                        <div class="form-group">
-                            <label>班次/航班号</label>
-                            <input type="text" id="transNo" placeholder="如 CA1234">
-                        </div>
+                        <div class="form-group"><label>出发时间</label><input type="datetime-local" id="transStart"></div>
+                        <div class="form-group"><label>到达时间</label><input type="datetime-local" id="transEnd"></div>
+                        <div class="form-group"><label>班次/航班号</label><input type="text" id="transNo" placeholder="如 CA1234"></div>
                     </div>
                     <div class="form-group">
                         <label>备注</label>
                         <textarea id="transNote" placeholder="订票平台、座位号、航站楼..."></textarea>
                     </div>
-                    <div style="text-align: right;">
+                    <div class="text-right">
                         <button class="btn btn-primary" onclick="saveTransport()">💾 保存交通</button>
                     </div>
                 </div>
@@ -698,32 +960,16 @@
             <!-- 景点 -->
             <div class="page" id="page-attractions">
                 <div class="card">
-                    <div class="card-title">➕ 添加景点</div>
+                    <div class="card-title">➕ 添加景点 <span class="subtitle">标记想去和必去</span></div>
                     <div class="form-row">
-                        <div class="form-group">
-                            <label>景点名称</label>
-                            <input type="text" id="attrName" placeholder="如：洱海">
-                        </div>
-                        <div class="form-group">
-                            <label>所在地点</label>
-                            <select id="attrLocation"></select>
-                        </div>
-                        <div class="form-group">
-                            <label>门票/费用</label>
-                            <input type="number" id="attrCost" placeholder="0">
-                        </div>
-                        <div class="form-group">
-                            <label>预计游玩时长</label>
-                            <input type="text" id="attrDuration" placeholder="如 3小时">
-                        </div>
+                        <div class="form-group"><label>景点名称</label><input type="text" id="attrName" placeholder="如：洱海"></div>
+                        <div class="form-group"><label>所在地点</label><select id="attrLocation"></select></div>
+                        <div class="form-group"><label>门票/费用</label><input type="number" id="attrCost" placeholder="0"></div>
+                        <div class="form-group"><label>预计游玩时长</label><input type="text" id="attrDuration" placeholder="如 3小时"></div>
                     </div>
                     <div class="form-row">
-                        <div class="form-group">
-                            <label>计划日期</label>
-                            <input type="date" id="attrDate">
-                        </div>
-                        <div class="form-group">
-                            <label>推荐指数</label>
+                        <div class="form-group"><label>计划日期</label><input type="date" id="attrDate"></div>
+                        <div class="form-group"><label>推荐指数</label>
                             <select id="attrRate">
                                 <option value="5">⭐⭐⭐⭐⭐ 必去</option>
                                 <option value="4">⭐⭐⭐⭐ 推荐</option>
@@ -738,11 +984,12 @@
                         <textarea id="attrNote" placeholder="开放时间、预约方式、拍照机位..."></textarea>
                     </div>
                     <div class="photo-upload" onclick="document.getElementById('attrPhoto').click()">
-                        <div>📷 点击上传景点照片</div>
+                        <div class="upload-icon">📷</div>
+                        <div class="upload-text">点击上传景点照片</div>
                         <input type="file" id="attrPhoto" accept="image/*" multiple onchange="handlePhotoUpload(this, 'attrPhotos')">
                     </div>
                     <div class="photo-preview-grid" id="attrPhotos"></div>
-                    <div style="margin-top: 16px; text-align: right;">
+                    <div class="text-right" style="margin-top: 18px;">
                         <button class="btn btn-primary" onclick="saveAttraction()">💾 保存景点</button>
                     </div>
                 </div>
@@ -752,18 +999,11 @@
             <!-- 住宿 -->
             <div class="page" id="page-stay">
                 <div class="card">
-                    <div class="card-title">➕ 添加住宿</div>
+                    <div class="card-title">➕ 添加住宿 <span class="subtitle">酒店、民宿、青旅</span></div>
                     <div class="form-row">
-                        <div class="form-group">
-                            <label>住宿名称</label>
-                            <input type="text" id="stayName" placeholder="如：洱海边的民宿">
-                        </div>
-                        <div class="form-group">
-                            <label>所在地点</label>
-                            <select id="stayLocation"></select>
-                        </div>
-                        <div class="form-group">
-                            <label>类型</label>
+                        <div class="form-group"><label>住宿名称</label><input type="text" id="stayName" placeholder="如：洱海边的民宿"></div>
+                        <div class="form-group"><label>所在地点</label><select id="stayLocation"></select></div>
+                        <div class="form-group"><label>类型</label>
                             <select id="stayType">
                                 <option value="酒店">🏨 酒店</option>
                                 <option value="民宿">🏡 民宿</option>
@@ -772,35 +1012,24 @@
                                 <option value="其他">🧳 其他</option>
                             </select>
                         </div>
-                        <div class="form-group">
-                            <label>每晚价格</label>
-                            <input type="number" id="stayPrice" placeholder="0">
-                        </div>
+                        <div class="form-group"><label>每晚价格</label><input type="number" id="stayPrice" placeholder="0"></div>
                     </div>
                     <div class="form-row">
-                        <div class="form-group">
-                            <label>入住日期</label>
-                            <input type="date" id="stayCheckin">
-                        </div>
-                        <div class="form-group">
-                            <label>退房日期</label>
-                            <input type="date" id="stayCheckout">
-                        </div>
-                        <div class="form-group">
-                            <label>预订平台</label>
-                            <input type="text" id="stayPlatform" placeholder="如 Booking">
-                        </div>
+                        <div class="form-group"><label>入住日期</label><input type="date" id="stayCheckin"></div>
+                        <div class="form-group"><label>退房日期</label><input type="date" id="stayCheckout"></div>
+                        <div class="form-group"><label>预订平台</label><input type="text" id="stayPlatform" placeholder="如 Booking"></div>
                     </div>
                     <div class="form-group">
                         <label>地址 / 入住提示</label>
                         <textarea id="stayNote" placeholder="详细地址、联系电话、入住时间..."></textarea>
                     </div>
                     <div class="photo-upload" onclick="document.getElementById('stayPhoto').click()">
-                        <div>📷 点击上传住宿照片</div>
+                        <div class="upload-icon">📷</div>
+                        <div class="upload-text">点击上传住宿照片</div>
                         <input type="file" id="stayPhoto" accept="image/*" multiple onchange="handlePhotoUpload(this, 'stayPhotos')">
                     </div>
                     <div class="photo-preview-grid" id="stayPhotos"></div>
-                    <div style="margin-top: 16px; text-align: right;">
+                    <div class="text-right" style="margin-top: 18px;">
                         <button class="btn btn-primary" onclick="saveStay()">💾 保存住宿</button>
                     </div>
                 </div>
@@ -810,7 +1039,7 @@
             <!-- 照片墙 -->
             <div class="page" id="page-gallery">
                 <div class="card">
-                    <div class="card-title">📷 旅程照片墙</div>
+                    <div class="card-title">📷 旅程照片墙 <span class="subtitle">所有美好瞬间</span></div>
                     <div class="gallery-grid" id="galleryGrid"></div>
                     <div class="empty-state hidden" id="emptyGallery">
                         <div class="icon">📷</div>
@@ -823,18 +1052,12 @@
             <div class="page" id="page-share">
                 <div class="card">
                     <div class="card-title">👥 与好友共同编辑</div>
-                    <p style="color: var(--text-light); margin-bottom: 16px;">
+                    <p style="color: var(--text-secondary); margin-bottom: 18px; line-height: 1.7;">
                         生成共享码或二维码，好友打开同一页面并粘贴共享码即可实时同步数据。所有数据都保存在本地浏览器中。
                     </p>
                     <div class="form-row">
-                        <div class="form-group">
-                            <label>你的名字</label>
-                            <input type="text" id="userName" placeholder="如：小明" onchange="saveUserName()">
-                        </div>
-                        <div class="form-group">
-                            <label>房间号 / 共享码</label>
-                            <input type="text" id="roomCode" placeholder="点击生成共享码">
-                        </div>
+                        <div class="form-group"><label>你的名字</label><input type="text" id="userName" placeholder="如：小明" onchange="saveUserName()"></div>
+                        <div class="form-group"><label>房间号 / 共享码</label><input type="text" id="roomCode" placeholder="点击生成共享码"></div>
                     </div>
                     <div class="share-box">
                         <div style="display:flex; gap: 10px; flex-wrap: wrap;">
@@ -843,19 +1066,15 @@
                             <button class="btn btn-success" onclick="joinRoom()">🔗 加入房间</button>
                             <button class="btn btn-warning" onclick="broadcastUpdate()">🔄 手动同步</button>
                         </div>
-                        <div style="margin-top: 12px; font-size: 13px; color: var(--text-light);">
-                            共享码（可扫码或复制）：
-                        </div>
+                        <div style="margin-top: 14px; font-size: 13px; color: var(--text-secondary); font-weight: 600;">共享码（可扫码或复制）：</div>
                         <div class="share-code" id="shareCodeDisplay">点击“生成共享码”开始共享</div>
-                        <div id="qrcode" class="text-center" style="margin-top: 12px;"></div>
+                        <div id="qrcode" class="text-center"></div>
                     </div>
                 </div>
 
                 <div class="card">
                     <div class="card-title">📤 导出 / 导入备份</div>
-                    <p style="color: var(--text-light); margin-bottom: 16px;">
-                        也可以通过 JSON 文件与好友交换完整行程数据。
-                    </p>
+                    <p style="color: var(--text-secondary); margin-bottom: 18px;">也可以通过 JSON 文件与好友交换完整行程数据。</p>
                     <div style="display:flex; gap: 12px; flex-wrap: wrap;">
                         <button class="btn btn-primary" onclick="exportData()">📤 导出 JSON 备份</button>
                         <button class="btn btn-secondary" onclick="document.getElementById('importFile2').click()">📥 导入 JSON 备份</button>
@@ -868,12 +1087,21 @@
     </div>
 </div>
 
-<button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+<!-- 底部导航（手机） -->
+<nav class="bottom-nav" id="bottomNav">
+    <div class="bottom-nav-inner">
+        <div class="bottom-nav-item active" onclick="navTo('dashboard')" data-page="dashboard"><span class="icon">📊</span><span>总览</span></div>
+        <div class="bottom-nav-item" onclick="navTo('locations')" data-page="locations"><span class="icon">📍</span><span>地点</span></div>
+        <div class="bottom-nav-item" onclick="navTo('food')" data-page="food"><span class="icon">🍜</span><span>美食</span></div>
+        <div class="bottom-nav-item" onclick="navTo('transport')" data-page="transport"><span class="icon">🚄</span><span>交通</span></div>
+        <div class="bottom-nav-item" onclick="navTo('share')" data-page="share"><span class="icon">👥</span><span>共享</span></div>
+    </div>
+</nav>
 
 <!-- 图片预览模态框 -->
 <div class="modal" id="imageModal" onclick="closeImageModal()">
-    <div class="modal-content" style="max-width: 900px; padding: 0; background: transparent;" onclick="event.stopPropagation()">
-        <img id="modalImage" src="" style="width: 100%; border-radius: 12px;">
+    <div class="modal-content" style="max-width: 900px; padding: 0; background: transparent; box-shadow: none;" onclick="event.stopPropagation()">
+        <img id="modalImage" src="" style="width: 100%; border-radius: 16px; box-shadow: 0 30px 80px rgba(0,0,0,0.4);">
     </div>
 </div>
 
@@ -898,7 +1126,7 @@
             <button class="btn btn-success" onclick="joinRoom(true)">🔗 加入</button>
         </div>
         <div class="share-code" id="modalShareCodeDisplay">点击“生成共享码”开始共享</div>
-        <div id="modalQrcode" class="text-center" style="margin-top: 12px;"></div>
+        <div id="modalQrcode" class="text-center"></div>
     </div>
 </div>
 
@@ -946,7 +1174,6 @@ function loadData() {
             data = { ...data, ...parsed };
         } catch(e) { console.error(e); }
     }
-    // 加载示例数据（仅首次）
     if (!raw) loadSampleData();
 }
 
@@ -978,7 +1205,6 @@ function loadSampleData() {
 function uid() { return Date.now().toString(36) + Math.random().toString(36).substr(2, 5); }
 
 function mergeData(incoming) {
-    // 简单合并：按 id 去重，新的覆盖旧的
     const mergeList = (key) => {
         const map = new Map(data[key].map(i => [i.id, i]));
         (incoming[key] || []).forEach(i => map.set(i.id, i));
@@ -992,16 +1218,21 @@ function mergeData(incoming) {
 function navTo(page) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.querySelectorAll('.bottom-nav-item').forEach(n => n.classList.remove('active'));
+
     document.getElementById('page-' + page).classList.add('active');
     const nav = document.querySelector(`.nav-item[onclick="navTo('${page}')"]`);
     if (nav) nav.classList.add('active');
+    const bnav = document.querySelector(`.bottom-nav-item[data-page="${page}"]`);
+    if (bnav) bnav.classList.add('active');
+
     const titles = {
         dashboard: '行程总览', locations: '地点', food: '美食',
         transport: '交通', attractions: '景点', stay: '住宿',
         gallery: '照片墙', share: '好友共享'
     };
     document.getElementById('pageTitle').textContent = titles[page];
-    if (window.innerWidth < 769) document.getElementById('sidebar').classList.remove('open');
+    closeSidebar();
     renderAll();
 }
 
@@ -1019,7 +1250,6 @@ function renderAll() {
 }
 
 function renderDashboard() {
-    // KPI
     const days = data.locations.reduce((sum, l) => {
         if (!l.date || !l.endDate) return sum;
         const d1 = new Date(l.date), d2 = new Date(l.endDate);
@@ -1031,12 +1261,11 @@ function renderDashboard() {
     document.getElementById('kpiSpots').textContent = data.attractions.length;
     document.getElementById('kpiFood').textContent = data.food.length;
 
-    // 时间线
     const timeline = document.getElementById('timeline');
     const allEvents = [
-        ...data.locations.map(l => ({ date: l.date, title: `📍 到达 ${l.name}`, desc: l.note?.slice(0, 60) + (l.note?.length > 60 ? '...' : '') || '无备注' })),
-        ...data.transport.map(t => ({ date: t.start, title: `${t.type} ${t.from} → ${t.to}`, desc: `航班/班次：${t.no || '无'} · ¥${t.cost || 0}` })),
-        ...data.attractions.map(a => ({ date: a.date, title: `🎡 游玩 ${a.name}`, desc: `预计 ${a.duration || '未知'} · ¥${a.cost || 0}` }))
+        ...data.locations.map(l => ({ type: 'location', date: l.date, title: `到达 ${l.name}`, desc: l.note?.slice(0, 60) + (l.note?.length > 60 ? '...' : '') || '无备注' })),
+        ...data.transport.map(t => ({ type: 'transport', date: t.start, title: `${t.type} ${t.from} → ${t.to}`, desc: `航班/班次：${t.no || '无'} · ¥${t.cost || 0}` })),
+        ...data.attractions.map(a => ({ type: 'attraction', date: a.date, title: `游玩 ${a.name}`, desc: `预计 ${a.duration || '未知'} · ¥${a.cost || 0}` }))
     ].filter(e => e.date).sort((a, b) => new Date(a.date) - new Date(b.date));
 
     if (allEvents.length === 0) {
@@ -1045,7 +1274,7 @@ function renderDashboard() {
     } else {
         document.getElementById('emptyTimeline').classList.add('hidden');
         timeline.innerHTML = allEvents.map(e => `
-            <div class="timeline-item">
+            <div class="timeline-item ${e.type}">
                 <div class="timeline-date">${formatDate(e.date)}</div>
                 <div class="timeline-title">${e.title}</div>
                 <div class="timeline-desc">${e.desc}</div>
@@ -1097,10 +1326,11 @@ function renderBudgetChart() {
         food: data.food.reduce((s, f) => s + (Number(f.cost) || 0), 0),
         attr: data.attractions.reduce((s, a) => s + (Number(a.cost) || 0), 0)
     };
-    const labels = { transport: '交通', stay: '住宿', food: '餐饮', attr: '景点' };
-    const colors = { transport: '#3b82f6', stay: '#8b5cf6', food: '#f97316', attr: '#10b981' };
+    const labels = { transport: '✈️ 交通', stay: '🏨 住宿', food: '🍜 餐饮', attr: '🎡 景点' };
+    const colors = { transport: '#3b82f6', stay: '#8b5cf6', food: '#ff7b7b', attr: '#10b981' };
+    const lightColors = { transport: '#dbeafe', stay: '#f5f3ff', food: '#fff1f1', attr: '#dcfce7' };
 
-    let html = '<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap: 16px; margin-top: 16px;">';
+    let html = '<div class="budget-grid">';
     Object.keys(labels).forEach(k => {
         const budget = data.budget[k] || 1;
         const pct = Math.min(100, Math.round((actual[k] / budget) * 100));
@@ -1108,15 +1338,15 @@ function renderBudgetChart() {
         if (pct > 100) barColor = '#ef4444';
         else if (pct > 80) barColor = '#f59e0b';
         html += `
-            <div style="background:#f8fafc; border-radius:12px; padding:14px;">
-                <div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:13px;">
-                    <span>${labels[k]}</span>
-                    <span style="font-weight:600;">¥${actual[k]} / ¥${budget}</span>
+            <div class="budget-item">
+                <div class="budget-item-header">
+                    <span class="budget-item-name">${labels[k]}</span>
+                    <span class="budget-item-amount">¥${actual[k]} / ¥${budget}</span>
                 </div>
-                <div style="height:8px; background:#e2e8f0; border-radius:4px; overflow:hidden;">
-                    <div style="height:100%; width:${pct}%; background:${barColor}; transition: width .4s;"></div>
+                <div class="progress-bar" style="background: ${lightColors[k]};">
+                    <div class="progress-fill" style="width: ${Math.min(100, pct)}%; background: ${barColor};"></div>
                 </div>
-                <div style="font-size:12px; color:#94a3b8; margin-top:6px;">已用 ${pct}%</div>
+                <div class="budget-percent">已用 ${pct}%</div>
             </div>
         `;
     });
@@ -1144,12 +1374,15 @@ function renderLocations() {
     }
     container.innerHTML = data.locations.map(l => `
         <div class="item-card">
-            <div class="item-image">${l.photos?.length ? `<img src="${l.photos[0]}" style="width:100%;height:100%;object-fit:cover;">` : '📍 暂无照片'}</div>
+            <div class="item-image">
+                ${l.photos?.length ? `<img src="${l.photos[0]}" style="width:100%;height:100%;object-fit:cover;">` : '📍 暂无照片'}
+                <div class="item-image-badge">${formatDate(l.date)} - ${formatDate(l.endDate)}</div>
+            </div>
             <div class="item-body">
                 <div class="item-header">
                     <div>
                         <div class="item-title">${l.name}</div>
-                        <div class="item-meta">${formatDate(l.date)} - ${formatDate(l.endDate)} · ${l.base || '未填写住宿'}</div>
+                        <div class="item-meta">🏠 ${l.base || '未填写住宿'}</div>
                     </div>
                 </div>
                 <div class="item-desc">${l.note || '无备注'}</div>
@@ -1170,12 +1403,14 @@ function renderFood() {
     }
     container.innerHTML = data.food.map(f => `
         <div class="item-card">
-            <div class="item-image">${f.photos?.length ? `<img src="${f.photos[0]}" style="width:100%;height:100%;object-fit:cover;">` : '🍜 暂无照片'}</div>
+            <div class="item-image">
+                ${f.photos?.length ? `<img src="${f.photos[0]}" style="width:100%;height:100%;object-fit:cover;">` : '🍜 暂无照片'}
+            </div>
             <div class="item-body">
                 <div class="item-header">
                     <div>
                         <div class="item-title">${f.name}</div>
-                        <div class="item-meta">${getLocName(f.location)} · 人均 ¥${f.cost || 0}</div>
+                        <div class="item-meta">📍 ${getLocName(f.location)} · 人均 ¥${f.cost || 0}</div>
                     </div>
                     <div class="stars">${'⭐'.repeat(f.rate || 0)}</div>
                 </div>
@@ -1197,7 +1432,7 @@ function renderTransport() {
     }
     container.innerHTML = data.transport.map(t => `
         <div class="item-card">
-            <div class="item-image" style="background: linear-gradient(135deg, #dbeafe, #eff6ff); display:flex; align-items:center; justify-content:center; font-size:48px;">
+            <div class="item-image" style="background: linear-gradient(135deg, #dbeafe, #eff6ff); display:flex; align-items:center; justify-content:center; font-size:56px;">
                 ${transportIcon(t.type)}
             </div>
             <div class="item-body">
@@ -1208,8 +1443,8 @@ function renderTransport() {
                     </div>
                 </div>
                 <div class="item-desc">
-                    出发：${formatDateTime(t.start)}<br>
-                    到达：${formatDateTime(t.end)}<br>
+                    🛫 出发：${formatDateTime(t.start)}<br>
+                    🛬 到达：${formatDateTime(t.end)}<br>
                     ${t.note || ''}
                 </div>
                 <div class="item-actions">
@@ -1229,17 +1464,20 @@ function renderAttractions() {
     }
     container.innerHTML = data.attractions.map(a => `
         <div class="item-card">
-            <div class="item-image">${a.photos?.length ? `<img src="${a.photos[0]}" style="width:100%;height:100%;object-fit:cover;">` : '🎡 暂无照片'}</div>
+            <div class="item-image">
+                ${a.photos?.length ? `<img src="${a.photos[0]}" style="width:100%;height:100%;object-fit:cover;">` : '🎡 暂无照片'}
+                <div class="item-image-badge">${formatDate(a.date)}</div>
+            </div>
             <div class="item-body">
                 <div class="item-header">
                     <div>
                         <div class="item-title">${a.name}</div>
-                        <div class="item-meta">${getLocName(a.location)} · ${formatDate(a.date)}</div>
+                        <div class="item-meta">📍 ${getLocName(a.location)}</div>
                     </div>
                     <div class="stars">${'⭐'.repeat(a.rate || 0)}</div>
                 </div>
                 <div class="item-desc">
-                    门票 ¥${a.cost || 0} · 预计 ${a.duration || '未知'}<br>
+                    🎫 门票 ¥${a.cost || 0} · ⏱️ 预计 ${a.duration || '未知'}<br>
                     ${a.note || '无备注'}
                 </div>
                 <div class="item-actions">
@@ -1261,18 +1499,21 @@ function renderStay() {
         const nights = s.checkin && s.checkout ? Math.max(1, Math.round((new Date(s.checkout) - new Date(s.checkin)) / 86400000)) : 1;
         return `
         <div class="item-card">
-            <div class="item-image">${s.photos?.length ? `<img src="${s.photos[0]}" style="width:100%;height:100%;object-fit:cover;">` : '🏨 暂无照片'}</div>
+            <div class="item-image">
+                ${s.photos?.length ? `<img src="${s.photos[0]}" style="width:100%;height:100%;object-fit:cover;">` : '🏨 暂无照片'}
+                <div class="item-image-badge">${s.type}</div>
+            </div>
             <div class="item-body">
                 <div class="item-header">
                     <div>
                         <div class="item-title">${s.name}</div>
-                        <div class="item-meta">${getLocName(s.location)} · ${s.type}</div>
+                        <div class="item-meta">📍 ${getLocName(s.location)}</div>
                     </div>
                 </div>
                 <div class="item-desc">
-                    ${formatDate(s.checkin)} - ${formatDate(s.checkout)} · ${nights}晚<br>
-                    ¥${s.price || 0}/晚 · 合计 ¥${(s.price || 0) * nights}<br>
-                    ${s.platform ? '预订：' + s.platform + '<br>' : ''}${s.note || ''}
+                    📅 ${formatDate(s.checkin)} - ${formatDate(s.checkout)} · ${nights}晚<br>
+                    💰 ¥${s.price || 0}/晚 · 合计 ¥${(s.price || 0) * nights}<br>
+                    ${s.platform ? '📱 预订：' + s.platform + '<br>' : ''}${s.note || ''}
                 </div>
                 <div class="item-actions">
                     <button class="btn btn-sm btn-secondary" onclick="editStay('${s.id}')">✏️ 编辑</button>
@@ -1499,7 +1740,6 @@ function deleteItem(key, id) {
     showToast('已删除');
 }
 
-// 编辑（简化版：填充表单并删除旧记录）
 function editLocation(id) {
     const l = data.locations.find(x => x.id === id);
     if (!l) return;
@@ -1583,6 +1823,11 @@ function closeImageModal() {
 
 function toggleSidebar() {
     document.getElementById('sidebar').classList.toggle('open');
+    document.getElementById('overlay').classList.toggle('active');
+}
+function closeSidebar() {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('overlay').classList.remove('active');
 }
 
 // ================= 共享与同步 =================
@@ -1664,11 +1909,8 @@ function closeShareModal() {
     document.getElementById('shareModal').classList.remove('active');
 }
 
-// 简单二维码占位（用表格渲染）
 function renderQr(text) {
-    // 使用简易二维码：这里用 data URI 显示一个二维码图片 API 的占位
-    // 由于没有网络，使用 canvas 绘制一个伪二维码
-    const size = 160;
+    const size = 170;
     const cells = 25;
     const cellSize = size / cells;
     const canvas = document.createElement('canvas');
@@ -1682,18 +1924,16 @@ function renderQr(text) {
             if (hash % 2 === 0) ctx.fillRect(j * cellSize, i * cellSize, cellSize, cellSize);
         }
     }
-    // 画三个定位角
     ctx.fillStyle = 'white';
     [[2,2],[2,18],[18,2]].forEach(([x,y]) => {
         ctx.fillRect(x*cellSize, y*cellSize, 7*cellSize, 7*cellSize);
-        ctx.strokeRect(x*cellSize, y*cellSize, 7*cellSize, 7*cellSize);
     });
     ctx.fillStyle = '#0f766e';
     [[3,3],[3,19],[19,3]].forEach(([x,y]) => {
         ctx.fillRect(x*cellSize, y*cellSize, 5*cellSize, 5*cellSize);
         ctx.clearRect((x+1)*cellSize, (y+1)*cellSize, 3*cellSize, 3*cellSize);
     });
-    return `<img src="${canvas.toDataURL()}" style="width:160px;height:160px;">`;
+    return `<img src="${canvas.toDataURL()}" style="width:170px;height:170px;border-radius:12px;box-shadow:var(--shadow);">`;
 }
 
 // ================= 导入导出 =================
@@ -1748,7 +1988,7 @@ function clearAllData() {
 function showToast(msg) {
     const div = document.createElement('div');
     div.textContent = msg;
-    div.style.cssText = 'position:fixed; bottom:30px; left:50%; transform:translateX(-50%); background:#1e293b; color:white; padding:12px 24px; border-radius:10px; font-size:14px; z-index:9999; box-shadow:0 4px 20px rgba(0,0,0,0.2);';
+    div.style.cssText = 'position:fixed; bottom:100px; left:50%; transform:translateX(-50%); background:#1e293b; color:white; padding:12px 24px; border-radius:12px; font-size:14px; z-index:9999; box-shadow:0 8px 30px rgba(0,0,0,0.2); font-weight:600;';
     document.body.appendChild(div);
     setTimeout(() => div.remove(), 2500);
 }

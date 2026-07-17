@@ -123,6 +123,7 @@
             box-shadow: var(--shadow);
         }
         .nav-item .icon { font-size: 20px; width: 28px; text-align: center; }
+        .nav-item .icon-img { width: 26px; height: 26px; object-fit: contain; }
 
         .main {
             margin-left: 240px;
@@ -695,6 +696,7 @@
         }
         .bottom-nav-item.active { color: var(--sage-dark); transform: translateY(-2px); }
         .bottom-nav-item .icon { font-size: 22px; }
+        .bottom-nav-item .icon-img { width: 24px; height: 24px; object-fit: contain; }
 
         .menu-toggle {
             display: none;
@@ -1088,19 +1090,19 @@
                 <span>地点</span>
             </div>
             <div class="nav-item" onclick="navTo('food')">
-                <span class="icon">🍜</span>
+                <img class="icon-img" src="icons/food.png" alt="美食">
                 <span>美食</span>
             </div>
             <div class="nav-item" onclick="navTo('transport')">
-                <span class="icon">🚄</span>
+                <img class="icon-img" src="icons/transport.png" alt="交通">
                 <span>交通</span>
             </div>
             <div class="nav-item" onclick="navTo('attractions')">
-                <span class="icon">🎡</span>
+                <img class="icon-img" src="icons/attractions.png" alt="景点">
                 <span>景点</span>
             </div>
             <div class="nav-item" onclick="navTo('stay')">
-                <span class="icon">🏨</span>
+                <img class="icon-img" src="icons/stay.png" alt="住宿">
                 <span>住宿</span>
             </div>
             <div class="nav-item" onclick="navTo('itinerary')">
@@ -1113,11 +1115,11 @@
             </div>
             <div class="nav-section">出行工具</div>
             <div class="nav-item" onclick="navTo('checklist')">
-                <span class="icon">✅</span>
+                <img class="icon-img" src="icons/checklist.png" alt="行李清单">
                 <span>行李清单</span>
             </div>
             <div class="nav-item" onclick="navTo('expense')">
-                <span class="icon">💰</span>
+                <img class="icon-img" src="icons/expense.png" alt="费用 AA">
                 <span>费用 AA</span>
             </div>
             <div class="nav-item" onclick="navTo('wallet')">
@@ -1126,7 +1128,7 @@
             </div>
             <div class="nav-section">更多</div>
             <div class="nav-item" onclick="navTo('gallery')">
-                <span class="icon">📷</span>
+                <img class="icon-img" src="icons/gallery.png" alt="照片墙">
                 <span>照片墙</span>
             </div>
             <div class="nav-item" onclick="navTo('share')">
@@ -1653,8 +1655,8 @@
     <div class="bottom-nav-inner">
         <div class="bottom-nav-item active" onclick="navTo('dashboard')" data-page="dashboard"><span class="icon">📔</span><span>首页</span></div>
         <div class="bottom-nav-item" onclick="navTo('itinerary')" data-page="itinerary"><span class="icon">📅</span><span>行程</span></div>
-        <div class="bottom-nav-item" onclick="navTo('checklist')" data-page="checklist"><span class="icon">✅</span><span>清单</span></div>
-        <div class="bottom-nav-item" onclick="navTo('expense')" data-page="expense"><span class="icon">💰</span><span>AA</span></div>
+        <div class="bottom-nav-item" onclick="navTo('checklist')" data-page="checklist"><img class="icon-img" src="icons/checklist.png" alt="清单"><span>清单</span></div>
+        <div class="bottom-nav-item" onclick="navTo('expense')" data-page="expense"><img class="icon-img" src="icons/expense.png" alt="AA"><span>AA</span></div>
         <div class="bottom-nav-item" onclick="toggleSidebar()" data-page="more"><span class="icon">☰</span><span>更多</span></div>
     </div>
 </nav>

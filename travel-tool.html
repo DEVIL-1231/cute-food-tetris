@@ -123,7 +123,26 @@
             box-shadow: var(--shadow);
         }
         .nav-item .icon { font-size: 20px; width: 28px; text-align: center; }
-        .nav-item .icon-img { width: 26px; height: 26px; object-fit: contain; }
+        .nav-item .icon-svg { width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; }
+        .nav-item .icon-svg svg { width: 22px; height: 22px; }
+
+        /* 手绘图标通用 */
+        .icon-svg { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .icon-svg svg { width: 100%; height: 100%; display: block; }
+        .btn .icon-svg { width: 18px; height: 18px; }
+        .icon-bg .icon-svg { width: 24px; height: 24px; }
+        .card-title .icon-svg { width: 22px; height: 22px; margin-right: 8px; }
+        .title-icon { display: inline-flex; vertical-align: middle; }
+        .empty-state .icon-svg { width: 64px; height: 64px; margin-bottom: 12px; opacity: 0.7; }
+        .day-event-icon .icon-svg { width: 22px; height: 22px; }
+        .upload-icon .icon-svg { width: 40px; height: 40px; margin-bottom: 4px; }
+        .stars .icon-svg { width: 14px; height: 14px; display: inline-block; vertical-align: middle; }
+        .checklist-category-title .icon-svg { width: 20px; height: 20px; }
+        .bottom-nav-item .icon-svg svg { width: 20px; height: 20px; }
+        .wallet-type-badge .icon-svg { width: 14px; height: 14px; display: inline-block; vertical-align: middle; margin-right: 2px; }
+        .budget-item-name .icon-svg { width: 16px; height: 16px; display: inline-block; vertical-align: middle; margin-right: 4px; }
+        .timeline-icon { display: inline-flex; vertical-align: middle; margin-right: 4px; }
+        .timeline-icon svg { width: 16px; height: 16px; }
 
         .main {
             margin-left: 240px;
@@ -696,7 +715,8 @@
         }
         .bottom-nav-item.active { color: var(--sage-dark); transform: translateY(-2px); }
         .bottom-nav-item .icon { font-size: 22px; }
-        .bottom-nav-item .icon-img { width: 24px; height: 24px; object-fit: contain; }
+        .bottom-nav-item .icon-svg { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; }
+        .bottom-nav-item .icon-svg svg { width: 20px; height: 20px; }
 
         .menu-toggle {
             display: none;
@@ -707,13 +727,13 @@
             border-radius: 12px;
             background: white;
             border: 2px dashed var(--dash);
-            font-size: 18px;
             box-shadow: var(--shadow);
             align-items: center;
             justify-content: center;
             cursor: pointer;
             color: var(--brown-dark);
         }
+        .menu-toggle .icon-svg { width: 20px; height: 20px; }
 
         /* ================= 新功能：每日行程/清单/AA ================= */
         /* 每日行程 */
@@ -1070,7 +1090,7 @@
 <body>
 
 <div class="overlay" id="overlay" onclick="closeSidebar()"></div>
-<button class="menu-toggle" id="menuToggle" onclick="toggleSidebar()">☰</button>
+<button class="menu-toggle" id="menuToggle" onclick="toggleSidebar()"><span class="icon-svg" data-icon="menu"></span></button>
 
 <div class="app">
     <aside class="sidebar" id="sidebar">
@@ -1082,57 +1102,57 @@
         <nav>
             <div class="nav-section">我的行程</div>
             <div class="nav-item active" onclick="navTo('dashboard')">
-                <span class="icon">📔</span>
+                <span class="icon-svg" data-icon="dashboard"></span>
                 <span>日志首页</span>
             </div>
             <div class="nav-item" onclick="navTo('locations')">
-                <span class="icon">📍</span>
+                <span class="icon-svg" data-icon="location"></span>
                 <span>地点</span>
             </div>
             <div class="nav-item" onclick="navTo('food')">
-                <img class="icon-img" src="icons/food.png" alt="美食">
+                <span class="icon-svg" data-icon="food"></span>
                 <span>美食</span>
             </div>
             <div class="nav-item" onclick="navTo('transport')">
-                <img class="icon-img" src="icons/transport.png" alt="交通">
+                <span class="icon-svg" data-icon="transport"></span>
                 <span>交通</span>
             </div>
             <div class="nav-item" onclick="navTo('attractions')">
-                <img class="icon-img" src="icons/attractions.png" alt="景点">
+                <span class="icon-svg" data-icon="attractions"></span>
                 <span>景点</span>
             </div>
             <div class="nav-item" onclick="navTo('stay')">
-                <img class="icon-img" src="icons/stay.png" alt="住宿">
+                <span class="icon-svg" data-icon="stay"></span>
                 <span>住宿</span>
             </div>
             <div class="nav-item" onclick="navTo('itinerary')">
-                <span class="icon">📅</span>
+                <span class="icon-svg" data-icon="calendar"></span>
                 <span>每日行程</span>
             </div>
             <div class="nav-item" onclick="navTo('map')">
-                <span class="icon">🗺️</span>
+                <span class="icon-svg" data-icon="map"></span>
                 <span>旅行地图</span>
             </div>
             <div class="nav-section">出行工具</div>
             <div class="nav-item" onclick="navTo('checklist')">
-                <img class="icon-img" src="icons/checklist.png" alt="行李清单">
+                <span class="icon-svg" data-icon="checklist"></span>
                 <span>行李清单</span>
             </div>
             <div class="nav-item" onclick="navTo('expense')">
-                <img class="icon-img" src="icons/expense.png" alt="费用 AA">
+                <span class="icon-svg" data-icon="expense"></span>
                 <span>费用 AA</span>
             </div>
             <div class="nav-item" onclick="navTo('wallet')">
-                <span class="icon">🎫</span>
+                <span class="icon-svg" data-icon="ticket"></span>
                 <span>票夹证件</span>
             </div>
             <div class="nav-section">更多</div>
             <div class="nav-item" onclick="navTo('gallery')">
-                <img class="icon-img" src="icons/gallery.png" alt="照片墙">
+                <span class="icon-svg" data-icon="gallery"></span>
                 <span>照片墙</span>
             </div>
             <div class="nav-item" onclick="navTo('share')">
-                <span class="icon">👥</span>
+                <span class="icon-svg" data-icon="share"></span>
                 <span>好友共享</span>
             </div>
         </nav>
@@ -1146,10 +1166,10 @@
                     <span class="sync-dot off" id="syncDot"></span>
                     <span id="syncText">本地模式</span>
                 </span>
-                <button class="btn btn-secondary btn-sm" onclick="exportData()">💾 导出</button>
-                <button class="btn btn-secondary btn-sm" onclick="document.getElementById('importFile').click()">📥 导入</button>
+                <button class="btn btn-secondary btn-sm" onclick="exportData()"><span class="icon-svg" data-icon="export"></span> 导出</button>
+                <button class="btn btn-secondary btn-sm" onclick="document.getElementById('importFile').click()"><span class="icon-svg" data-icon="import"></span> 导入</button>
                 <input type="file" id="importFile" class="hidden" accept=".json" onchange="importData(event)">
-                <button class="btn btn-primary btn-sm" onclick="openShareModal()">👥 邀请</button>
+                <button class="btn btn-primary btn-sm" onclick="openShareModal()"><span class="icon-svg" data-icon="share"></span> 邀请</button>
             </div>
         </header>
 
@@ -1157,10 +1177,10 @@
             <!-- 只读分享页横幅 -->
             <div class="readonly-banner hidden" id="readonlyBanner">
                 <div>
-                    <h3 id="readonlyTitle">👀 这是某位旅人的旅行日志</h3>
+                    <h3 id="readonlyTitle"><span class="title-icon icon-svg" data-icon="eye"></span> 这是某位旅人的旅行日志</h3>
                     <p>只读模式，不能编辑。觉得不错可以自己也做一个~ 🐑</p>
                 </div>
-                <button class="btn btn-primary" onclick="createMyOwn()">🐑 我也做一个</button>
+                <button class="btn btn-primary" onclick="createMyOwn()"><span class="icon-svg" data-icon="sheep"></span> 我也做一个</button>
             </div>
 
             <!-- 总览 -->
@@ -1201,22 +1221,22 @@
 
                 <div class="kpi-grid">
                     <div class="kpi-card">
-                        <div class="icon-bg">📅</div>
+                        <div class="icon-bg"><span class="icon-svg" data-icon="calendar"></span></div>
                         <div class="label">旅行天数</div>
                         <div class="num" id="kpiDays">0</div>
                     </div>
                     <div class="kpi-card orange">
-                        <div class="icon-bg">💰</div>
+                        <div class="icon-bg"><span class="icon-svg" data-icon="money"></span></div>
                         <div class="label">预计总花费</div>
                         <div class="num" id="kpiCost">¥0</div>
                     </div>
                     <div class="kpi-card blue">
-                        <div class="icon-bg">🎡</div>
+                        <div class="icon-bg"><span class="icon-svg" data-icon="attractions"></span></div>
                         <div class="label">想去景点</div>
                         <div class="num" id="kpiSpots">0</div>
                     </div>
                     <div class="kpi-card purple">
-                        <div class="icon-bg">🍜</div>
+                        <div class="icon-bg"><span class="icon-svg" data-icon="food"></span></div>
                         <div class="label">美食打卡</div>
                         <div class="num" id="kpiFood">0</div>
                     </div>
@@ -1224,16 +1244,16 @@
 
                 <div class="two-col">
                     <div class="card">
-                        <div class="card-title">🗓️ 行程时间线</div>
+                        <div class="card-title"><span class="title-icon icon-svg" data-icon="timeline"></span> 行程时间线</div>
                         <div class="timeline" id="timeline"></div>
                         <div class="empty-state hidden" id="emptyTimeline">
-                            <div class="icon">🐑</div>
+                            <div class="icon-svg" data-icon="sheep"></div>
                             <p>小羊还没有目的地，快去添加第一站吧~</p>
                         </div>
                     </div>
 
                     <div class="card">
-                        <div class="card-title">💰 旅行预算</div>
+                        <div class="card-title"><span class="title-icon icon-svg" data-icon="money"></span> 旅行预算</div>
                         <div class="form-row">
                             <div class="form-group"><label>交通预算</label><input type="number" id="budgetTransport" placeholder="0" onchange="saveBudget()"></div>
                             <div class="form-group"><label>住宿预算</label><input type="number" id="budgetStay" placeholder="0" onchange="saveBudget()"></div>
@@ -1245,14 +1265,14 @@
                 </div>
 
                 <div class="card">
-                    <div class="card-title">🧰 快捷工具</div>
+                    <div class="card-title"><span class="title-icon icon-svg" data-icon="tools"></span> 快捷工具</div>
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px;">
-                        <button class="btn btn-secondary" onclick="navTo('itinerary')">📅 每日行程</button>
-                        <button class="btn btn-secondary" onclick="navTo('checklist')">✅ 行李清单</button>
-                        <button class="btn btn-secondary" onclick="navTo('expense')">💰 费用 AA</button>
-                        <button class="btn btn-secondary" onclick="navTo('wallet')">🎫 票夹证件</button>
-                        <button class="btn btn-secondary" onclick="navTo('map')">🗺️ 旅行地图</button>
-                        <button class="btn btn-secondary" onclick="navTo('gallery')">📷 回忆相册</button>
+                        <button class="btn btn-secondary" onclick="navTo('itinerary')"><span class="icon-svg" data-icon="calendar"></span> 每日行程</button>
+                        <button class="btn btn-secondary" onclick="navTo('checklist')"><span class="icon-svg" data-icon="checklist"></span> 行李清单</button>
+                        <button class="btn btn-secondary" onclick="navTo('expense')"><span class="icon-svg" data-icon="expense"></span> 费用 AA</button>
+                        <button class="btn btn-secondary" onclick="navTo('wallet')"><span class="icon-svg" data-icon="ticket"></span> 票夹证件</button>
+                        <button class="btn btn-secondary" onclick="navTo('map')"><span class="icon-svg" data-icon="map"></span> 旅行地图</button>
+                        <button class="btn btn-secondary" onclick="navTo('gallery')"><span class="icon-svg" data-icon="gallery"></span> 回忆相册</button>
                     </div>
                 </div>
             </div>
@@ -1260,7 +1280,7 @@
             <!-- 地点 -->
             <div class="page" id="page-locations">
                 <div class="card">
-                    <div class="card-title">📍 添加地点 <span class="subtitle">记录每一站</span></div>
+                    <div class="card-title"><span class="title-icon icon-svg" data-icon="location"></span> 添加地点 <span class="subtitle">记录每一站</span></div>
                     <div class="form-row">
                         <div class="form-group"><label>地点名称</label><input type="text" id="locName" placeholder="如：大理古城"></div>
                         <div class="form-group"><label>到达日期</label><input type="date" id="locDate"></div>
@@ -1272,14 +1292,14 @@
                         <textarea id="locNote" placeholder="写下对这个地方的期待..."></textarea>
                     </div>
                     <div class="photo-upload" onclick="document.getElementById('locPhoto').click()">
-                        <div class="upload-icon">📷</div>
+                        <div class="upload-icon"><span class="icon-svg" data-icon="camera"></span></div>
                         <div class="upload-text">贴一张地点照片</div>
                         <div class="upload-hint">支持多张，自动压缩</div>
                         <input type="file" id="locPhoto" accept="image/*" multiple onchange="handlePhotoUpload(this, 'locPhotos')">
                     </div>
                     <div class="photo-preview-grid" id="locPhotos"></div>
                     <div class="text-right" style="margin-top: 18px;">
-                        <button class="btn btn-primary" onclick="saveLocation()">📝 记一笔</button>
+                        <button class="btn btn-primary" onclick="saveLocation()"><span class="icon-svg" data-icon="write"></span> 记一笔</button>
                     </div>
                 </div>
                 <div class="items-grid" id="locationsList"></div>
@@ -1288,18 +1308,18 @@
             <!-- 美食 -->
             <div class="page" id="page-food">
                 <div class="card">
-                    <div class="card-title">🍜 添加美食 <span class="subtitle">记录味蕾记忆</span></div>
+                    <div class="card-title"><span class="title-icon icon-svg" data-icon="food"></span> 添加美食 <span class="subtitle">记录味蕾记忆</span></div>
                     <div class="form-row">
                         <div class="form-group"><label>美食名称</label><input type="text" id="foodName" placeholder="如：过桥米线"></div>
                         <div class="form-group"><label>所在地点</label><select id="foodLocation"></select></div>
                         <div class="form-group"><label>人均消费</label><input type="number" id="foodCost" placeholder="0"></div>
                         <div class="form-group"><label>评分</label>
                             <select id="foodRate">
-                                <option value="5">⭐⭐⭐⭐⭐</option>
-                                <option value="4">⭐⭐⭐⭐</option>
-                                <option value="3">⭐⭐⭐</option>
-                                <option value="2">⭐⭐</option>
-                                <option value="1">⭐</option>
+                                <option value="5">5 星</option>
+                                <option value="4">4 星</option>
+                                <option value="3">3 星</option>
+                                <option value="2">2 星</option>
+                                <option value="1">1 星</option>
                             </select>
                         </div>
                     </div>
@@ -1308,13 +1328,13 @@
                         <textarea id="foodNote" placeholder="必点、排队提示、营业时间..."></textarea>
                     </div>
                     <div class="photo-upload" onclick="document.getElementById('foodPhoto').click()">
-                        <div class="upload-icon">📷</div>
+                        <div class="upload-icon"><span class="icon-svg" data-icon="camera"></span></div>
                         <div class="upload-text">贴一张美食照片</div>
                         <input type="file" id="foodPhoto" accept="image/*" multiple onchange="handlePhotoUpload(this, 'foodPhotos')">
                     </div>
                     <div class="photo-preview-grid" id="foodPhotos"></div>
                     <div class="text-right" style="margin-top: 18px;">
-                        <button class="btn btn-primary" onclick="saveFood()">📝 记一笔</button>
+                        <button class="btn btn-primary" onclick="saveFood()"><span class="icon-svg" data-icon="write"></span> 记一笔</button>
                     </div>
                 </div>
                 <div class="items-grid" id="foodList"></div>
@@ -1323,19 +1343,19 @@
             <!-- 交通 -->
             <div class="page" id="page-transport">
                 <div class="card">
-                    <div class="card-title">🚄 添加交通 <span class="subtitle">航班、高铁、租车都记下</span></div>
+                    <div class="card-title"><span class="title-icon icon-svg" data-icon="transport"></span> 添加交通 <span class="subtitle">航班、高铁、租车都记下</span></div>
                     <div class="form-row">
                         <div class="form-group"><label>交通方式</label>
                             <select id="transType">
-                                <option value="飞机">✈️ 飞机</option>
-                                <option value="高铁">🚄 高铁</option>
-                                <option value="火车">🚂 火车</option>
-                                <option value="大巴">🚌 大巴</option>
-                                <option value="租车">🚗 租车</option>
-                                <option value="网约车">🚕 网约车</option>
-                                <option value="地铁">🚇 地铁</option>
-                                <option value="船">🚢 船</option>
-                                <option value="其他">🛴 其他</option>
+                                <option value="飞机">飞机</option>
+                                <option value="高铁">高铁</option>
+                                <option value="火车">火车</option>
+                                <option value="大巴">大巴</option>
+                                <option value="租车">租车</option>
+                                <option value="网约车">网约车</option>
+                                <option value="地铁">地铁</option>
+                                <option value="船">船</option>
+                                <option value="其他">其他</option>
                             </select>
                         </div>
                         <div class="form-group"><label>出发地</label><input type="text" id="transFrom" placeholder="出发城市"></div>
@@ -1352,7 +1372,7 @@
                         <textarea id="transNote" placeholder="订票平台、座位号、航站楼..."></textarea>
                     </div>
                     <div class="text-right">
-                        <button class="btn btn-primary" onclick="saveTransport()">📝 记一笔</button>
+                        <button class="btn btn-primary" onclick="saveTransport()"><span class="icon-svg" data-icon="write"></span> 记一笔</button>
                     </div>
                 </div>
                 <div class="items-grid" id="transportList"></div>
@@ -1361,7 +1381,7 @@
             <!-- 景点 -->
             <div class="page" id="page-attractions">
                 <div class="card">
-                    <div class="card-title">🎡 添加景点 <span class="subtitle">标记想去和必去</span></div>
+                    <div class="card-title"><span class="title-icon icon-svg" data-icon="attractions"></span> 添加景点 <span class="subtitle">标记想去和必去</span></div>
                     <div class="form-row">
                         <div class="form-group"><label>景点名称</label><input type="text" id="attrName" placeholder="如：洱海"></div>
                         <div class="form-group"><label>所在地点</label><select id="attrLocation"></select></div>
@@ -1372,11 +1392,11 @@
                         <div class="form-group"><label>计划日期</label><input type="date" id="attrDate"></div>
                         <div class="form-group"><label>推荐指数</label>
                             <select id="attrRate">
-                                <option value="5">⭐⭐⭐⭐⭐ 必去</option>
-                                <option value="4">⭐⭐⭐⭐ 推荐</option>
-                                <option value="3">⭐⭐⭐ 一般</option>
-                                <option value="2">⭐⭐ 可去可不去</option>
-                                <option value="1">⭐ 避雷</option>
+                                <option value="5">5 星 必去</option>
+                                <option value="4">4 星 推荐</option>
+                                <option value="3">3 星 一般</option>
+                                <option value="2">2 星 可去可不去</option>
+                                <option value="1">1 星 避雷</option>
                             </select>
                         </div>
                     </div>
@@ -1385,13 +1405,13 @@
                         <textarea id="attrNote" placeholder="开放时间、预约方式、拍照机位..."></textarea>
                     </div>
                     <div class="photo-upload" onclick="document.getElementById('attrPhoto').click()">
-                        <div class="upload-icon">📷</div>
+                        <div class="upload-icon"><span class="icon-svg" data-icon="camera"></span></div>
                         <div class="upload-text">贴一张景点照片</div>
                         <input type="file" id="attrPhoto" accept="image/*" multiple onchange="handlePhotoUpload(this, 'attrPhotos')">
                     </div>
                     <div class="photo-preview-grid" id="attrPhotos"></div>
                     <div class="text-right" style="margin-top: 18px;">
-                        <button class="btn btn-primary" onclick="saveAttraction()">📝 记一笔</button>
+                        <button class="btn btn-primary" onclick="saveAttraction()"><span class="icon-svg" data-icon="write"></span> 记一笔</button>
                     </div>
                 </div>
                 <div class="items-grid" id="attractionsList"></div>
@@ -1400,17 +1420,17 @@
             <!-- 住宿 -->
             <div class="page" id="page-stay">
                 <div class="card">
-                    <div class="card-title">🏨 添加住宿 <span class="subtitle">酒店、民宿、青旅</span></div>
+                    <div class="card-title"><span class="title-icon icon-svg" data-icon="stay"></span> 添加住宿 <span class="subtitle">酒店、民宿、青旅</span></div>
                     <div class="form-row">
                         <div class="form-group"><label>住宿名称</label><input type="text" id="stayName" placeholder="如：洱海边的民宿"></div>
                         <div class="form-group"><label>所在地点</label><select id="stayLocation"></select></div>
                         <div class="form-group"><label>类型</label>
                             <select id="stayType">
-                                <option value="酒店">🏨 酒店</option>
-                                <option value="民宿">🏡 民宿</option>
-                                <option value="青旅">🛏️ 青旅</option>
-                                <option value="露营">⛺ 露营</option>
-                                <option value="其他">🧳 其他</option>
+                                <option value="酒店">酒店</option>
+                                <option value="民宿">民宿</option>
+                                <option value="青旅">青旅</option>
+                                <option value="露营">露营</option>
+                                <option value="其他">其他</option>
                             </select>
                         </div>
                         <div class="form-group"><label>每晚价格</label><input type="number" id="stayPrice" placeholder="0"></div>
@@ -1425,13 +1445,13 @@
                         <textarea id="stayNote" placeholder="详细地址、联系电话、入住时间..."></textarea>
                     </div>
                     <div class="photo-upload" onclick="document.getElementById('stayPhoto').click()">
-                        <div class="upload-icon">📷</div>
+                        <div class="upload-icon"><span class="icon-svg" data-icon="camera"></span></div>
                         <div class="upload-text">贴一张住宿照片</div>
                         <input type="file" id="stayPhoto" accept="image/*" multiple onchange="handlePhotoUpload(this, 'stayPhotos')">
                     </div>
                     <div class="photo-preview-grid" id="stayPhotos"></div>
                     <div class="text-right" style="margin-top: 18px;">
-                        <button class="btn btn-primary" onclick="saveStay()">📝 记一笔</button>
+                        <button class="btn btn-primary" onclick="saveStay()"><span class="icon-svg" data-icon="write"></span> 记一笔</button>
                     </div>
                 </div>
                 <div class="items-grid" id="stayList"></div>
@@ -1440,10 +1460,10 @@
             <!-- 照片墙 -->
             <div class="page" id="page-gallery">
                 <div class="card">
-                    <div class="card-title">📷 回忆相册 <span class="subtitle">所有美好瞬间</span></div>
+                    <div class="card-title"><span class="title-icon icon-svg" data-icon="gallery"></span> 回忆相册 <span class="subtitle">所有美好瞬间</span></div>
                     <div class="gallery-grid" id="galleryGrid"></div>
                     <div class="empty-state hidden" id="emptyGallery">
-                        <div class="icon">📷</div>
+                        <div class="icon-svg" data-icon="gallery"></div>
                         <p>还没有照片，快去各地点、美食、景点上传吧~</p>
                     </div>
                 </div>
@@ -1452,7 +1472,7 @@
             <!-- 共享 -->
             <div class="page" id="page-share">
                 <div class="card">
-                    <div class="card-title">👥 和旅伴一起写</div>
+                    <div class="card-title"><span class="title-icon icon-svg" data-icon="share"></span> 和旅伴一起写</div>
                     <p style="color: var(--ink-light); margin-bottom: 18px; line-height: 1.7;">
                         生成共享码或二维码，好友打开同一页面并粘贴共享码即可实时同步。所有数据都保存在本地浏览器中。
                     </p>
@@ -1462,10 +1482,10 @@
                     </div>
                     <div class="share-box">
                         <div style="display:flex; gap: 10px; flex-wrap: wrap;">
-                            <button class="btn btn-primary" onclick="createShareCode()">🔑 生成共享码</button>
-                            <button class="btn btn-secondary" onclick="copyShareCode()">📋 复制共享码</button>
-                            <button class="btn btn-success" onclick="joinRoom()">🔗 加入房间</button>
-                            <button class="btn btn-warning" onclick="broadcastUpdate()">🔄 手动同步</button>
+                            <button class="btn btn-primary" onclick="createShareCode()"><span class="icon-svg" data-icon="key"></span> 生成共享码</button>
+                            <button class="btn btn-secondary" onclick="copyShareCode()"><span class="icon-svg" data-icon="copy"></span> 复制共享码</button>
+                            <button class="btn btn-success" onclick="joinRoom()"><span class="icon-svg" data-icon="link"></span> 加入房间</button>
+                            <button class="btn btn-warning" onclick="broadcastUpdate()"><span class="icon-svg" data-icon="refresh"></span> 手动同步</button>
                         </div>
                         <div style="margin-top: 14px; font-size: 13px; color: var(--ink-light); font-family: 'ZCOOL KuaiLe', cursive;">共享码（可扫码或复制）：</div>
                         <div class="share-code" id="shareCodeDisplay">点击“生成共享码”开始共享</div>
@@ -1474,22 +1494,22 @@
                 </div>
 
                 <div class="card">
-                    <div class="card-title">📤 导出 / 导入备份</div>
+                    <div class="card-title"><span class="title-icon icon-svg" data-icon="export"></span> 导出 / 导入备份</div>
                     <p style="color: var(--ink-light); margin-bottom: 18px;">也可以通过 JSON 文件与好友交换完整行程数据。</p>
                     <div style="display:flex; gap: 12px; flex-wrap: wrap;">
-                        <button class="btn btn-primary" onclick="exportData()">📤 导出 JSON 备份</button>
-                        <button class="btn btn-secondary" onclick="document.getElementById('importFile2').click()">📥 导入 JSON 备份</button>
+                        <button class="btn btn-primary" onclick="exportData()"><span class="icon-svg" data-icon="export"></span> 导出 JSON 备份</button>
+                        <button class="btn btn-secondary" onclick="document.getElementById('importFile2').click()"><span class="icon-svg" data-icon="import"></span> 导入 JSON 备份</button>
                         <input type="file" id="importFile2" class="hidden" accept=".json" onchange="importData(event)">
-                        <button class="btn btn-danger" onclick="clearAllData()">🗑️ 清空所有数据</button>
+                        <button class="btn btn-danger" onclick="clearAllData()"><span class="icon-svg" data-icon="delete"></span> 清空所有数据</button>
                     </div>
                 </div>
 
                 <div class="card">
-                    <div class="card-title">🖼️ 分享给粉丝</div>
+                    <div class="card-title"><span class="title-icon icon-svg" data-icon="poster"></span> 分享给粉丝</div>
                     <p style="color: var(--ink-light); margin-bottom: 18px;">生成一张精美海报，或一个只读链接，分享给粉丝看。</p>
                     <div style="display:flex; gap: 12px; flex-wrap: wrap;">
-                        <button class="btn btn-primary" onclick="openPosterModal()">🖼️ 生成分享海报</button>
-                        <button class="btn btn-success" onclick="createReadOnlyLink()">🔗 复制只读链接</button>
+                        <button class="btn btn-primary" onclick="openPosterModal()"><span class="icon-svg" data-icon="poster"></span> 生成分享海报</button>
+                        <button class="btn btn-success" onclick="createReadOnlyLink()"><span class="icon-svg" data-icon="link"></span> 复制只读链接</button>
                     </div>
                 </div>
             </div>
@@ -1497,7 +1517,7 @@
             <!-- 每日行程 -->
             <div class="page" id="page-itinerary">
                 <div class="card">
-                    <div class="card-title">📅 每日行程 <span class="subtitle">一天一页，像翻日记</span></div>
+                    <div class="card-title"><span class="title-icon icon-svg" data-icon="calendar"></span> 每日行程 <span class="subtitle">一天一页，像翻日记</span></div>
                     <div id="itineraryList"></div>
                 </div>
             </div>
@@ -1505,7 +1525,7 @@
             <!-- 行李清单 -->
             <div class="page" id="page-checklist">
                 <div class="card">
-                    <div class="card-title">✅ 行李清单 <span class="subtitle">打勾出发</span></div>
+                    <div class="card-title"><span class="title-icon icon-svg" data-icon="checklist"></span> 行李清单 <span class="subtitle">打勾出发</span></div>
 
                     <div class="checklist-progress">
                         <div class="checklist-progress-text">
@@ -1525,12 +1545,12 @@
                         <div class="form-group">
                             <label>分类</label>
                             <select id="checkItemCategory">
-                                <option value="证件">📋 证件</option>
-                                <option value="衣物">👕 衣物</option>
-                                <option value="电子">🔌 电子</option>
-                                <option value="洗漱">🧴 洗漱</option>
-                                <option value="药品">💊 药品</option>
-                                <option value="其他">🧳 其他</option>
+                                <option value="证件">证件</option>
+                                <option value="衣物">衣物</option>
+                                <option value="电子">电子</option>
+                                <option value="洗漱">洗漱</option>
+                                <option value="药品">药品</option>
+                                <option value="其他">其他</option>
                             </select>
                         </div>
                         <div class="form-group">
@@ -1539,7 +1559,7 @@
                         </div>
                     </div>
                     <div class="text-right" style="margin-bottom: 18px;">
-                        <button class="btn btn-primary" onclick="saveChecklistItem()">➕ 添加物品</button>
+                        <button class="btn btn-primary" onclick="saveChecklistItem()"><span class="icon-svg" data-icon="plus"></span> 添加物品</button>
                     </div>
                     <div id="checklistList"></div>
                 </div>
@@ -1548,7 +1568,7 @@
             <!-- 费用 AA -->
             <div class="page" id="page-expense">
                 <div class="card">
-                    <div class="card-title">💰 费用 AA <span class="subtitle">自动算清楚谁该给谁多少</span></div>
+                    <div class="card-title"><span class="title-icon icon-svg" data-icon="expense"></span> 费用 AA <span class="subtitle">自动算清楚谁该给谁多少</span></div>
                     <div class="form-row">
                         <div class="form-group">
                             <label>旅伴名单（用逗号分隔）</label>
@@ -1559,13 +1579,13 @@
                 </div>
 
                 <div class="balance-card">
-                    <div class="card-title" style="margin-bottom: 12px;">📊 当前余额</div>
+                    <div class="card-title" style="margin-bottom: 12px;"><span class="title-icon icon-svg" data-icon="money"></span> 当前余额</div>
                     <div id="balanceList"></div>
                     <div class="settlement-list" id="settlementList"></div>
                 </div>
 
                 <div class="card">
-                    <div class="card-title">➕ 记一笔花费</div>
+                    <div class="card-title"><span class="title-icon icon-svg" data-icon="plus"></span> 记一笔花费</div>
                     <div class="form-row">
                         <div class="form-group"><label>用途</label><input type="text" id="expenseTitle" placeholder="如：晚餐"></div>
                         <div class="form-group"><label>金额</label><input type="number" id="expenseAmount" placeholder="0"></div>
@@ -1577,7 +1597,7 @@
                         <div class="people-chips" id="expenseSplitWith"></div>
                     </div>
                     <div class="text-right">
-                        <button class="btn btn-primary" onclick="saveExpense()">📝 记一笔</button>
+                        <button class="btn btn-primary" onclick="saveExpense()"><span class="icon-svg" data-icon="write"></span> 记一笔</button>
                     </div>
                 </div>
 
@@ -1587,7 +1607,7 @@
             <!-- 票夹 / 证件夹 -->
             <div class="page" id="page-wallet">
                 <div class="card">
-                    <div class="card-title">🎫 票夹 / 证件夹 <span class="subtitle">把重要票根都收好</span></div>
+                    <div class="card-title"><span class="title-icon icon-svg" data-icon="ticket"></span> 票夹 / 证件夹 <span class="subtitle">把重要票根都收好</span></div>
                     <div class="form-row">
                         <div class="form-group">
                             <label>票证名称</label>
@@ -1596,11 +1616,11 @@
                         <div class="form-group">
                             <label>类型</label>
                             <select id="walletType">
-                                <option value="transport">✈️ 交通票</option>
-                                <option value="stay">🏨 住宿订单</option>
-                                <option value="ticket">🎡 门票</option>
-                                <option value="document">🪪 证件</option>
-                                <option value="other">🧾 其他</option>
+                                <option value="transport">交通票</option>
+                                <option value="stay">住宿订单</option>
+                                <option value="ticket">门票</option>
+                                <option value="document">证件</option>
+                                <option value="other">其他</option>
                             </select>
                         </div>
                         <div class="form-group">
@@ -1609,14 +1629,14 @@
                         </div>
                     </div>
                     <div class="photo-upload" onclick="document.getElementById('walletPhoto').click()">
-                        <div class="upload-icon">📷</div>
+                        <div class="upload-icon"><span class="icon-svg" data-icon="camera"></span></div>
                         <div class="upload-text">上传票证照片</div>
                         <div class="upload-hint">机票、酒店订单、门票、证件都可以</div>
                         <input type="file" id="walletPhoto" accept="image/*" onchange="handleWalletPhotoUpload(this)">
                     </div>
                     <div class="photo-preview-grid" id="walletPhotos"></div>
                     <div class="text-right" style="margin-top: 18px;">
-                        <button class="btn btn-primary" onclick="saveWalletItem()">🎫 收入票夹</button>
+                        <button class="btn btn-primary" onclick="saveWalletItem()"><span class="icon-svg" data-icon="ticket"></span> 收入票夹</button>
                     </div>
                 </div>
                 <div class="wallet-grid" id="walletList"></div>
@@ -1625,7 +1645,7 @@
             <!-- 地图路线 -->
             <div class="page" id="page-map">
                 <div class="card">
-                    <div class="card-title">🗺️ 旅行地图 <span class="subtitle">我们的路线</span></div>
+                    <div class="card-title"><span class="title-icon icon-svg" data-icon="map"></span> 旅行地图 <span class="subtitle">我们的路线</span></div>
                     <div class="map-container" id="mapContainer">
                         <svg id="travelMap" width="100%" height="400" viewBox="0 0 800 400" preserveAspectRatio="xMidYMid meet">
                             <!-- 背景装饰 -->
@@ -1653,11 +1673,11 @@
 <!-- 底部导航（手机） -->
 <nav class="bottom-nav" id="bottomNav">
     <div class="bottom-nav-inner">
-        <div class="bottom-nav-item active" onclick="navTo('dashboard')" data-page="dashboard"><span class="icon">📔</span><span>首页</span></div>
-        <div class="bottom-nav-item" onclick="navTo('itinerary')" data-page="itinerary"><span class="icon">📅</span><span>行程</span></div>
-        <div class="bottom-nav-item" onclick="navTo('checklist')" data-page="checklist"><img class="icon-img" src="icons/checklist.png" alt="清单"><span>清单</span></div>
-        <div class="bottom-nav-item" onclick="navTo('expense')" data-page="expense"><img class="icon-img" src="icons/expense.png" alt="AA"><span>AA</span></div>
-        <div class="bottom-nav-item" onclick="toggleSidebar()" data-page="more"><span class="icon">☰</span><span>更多</span></div>
+        <div class="bottom-nav-item active" onclick="navTo('dashboard')" data-page="dashboard"><span class="icon-svg" data-icon="dashboard"></span><span>首页</span></div>
+        <div class="bottom-nav-item" onclick="navTo('itinerary')" data-page="itinerary"><span class="icon-svg" data-icon="calendar"></span><span>行程</span></div>
+        <div class="bottom-nav-item" onclick="navTo('checklist')" data-page="checklist"><span class="icon-svg" data-icon="checklist"></span><span>清单</span></div>
+        <div class="bottom-nav-item" onclick="navTo('expense')" data-page="expense"><span class="icon-svg" data-icon="expense"></span><span>AA</span></div>
+        <div class="bottom-nav-item" onclick="toggleSidebar()" data-page="more"><span class="icon-svg" data-icon="menu"></span><span>更多</span></div>
     </div>
 </nav>
 
@@ -1672,7 +1692,7 @@
 <div class="modal" id="shareModal">
     <div class="modal-content">
         <div class="modal-header">
-            <h3>👥 邀请旅伴</h3>
+            <h3><span class="title-icon icon-svg" data-icon="share"></span> 邀请旅伴</h3>
             <button class="close-btn" onclick="closeShareModal()">×</button>
         </div>
         <div class="form-group">
@@ -1684,9 +1704,9 @@
             <input type="text" id="modalRoomCode" placeholder="点击生成">
         </div>
         <div style="display:flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px;">
-            <button class="btn btn-primary" onclick="createShareCode(true)">🔑 生成共享码</button>
-            <button class="btn btn-secondary" onclick="copyShareCode(true)">📋 复制</button>
-            <button class="btn btn-success" onclick="joinRoom(true)">🔗 加入</button>
+            <button class="btn btn-primary" onclick="createShareCode(true)"><span class="icon-svg" data-icon="key"></span> 生成共享码</button>
+            <button class="btn btn-secondary" onclick="copyShareCode(true)"><span class="icon-svg" data-icon="copy"></span> 复制</button>
+            <button class="btn btn-success" onclick="joinRoom(true)"><span class="icon-svg" data-icon="link"></span> 加入</button>
         </div>
         <div class="share-code" id="modalShareCodeDisplay">点击“生成共享码”开始共享</div>
         <div id="modalQrcode" class="text-center"></div>
@@ -1697,7 +1717,7 @@
 <div class="modal" id="posterModal">
     <div class="modal-content poster-tool">
         <div class="modal-header">
-            <h3>🖼️ 生成旅行海报</h3>
+            <h3><span class="title-icon icon-svg" data-icon="poster"></span> 生成旅行海报</h3>
             <button class="close-btn" onclick="closePosterModal()">×</button>
         </div>
         <div class="form-group">
@@ -1713,8 +1733,8 @@
             点击生成预览海报
         </div>
         <div style="display: flex; gap: 10px; justify-content: center; margin-top: 16px;">
-            <button class="btn btn-primary" onclick="generatePoster()">✨ 生成海报</button>
-            <button class="btn btn-success" onclick="downloadPoster()">⬇️ 下载图片</button>
+            <button class="btn btn-primary" onclick="generatePoster()"><span class="icon-svg" data-icon="sparkle"></span> 生成海报</button>
+            <button class="btn btn-success" onclick="downloadPoster()"><span class="icon-svg" data-icon="download"></span> 下载图片</button>
         </div>
     </div>
 </div>
@@ -1754,7 +1774,7 @@ try {
     bc.onmessage = (e) => {
         if (e.data && e.data.type === 'sync' && e.data.roomCode === data.roomCode && e.data.roomCode) {
             mergeData(e.data.payload);
-            showToast('🔄 收到好友同步数据');
+            showToast('收到好友同步数据');
             renderAll();
         }
     };
@@ -1865,6 +1885,7 @@ function renderAll() {
     renderPeople();
     renderWallet();
     renderMap();
+    renderIcons();
 }
 
 function renderDashboard() {
@@ -1949,7 +1970,8 @@ function renderBudgetChart() {
         food: data.food.reduce((s, f) => s + (Number(f.cost) || 0), 0),
         attr: data.attractions.reduce((s, a) => s + (Number(a.cost) || 0), 0)
     };
-    const labels = { transport: '✈️ 交通', stay: '🏨 住宿', food: '🍜 餐饮', attr: '🎡 景点' };
+    const labels = { transport: '交通', stay: '住宿', food: '餐饮', attr: '景点' };
+    const labelIcons = { transport: 'plane', stay: 'stay', food: 'food', attr: 'attractions' };
     const colors = { transport: '#7c9885', stay: '#a78bfa', food: '#d98c7e', attr: '#8faec4' };
     const lightColors = { transport: '#e8f0ea', stay: '#f0ebf5', food: '#f9e6e3', attr: '#e8f1f6' };
 
@@ -1963,7 +1985,7 @@ function renderBudgetChart() {
         html += `
             <div class="budget-item">
                 <div class="budget-item-header">
-                    <span class="budget-item-name">${labels[k]}</span>
+                    <span class="budget-item-name"><span class="icon-svg" data-icon="${labelIcons[k]}"></span> ${labels[k]}</span>
                     <span class="budget-item-amount">¥${actual[k]} / ¥${budget}</span>
                 </div>
                 <div class="progress-bar" style="background: ${lightColors[k]};">
@@ -1975,6 +1997,7 @@ function renderBudgetChart() {
     });
     html += '</div>';
     document.getElementById('budgetChart').innerHTML = html;
+    renderIcons();
 }
 
 function renderLocationSelects() {
@@ -1992,26 +2015,26 @@ function renderLocationSelects() {
 function renderLocations() {
     const container = document.getElementById('locationsList');
     if (data.locations.length === 0) {
-        container.innerHTML = emptyCard('还没有地点，添加第一站吧！', '🐑');
+        container.innerHTML = emptyCard('还没有地点，添加第一站吧！', 'sheep');
         return;
     }
     container.innerHTML = data.locations.map(l => `
         <div class="item-card">
             <div class="item-image">
-                ${l.photos?.length ? `<img src="${l.photos[0]}" style="width:100%;height:100%;object-fit:cover;">` : '📍 暂无照片'}
+                ${l.photos?.length ? `<img src="${l.photos[0]}" style="width:100%;height:100%;object-fit:cover;">` : '<span class="icon-svg" data-icon="location"></span> 暂无照片'}
                 <div class="item-image-badge">${formatDate(l.date)} - ${formatDate(l.endDate)}</div>
             </div>
             <div class="item-body">
                 <div class="item-header">
                     <div>
                         <div class="item-title">${l.name}</div>
-                        <div class="item-meta">🏠 ${l.base || '未填写住宿'}</div>
+                        <div class="item-meta"><span class="icon-svg" data-icon="home" style="width:14px;height:14px;"></span> ${l.base || '未填写住宿'}</div>
                     </div>
                 </div>
                 <div class="item-desc">${l.note || '无备注'}</div>
                 <div class="item-actions">
-                    <button class="btn btn-sm btn-secondary" onclick="editLocation('${l.id}')">✏️ 编辑</button>
-                    <button class="btn btn-sm btn-danger" onclick="deleteItem('locations','${l.id}')">🗑️ 删除</button>
+                    <button class="btn btn-sm btn-secondary" onclick="editLocation('${l.id}')"><span class="icon-svg" data-icon="edit"></span> 编辑</button>
+                    <button class="btn btn-sm btn-danger" onclick="deleteItem('locations','${l.id}')"><span class="icon-svg" data-icon="delete"></span> 删除</button>
                 </div>
             </div>
         </div>
@@ -2021,26 +2044,26 @@ function renderLocations() {
 function renderFood() {
     const container = document.getElementById('foodList');
     if (data.food.length === 0) {
-        container.innerHTML = emptyCard('还没有美食记录。', '🍜');
+        container.innerHTML = emptyCard('还没有美食记录。', 'food');
         return;
     }
     container.innerHTML = data.food.map(f => `
         <div class="item-card">
             <div class="item-image">
-                ${f.photos?.length ? `<img src="${f.photos[0]}" style="width:100%;height:100%;object-fit:cover;">` : '🍜 暂无照片'}
+                ${f.photos?.length ? `<img src="${f.photos[0]}" style="width:100%;height:100%;object-fit:cover;">` : '<span class="icon-svg" data-icon="food"></span> 暂无照片'}
             </div>
             <div class="item-body">
                 <div class="item-header">
                     <div>
                         <div class="item-title">${f.name}</div>
-                        <div class="item-meta">📍 ${getLocName(f.location)} · 人均 ¥${f.cost || 0}</div>
+                        <div class="item-meta"><span class="icon-svg" data-icon="location" style="width:14px;height:14px;"></span> ${getLocName(f.location)} · 人均 ¥${f.cost || 0}</div>
                     </div>
-                    <div class="stars">${'⭐'.repeat(f.rate || 0)}</div>
+                    <div class="stars">${renderStars(f.rate || 0)}</div>
                 </div>
                 <div class="item-desc">${f.note || '无备注'}</div>
                 <div class="item-actions">
-                    <button class="btn btn-sm btn-secondary" onclick="editFood('${f.id}')">✏️ 编辑</button>
-                    <button class="btn btn-sm btn-danger" onclick="deleteItem('food','${f.id}')">🗑️ 删除</button>
+                    <button class="btn btn-sm btn-secondary" onclick="editFood('${f.id}')"><span class="icon-svg" data-icon="edit"></span> 编辑</button>
+                    <button class="btn btn-sm btn-danger" onclick="deleteItem('food','${f.id}')"><span class="icon-svg" data-icon="delete"></span> 删除</button>
                 </div>
             </div>
         </div>
@@ -2050,13 +2073,13 @@ function renderFood() {
 function renderTransport() {
     const container = document.getElementById('transportList');
     if (data.transport.length === 0) {
-        container.innerHTML = emptyCard('还没有交通安排。', '🚄');
+        container.innerHTML = emptyCard('还没有交通安排。', 'transport');
         return;
     }
     container.innerHTML = data.transport.map(t => `
         <div class="item-card">
             <div class="item-image" style="background: linear-gradient(135deg, #e8f1f6 0%, #f0f5f9 100%); display:flex; align-items:center; justify-content:center; font-size:52px;">
-                ${transportIcon(t.type)}
+                <span class="icon-svg" data-icon="${transportIconName(t.type)}" style="width:56px;height:56px;"></span>
             </div>
             <div class="item-body">
                 <div class="item-header">
@@ -2066,13 +2089,13 @@ function renderTransport() {
                     </div>
                 </div>
                 <div class="item-desc">
-                    🛫 出发：${formatDateTime(t.start)}<br>
-                    🛬 到达：${formatDateTime(t.end)}<br>
+                    <span class="icon-svg" data-icon="clock" style="width:14px;height:14px;"></span> 出发：${formatDateTime(t.start)}<br>
+                    <span class="icon-svg" data-icon="clock" style="width:14px;height:14px;"></span> 到达：${formatDateTime(t.end)}<br>
                     ${t.note || ''}
                 </div>
                 <div class="item-actions">
-                    <button class="btn btn-sm btn-secondary" onclick="editTransport('${t.id}')">✏️ 编辑</button>
-                    <button class="btn btn-sm btn-danger" onclick="deleteItem('transport','${t.id}')">🗑️ 删除</button>
+                    <button class="btn btn-sm btn-secondary" onclick="editTransport('${t.id}')"><span class="icon-svg" data-icon="edit"></span> 编辑</button>
+                    <button class="btn btn-sm btn-danger" onclick="deleteItem('transport','${t.id}')"><span class="icon-svg" data-icon="delete"></span> 删除</button>
                 </div>
             </div>
         </div>
@@ -2082,30 +2105,30 @@ function renderTransport() {
 function renderAttractions() {
     const container = document.getElementById('attractionsList');
     if (data.attractions.length === 0) {
-        container.innerHTML = emptyCard('还没有景点安排。', '🎡');
+        container.innerHTML = emptyCard('还没有景点安排。', 'attractions');
         return;
     }
     container.innerHTML = data.attractions.map(a => `
         <div class="item-card">
             <div class="item-image">
-                ${a.photos?.length ? `<img src="${a.photos[0]}" style="width:100%;height:100%;object-fit:cover;">` : '🎡 暂无照片'}
+                ${a.photos?.length ? `<img src="${a.photos[0]}" style="width:100%;height:100%;object-fit:cover;">` : '<span class="icon-svg" data-icon="attractions"></span> 暂无照片'}
                 <div class="item-image-badge">${formatDate(a.date)}</div>
             </div>
             <div class="item-body">
                 <div class="item-header">
                     <div>
                         <div class="item-title">${a.name}</div>
-                        <div class="item-meta">📍 ${getLocName(a.location)}</div>
+                        <div class="item-meta"><span class="icon-svg" data-icon="location" style="width:14px;height:14px;"></span> ${getLocName(a.location)}</div>
                     </div>
-                    <div class="stars">${'⭐'.repeat(a.rate || 0)}</div>
+                    <div class="stars">${renderStars(a.rate || 0)}</div>
                 </div>
                 <div class="item-desc">
-                    🎫 门票 ¥${a.cost || 0} · ⏱️ 预计 ${a.duration || '未知'}<br>
+                    <span class="icon-svg" data-icon="ticket" style="width:14px;height:14px;"></span> 门票 ¥${a.cost || 0} · <span class="icon-svg" data-icon="clock" style="width:14px;height:14px;"></span> 预计 ${a.duration || '未知'}<br>
                     ${a.note || '无备注'}
                 </div>
                 <div class="item-actions">
-                    <button class="btn btn-sm btn-secondary" onclick="editAttraction('${a.id}')">✏️ 编辑</button>
-                    <button class="btn btn-sm btn-danger" onclick="deleteItem('attractions','${a.id}')">🗑️ 删除</button>
+                    <button class="btn btn-sm btn-secondary" onclick="editAttraction('${a.id}')"><span class="icon-svg" data-icon="edit"></span> 编辑</button>
+                    <button class="btn btn-sm btn-danger" onclick="deleteItem('attractions','${a.id}')"><span class="icon-svg" data-icon="delete"></span> 删除</button>
                 </div>
             </div>
         </div>
@@ -2115,7 +2138,7 @@ function renderAttractions() {
 function renderStay() {
     const container = document.getElementById('stayList');
     if (data.stay.length === 0) {
-        container.innerHTML = emptyCard('还没有住宿安排。', '🏨');
+        container.innerHTML = emptyCard('还没有住宿安排。', 'stay');
         return;
     }
     container.innerHTML = data.stay.map(s => {
@@ -2123,24 +2146,24 @@ function renderStay() {
         return `
         <div class="item-card">
             <div class="item-image">
-                ${s.photos?.length ? `<img src="${s.photos[0]}" style="width:100%;height:100%;object-fit:cover;">` : '🏨 暂无照片'}
+                ${s.photos?.length ? `<img src="${s.photos[0]}" style="width:100%;height:100%;object-fit:cover;">` : '<span class="icon-svg" data-icon="stay"></span> 暂无照片'}
                 <div class="item-image-badge">${s.type}</div>
             </div>
             <div class="item-body">
                 <div class="item-header">
                     <div>
                         <div class="item-title">${s.name}</div>
-                        <div class="item-meta">📍 ${getLocName(s.location)}</div>
+                        <div class="item-meta"><span class="icon-svg" data-icon="location" style="width:14px;height:14px;"></span> ${getLocName(s.location)}</div>
                     </div>
                 </div>
                 <div class="item-desc">
-                    📅 ${formatDate(s.checkin)} - ${formatDate(s.checkout)} · ${nights}晚<br>
-                    💰 ¥${s.price || 0}/晚 · 合计 ¥${(s.price || 0) * nights}<br>
-                    ${s.platform ? '📱 预订：' + s.platform + '<br>' : ''}${s.note || ''}
+                    <span class="icon-svg" data-icon="calendar" style="width:14px;height:14px;"></span> ${formatDate(s.checkin)} - ${formatDate(s.checkout)} · ${nights}晚<br>
+                    <span class="icon-svg" data-icon="money" style="width:14px;height:14px;"></span> ¥${s.price || 0}/晚 · 合计 ¥${(s.price || 0) * nights}<br>
+                    ${s.platform ? '<span class="icon-svg" data-icon="phone" style="width:14px;height:14px;"></span> 预订：' + s.platform + '<br>' : ''}${s.note || ''}
                 </div>
                 <div class="item-actions">
-                    <button class="btn btn-sm btn-secondary" onclick="editStay('${s.id}')">✏️ 编辑</button>
-                    <button class="btn btn-sm btn-danger" onclick="deleteItem('stay','${s.id}')">🗑️ 删除</button>
+                    <button class="btn btn-sm btn-secondary" onclick="editStay('${s.id}')"><span class="icon-svg" data-icon="edit"></span> 编辑</button>
+                    <button class="btn btn-sm btn-danger" onclick="deleteItem('stay','${s.id}')"><span class="icon-svg" data-icon="delete"></span> 删除</button>
                 </div>
             </div>
         </div>
@@ -2219,17 +2242,17 @@ function getItineraryDays() {
     // 填充事件
     days.forEach(day => {
         data.locations.forEach(loc => {
-            if (loc.date === day.date) day.events.push({ type: 'location', time: '', title: `抵达 ${loc.name}`, desc: loc.base || '新一站开始', icon: '📍' });
+            if (loc.date === day.date) day.events.push({ type: 'location', time: '', title: `抵达 ${loc.name}`, desc: loc.base || '新一站开始', icon: 'location' });
         });
         data.transport.forEach(t => {
-            if (t.start && t.start.split('T')[0] === day.date) day.events.push({ type: 'transport', time: formatTime(t.start), title: `${t.type} ${t.from} → ${t.to}`, desc: t.no || '', icon: transportIcon(t.type) });
+            if (t.start && t.start.split('T')[0] === day.date) day.events.push({ type: 'transport', time: formatTime(t.start), title: `${t.type} ${t.from} → ${t.to}`, desc: t.no || '', icon: transportIconName(t.type) });
         });
         data.attractions.forEach(a => {
-            if (a.date === day.date) day.events.push({ type: 'attraction', time: '', title: `游玩 ${a.name}`, desc: `预计 ${a.duration || '未知'} · ¥${a.cost || 0}`, icon: '🎡' });
+            if (a.date === day.date) day.events.push({ type: 'attraction', time: '', title: `游玩 ${a.name}`, desc: `预计 ${a.duration || '未知'} · ¥${a.cost || 0}`, icon: 'attractions' });
         });
         data.food.forEach(f => {
             const loc = data.locations.find(l => l.id === f.location);
-            if (loc && loc.date === day.date) day.events.push({ type: 'food', time: '', title: `美食 ${f.name}`, desc: `人均 ¥${f.cost || 0} · ${f.rate ? '⭐'.repeat(f.rate) : ''}`, icon: '🍜' });
+            if (loc && loc.date === day.date) day.events.push({ type: 'food', time: '', title: `美食 ${f.name}`, desc: `人均 ¥${f.cost || 0} · ${f.rate ? '⭐'.repeat(f.rate) : ''}`, icon: 'food' });
         });
         day.events.sort((a, b) => (a.time || '99:99').localeCompare(b.time || '99:99'));
     });
@@ -2242,7 +2265,7 @@ function renderItinerary() {
     if (days.length === 0) {
         container.innerHTML = `
             <div class="empty-state">
-                <div class="icon">📅</div>
+                <div class="icon-svg" data-icon="calendar"></div>
                 <p>还没有行程日，先去“地点”添加旅行站点吧~</p>
             </div>
         `;
@@ -2260,7 +2283,7 @@ function renderItinerary() {
             ${day.events.length === 0 ? '<div class="day-event"><div class="day-event-body"><div class="day-event-desc">这一天还没有安排~</div></div></div>' : day.events.map(e => `
                 <div class="day-event">
                     <div class="day-event-time">${e.time || '全天'}</div>
-                    <div class="day-event-icon">${e.icon}</div>
+                    <div class="day-event-icon"><span class="icon-svg" data-icon="${e.icon}"></span></div>
                     <div class="day-event-body">
                         <div class="day-event-title">${e.title}</div>
                         <div class="day-event-desc">${e.desc}</div>
@@ -2288,7 +2311,7 @@ function formatTime(d) {
 
 // ================= 行李清单 =================
 function renderChecklist() {
-    const categories = { '证件':'📋', '衣物':'👕', '电子':'🔌', '洗漱':'🧴', '药品':'💊', '其他':'🧳' };
+    const categories = { '证件':'doc', '衣物':'clothing', '电子':'electronics', '洗漱':'toiletries', '药品':'medicine', '其他':'luggage' };
     const grouped = {};
     data.checklist.forEach(item => {
         if (!grouped[item.category]) grouped[item.category] = [];
@@ -2310,25 +2333,26 @@ function renderChecklist() {
     if (total === 0) {
         container.innerHTML = `
             <div class="empty-state">
-                <div class="icon">✅</div>
+                <div class="icon-svg" data-icon="checklist"></div>
                 <p>清单还是空的，添加第一件物品吧~</p>
             </div>
         `;
-        return;
+    } else {
+        container.innerHTML = Object.keys(grouped).map(cat => `
+            <div class="checklist-category">
+                <div class="checklist-category-title"><span class="icon-svg" data-icon="${categories[cat] || 'luggage'}"></span> ${cat}</div>
+                ${grouped[cat].map(item => `
+                    <div class="checklist-item ${item.checked ? 'checked' : ''}">
+                        <div class="checklist-checkbox" onclick="toggleChecklistItem('${item.id}')">${item.checked ? '✓' : ''}</div>
+                        <div class="checklist-name">${item.name}</div>
+                        <div class="checklist-assignee">${item.assignee || '未分配'}</div>
+                        <button class="btn btn-sm btn-ghost" onclick="deleteChecklistItem('${item.id}')"><span class="icon-svg" data-icon="delete"></span></button>
+                    </div>
+                `).join('')}
+            </div>
+        `).join('');
     }
-    container.innerHTML = Object.keys(grouped).map(cat => `
-        <div class="checklist-category">
-            <div class="checklist-category-title">${categories[cat] || '📦'} ${cat}</div>
-            ${grouped[cat].map(item => `
-                <div class="checklist-item ${item.checked ? 'checked' : ''}">
-                    <div class="checklist-checkbox" onclick="toggleChecklistItem('${item.id}')">${item.checked ? '✓' : ''}</div>
-                    <div class="checklist-name">${item.name}</div>
-                    <div class="checklist-assignee">${item.assignee || '未分配'}</div>
-                    <button class="btn btn-sm btn-ghost" onclick="deleteChecklistItem('${item.id}')">🗑️</button>
-                </div>
-            `).join('')}
-        </div>
-    `).join('');
+    renderIcons();
 }
 
 function saveChecklistItem() {
@@ -2441,7 +2465,7 @@ function renderExpense() {
         list.innerHTML = `
             <div class="card">
                 <div class="empty-state">
-                    <div class="icon">💰</div>
+                    <div class="icon-svg" data-icon="money"></div>
                     <p>还没有花费记录，记第一笔吧~</p>
                 </div>
             </div>
@@ -2458,7 +2482,7 @@ function renderExpense() {
                     <div class="expense-amount">¥${e.amount}</div>
                 </div>
                 <div class="item-actions" style="margin-top: 10px; padding-top: 10px;">
-                    <button class="btn btn-sm btn-danger" onclick="deleteExpense('${e.id}')">🗑️ 删除</button>
+                    <button class="btn btn-sm btn-danger" onclick="deleteExpense('${e.id}')"><span class="icon-svg" data-icon="delete"></span> 删除</button>
                 </div>
             </div>
         `).join('');
@@ -2481,12 +2505,13 @@ function renderExpense() {
     const settlements = calculateSettlements(balances);
     const settlementList = document.getElementById('settlementList');
     if (settlements.length === 0) {
-        settlementList.innerHTML = '<div style="text-align:center; color: var(--ink-light); margin-top: 10px; font-size: 13px;">🎉 大家已经平账啦~</div>';
+        settlementList.innerHTML = '<div style="text-align:center; color: var(--ink-light); margin-top: 10px; font-size: 13px;">大家已经平账啦~</div>';
     } else {
-        settlementList.innerHTML = '<div style="font-family: \'ZCOOL KuaiLe\', cursive; color: var(--brown-dark); margin-bottom: 8px;">💡 结算建议：</div>' + settlements.map(s => `
+        settlementList.innerHTML = '<div style="font-family: \'ZCOOL KuaiLe\', cursive; color: var(--brown-dark); margin-bottom: 8px;">结算建议：</div>' + settlements.map(s => `
             <div class="settlement-item">${s.from} 给 ${s.to} ¥${s.amount.toFixed(2)}</div>
         `).join('');
     }
+    renderIcons();
 }
 
 function calculateBalances() {
@@ -2619,26 +2644,28 @@ function deleteWalletItem(id) {
 function renderWallet() {
     const container = document.getElementById('walletList');
     if (data.wallet.length === 0) {
-        container.innerHTML = emptyCard('票夹还是空的，把机票、门票、证件都收进来吧~', '🎫');
-        return;
-    }
-    const typeNames = { transport: '交通票', stay: '住宿订单', ticket: '门票', document: '证件', other: '其他' };
-    const sorted = [...data.wallet].sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
-    container.innerHTML = sorted.map(w => `
-        <div class="wallet-card">
-            <div class="wallet-image" onclick="${w.photo ? `openImage('${w.photo}')` : ''}">
-                ${w.photo ? `<img src="${w.photo}" style="width:100%;height:100%;object-fit:cover;">` : '🎫 暂无照片'}
-            </div>
-            <div class="wallet-body">
-                <span class="wallet-type-badge ${w.type}">${typeNames[w.type]}</span>
-                <div class="wallet-title">${w.name}</div>
-                <div class="wallet-meta">${formatDate(w.date)}</div>
-                <div class="item-actions" style="margin-top: 10px; padding-top: 10px;">
-                    <button class="btn btn-sm btn-danger" onclick="deleteWalletItem('${w.id}')">🗑️ 删除</button>
+        container.innerHTML = emptyCard('票夹还是空的，把机票、门票、证件都收进来吧~', 'ticket');
+    } else {
+        const typeNames = { transport: '交通票', stay: '住宿订单', ticket: '门票', document: '证件', other: '其他' };
+        const typeIcons = { transport: 'plane', stay: 'stay', ticket: 'attractions', document: 'doc', other: 'luggage' };
+        const sorted = [...data.wallet].sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+        container.innerHTML = sorted.map(w => `
+            <div class="wallet-card">
+                <div class="wallet-image" onclick="${w.photo ? `openImage('${w.photo}')` : ''}">
+                    ${w.photo ? `<img src="${w.photo}" style="width:100%;height:100%;object-fit:cover;">` : '<span class="icon-svg" data-icon="ticket"></span> 暂无照片'}
+                </div>
+                <div class="wallet-body">
+                    <span class="wallet-type-badge ${w.type}"><span class="icon-svg" data-icon="${typeIcons[w.type] || 'luggage'}"></span> ${typeNames[w.type]}</span>
+                    <div class="wallet-title">${w.name}</div>
+                    <div class="wallet-meta">${formatDate(w.date)}</div>
+                    <div class="item-actions" style="margin-top: 10px; padding-top: 10px;">
+                        <button class="btn btn-sm btn-danger" onclick="deleteWalletItem('${w.id}')"><span class="icon-svg" data-icon="delete"></span> 删除</button>
+                    </div>
                 </div>
             </div>
-        </div>
-    `).join('');
+        `).join('');
+    }
+    renderIcons();
 }
 
 // ================= 旅行地图 =================
@@ -2746,7 +2773,7 @@ function generatePoster() {
         ctx.fillStyle = '#4a4036';
         ctx.font = '24px "ZCOOL KuaiLe", cursive';
         ctx.textAlign = 'left';
-        ctx.fillText('📍 路线', 80, 250);
+        ctx.fillText('路线', 80, 250);
 
         locs.forEach((loc, i) => {
             const y = 300 + i * 70;
@@ -2770,7 +2797,7 @@ function generatePoster() {
     ctx.fillStyle = '#4a4036';
     ctx.font = '24px "ZCOOL KuaiLe", cursive';
     ctx.textAlign = 'left';
-    ctx.fillText('📊 行程概览', 80, statsY);
+    ctx.fillText('行程概览', 80, statsY);
 
     const days = data.locations.reduce((sum, l) => {
         if (!l.date || !l.endDate) return sum;
@@ -2778,11 +2805,11 @@ function generatePoster() {
     }, 0);
     ctx.font = '22px "ZCOOL KuaiLe", cursive';
     ctx.fillStyle = '#7d7268';
-    ctx.fillText(`🗓️ ${days || 0} 天`, 100, statsY + 45);
-    ctx.fillText(`📍 ${data.locations.length} 个地点`, 100, statsY + 80);
-    ctx.fillText(`🍜 ${data.food.length} 个美食`, 100, statsY + 115);
-    ctx.fillText(`🎡 ${data.attractions.length} 个景点`, 360, statsY + 45);
-    ctx.fillText(`💰 ¥${calcTotalCost().toLocaleString()} 预算`, 360, statsY + 80);
+    ctx.fillText(`${days || 0} 天`, 100, statsY + 45);
+    ctx.fillText(`${data.locations.length} 个地点`, 100, statsY + 80);
+    ctx.fillText(`${data.food.length} 个美食`, 100, statsY + 115);
+    ctx.fillText(`${data.attractions.length} 个景点`, 360, statsY + 45);
+    ctx.fillText(`¥${calcTotalCost().toLocaleString()} 预算`, 360, statsY + 80);
 
     ctx.fillStyle = '#7c9885';
     ctx.font = '20px "ZCOOL KuaiLe", cursive';
@@ -2863,7 +2890,7 @@ function checkReadOnlyMode() {
         const viewData = JSON.parse(decodeURIComponent(atob(viewCode)));
         data = { ...data, ...viewData };
         document.getElementById('readonlyBanner').classList.remove('hidden');
-        document.getElementById('readonlyTitle').textContent = `👀 这是 ${data.userName || '某位旅人'} 的旅行日志`;
+        document.getElementById('readonlyTitle').textContent = `这是 ${data.userName || '某位旅人'} 的旅行日志`;
         document.querySelectorAll('.topbar-actions').forEach(el => el.classList.add('readonly-hide'));
         document.getElementById('bottomNav').classList.add('readonly-hide');
         document.getElementById('menuToggle').classList.add('readonly-hide');
@@ -2886,17 +2913,21 @@ function createMyOwn() {
 }
 
 function emptyCard(text, icon) {
-    return `<div class="item-card"><div class="empty-state"><div class="icon">${icon}</div><p>${text}</p></div></div>`;
+    return `<div class="item-card"><div class="empty-state"><div class="icon-svg" data-icon="${icon}"></div><p>${text}</p></div></div>`;
 }
 
-function transportIcon(type) {
-    const map = { '飞机':'✈️','高铁':'🚄','火车':'🚂','大巴':'🚌','租车':'🚗','网约车':'🚕','地铁':'🚇','船':'🚢','其他':'🛴' };
-    return map[type] || '🚗';
+function transportIconName(type) {
+    const map = { '飞机':'plane','高铁':'train','火车':'train','大巴':'bus','租车':'car','网约车':'taxi','地铁':'metro','船':'ship','其他':'scooter' };
+    return map[type] || 'car';
 }
 
 function getLocName(id) {
     const l = data.locations.find(x => x.id === id);
     return l ? l.name : '未指定';
+}
+
+function renderStars(count) {
+    return Array.from({ length: count }, () => '<span class="icon-svg" data-icon="star"></span>').join('');
 }
 
 function formatDate(d) {
@@ -2911,6 +2942,100 @@ function formatDateTime(d) {
     const date = new Date(d);
     if (isNaN(date)) return d;
     return `${date.getMonth()+1}月${date.getDate()}日 ${String(date.getHours()).padStart(2,'0')}:${String(date.getMinutes()).padStart(2,'0')}`;
+}
+
+// ================= 手绘 SVG 图标 =================
+function getIconSvg(name, opts = {}) {
+    const stroke = opts.stroke || '#a67c52';
+    const fillBrown = opts.fillBrown || '#f0e6d8';
+    const fillBlue = opts.fillBlue || '#e8f1f6';
+    const fillSage = opts.fillSage || '#e8f0ea';
+    const fillCoral = opts.fillCoral || '#f9e6e3';
+    const fillYellow = opts.fillYellow || '#fffbeb';
+    const fillPurple = opts.fillPurple || '#f0ebf5';
+    const common = `stroke="${stroke}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"`;
+    const thin = `stroke="${stroke}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"`;
+
+    const icons = {
+        // 导航核心
+        dashboard: `<svg viewBox="0 0 48 48"><rect x="8" y="6" width="32" height="36" rx="4" fill="white" ${common}/><path d="M8 16 L40 16" ${common}/><line x1="14" y1="24" x2="20" y2="24" ${thin}/><line x1="14" y1="30" x2="26" y2="30" ${thin}/><path d="M30 24 L36 24 L33 32 Z" fill="${fillSage}" ${common}/></svg>`,
+        location: `<svg viewBox="0 0 48 48"><path d="M24 6 C14 6 10 15 10 21 C10 31 24 42 24 42 C24 42 38 31 38 21 C38 15 34 6 24 6 Z" fill="${fillCoral}" ${common}/><circle cx="24" cy="20" r="6" fill="white" ${common}/></svg>`,
+        food: `<svg viewBox="0 0 48 48"><path d="M10 20 Q10 38 24 38 Q38 38 38 20" fill="${fillYellow}" ${common}/><path d="M14 24 Q14 34 24 34 Q34 34 34 24" fill="white" ${common}/><path d="M18 18 Q24 26 30 18" fill="none" ${common}/><path d="M22 14 Q24 20 26 14" fill="none" ${common}/><line x1="32" y1="8" x2="38" y2="20" ${common}/><line x1="38" y1="8" x2="44" y2="18" ${common}/></svg>`,
+        transport: `<svg viewBox="0 0 48 48"><rect x="6" y="14" width="36" height="18" rx="5" fill="${fillBlue}" ${common}/><rect x="10" y="18" width="8" height="6" rx="1" fill="white" ${common}/><rect x="22" y="18" width="8" height="6" rx="1" fill="white" ${common}/><circle cx="13" cy="35" r="3" fill="${fillYellow}" ${common}/><circle cx="35" cy="35" r="3" fill="${fillYellow}" ${common}/><line x1="4" y1="38" x2="44" y2="38" ${common}/><line x1="42" y1="22" x2="46" y2="18" ${common}/></svg>`,
+        attractions: `<svg viewBox="0 0 48 48"><path d="M6 38 L18 16 L28 28 L38 12 L42 38 Z" fill="${fillSage}" ${common}/><path d="M6 38 L42 38" ${common}/><line x1="30" y1="8" x2="30" y2="18" ${common}/><path d="M24 12 L30 8 L36 12" fill="${fillYellow}" ${common}/></svg>`,
+        stay: `<svg viewBox="0 0 48 48"><rect x="6" y="18" width="26" height="24" rx="2" fill="${fillBrown}" ${common}/><rect x="10" y="26" width="8" height="12" rx="1" fill="white" ${common}/><rect x="24" y="28" width="6" height="6" rx="1" fill="white" ${common}/><path d="M6 18 L19 8 L32 18" fill="${fillYellow}" ${common}/><rect x="30" y="22" width="14" height="20" rx="2" fill="${fillBlue}" ${common}/><rect x="34" y="30" width="10" height="8" rx="1" fill="white" ${common}/></svg>`,
+        itinerary: `<svg viewBox="0 0 48 48"><rect x="8" y="6" width="32" height="36" rx="4" fill="white" ${common}/><path d="M8 16 L40 16" ${common}/><line x1="14" y1="10" x2="18" y2="10" ${thin}/><line x1="30" y1="10" x2="34" y2="10" ${thin}/><rect x="12" y="22" width="10" height="8" rx="2" fill="${fillSage}" ${common}/><line x1="28" y1="24" x2="36" y2="24" ${thin}/><line x1="28" y1="30" x2="34" y2="30" ${thin}/></svg>`,
+        calendar: `<svg viewBox="0 0 48 48"><rect x="6" y="8" width="36" height="32" rx="4" fill="white" ${common}/><path d="M6 18 L42 18" ${common}/><line x1="14" y1="4" x2="14" y2="12" ${common}/><line x1="34" y1="4" x2="34" y2="12" ${common}/><rect x="12" y="24" width="8" height="6" rx="1" fill="${fillSage}" ${common}/><rect x="28" y="24" width="8" height="6" rx="1" fill="${fillCoral}" ${common}/></svg>`,
+        map: `<svg viewBox="0 0 48 48"><path d="M6 12 L18 8 L30 14 L42 8 L42 36 L30 40 L18 34 L6 40 Z" fill="${fillSage}" ${common}/><line x1="18" y1="8" x2="18" y2="34" ${common}/><line x1="30" y1="14" x2="30" y2="40" ${common}/><path d="M24 18 C20 18 18 21 18 24 C18 29 24 34 24 34 C24 34 30 29 30 24 C30 21 28 18 24 18 Z" fill="white" ${common}/><circle cx="24" cy="23" r="2.5" fill="${fillCoral}" stroke="none"/></svg>`,
+        checklist: `<svg viewBox="0 0 48 48"><rect x="6" y="10" width="18" height="28" rx="3" fill="${fillBlue}" ${common}/><circle cx="11" cy="19" r="2" fill="${fillYellow}" ${common}/><line x1="16" y1="19" x2="20" y2="19" ${common}/><circle cx="11" cy="28" r="2" fill="${fillYellow}" ${common}/><line x1="16" y1="28" x2="20" y2="28" ${common}/><circle cx="11" cy="37" r="2" fill="${fillYellow}" ${common}/><rect x="26" y="14" width="16" height="22" rx="2" fill="${fillSage}" ${common}/><path d="M30 22 L34 26 L40 18" fill="none" stroke="${stroke}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+        expense: `<svg viewBox="0 0 48 48"><rect x="4" y="16" width="24" height="18" rx="3" fill="${fillCoral}" ${common}/><circle cx="16" cy="25" r="5" fill="${fillYellow}" ${common}/><text x="16" y="28" text-anchor="middle" font-size="10" fill="${stroke}" font-family="sans-serif" font-weight="bold">¥</text><circle cx="34" cy="14" r="5" fill="${fillBlue}" ${common}/><circle cx="38" cy="30" r="5" fill="${fillSage}" ${common}/><line x1="30" y1="22" x2="26" y2="26" ${common}/></svg>`,
+        wallet: `<svg viewBox="0 0 48 48"><rect x="6" y="12" width="36" height="26" rx="4" fill="${fillYellow}" ${common}/><path d="M6 18 L42 18" ${common}/><rect x="28" y="22" width="12" height="10" rx="2" fill="white" ${common}/><circle cx="34" cy="27" r="2" fill="${fillCoral}" stroke="none"/></svg>`,
+        ticket: `<svg viewBox="0 0 48 48"><path d="M8 10 L40 10 L40 38 L8 38 Z" fill="white" ${common}/><path d="M8 18 L40 18" ${common}/><circle cx="16" cy="14" r="2" fill="${fillCoral}" ${common}/><path d="M14 28 L20 34 L34 22" fill="none" stroke="${stroke}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 22 Q8 22 8 26 L8 30 Q8 34 4 34" fill="${fillSage}" ${common}/><path d="M44 22 Q40 22 40 26 L40 30 Q40 34 44 34" fill="${fillSage}" ${common}/></svg>`,
+        gallery: `<svg viewBox="0 0 48 48"><rect x="4" y="12" width="22" height="26" rx="2" fill="white" ${common}/><rect x="8" y="16" width="14" height="14" fill="${fillSage}" ${common}/><circle cx="12" cy="20" r="2" fill="${fillYellow}" ${common}/><path d="M8 30 L13 24 L18 30" fill="none" ${common}/><rect x="22" y="8" width="20" height="26" rx="2" fill="white" ${common}/><rect x="26" y="12" width="12" height="14" fill="${fillBlue}" ${common}/><circle cx="30" cy="16" r="1.5" fill="${fillYellow}" ${common}/><path d="M26 26 L30 20 L34 26" fill="none" ${common}/></svg>`,
+        share: `<svg viewBox="0 0 48 48"><circle cx="14" cy="16" r="6" fill="${fillBlue}" ${common}/><circle cx="34" cy="10" r="5" fill="${fillSage}" ${common}/><circle cx="34" cy="34" r="5" fill="${fillCoral}" ${common}/><line x1="19" y1="18" x2="30" y2="13" ${common}/><line x1="19" y1="22" x2="30" y2="31" ${common}/></svg>`,
+        camera: `<svg viewBox="0 0 48 48"><rect x="6" y="14" width="36" height="26" rx="4" fill="${fillBlue}" ${common}/><path d="M18 14 L22 8 L26 8 L30 14" fill="${fillYellow}" ${common}/><circle cx="24" cy="26" r="8" fill="white" ${common}/><circle cx="24" cy="26" r="5" fill="${fillSage}" ${common}/><circle cx="36" cy="18" r="2" fill="${fillYellow}" ${common}/></svg>`,
+        money: `<svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="16" fill="${fillYellow}" ${common}/><text x="24" y="29" text-anchor="middle" font-size="16" fill="${stroke}" font-family="sans-serif" font-weight="bold">¥</text></svg>`,
+        timeline: `<svg viewBox="0 0 48 48"><line x1="24" y1="6" x2="24" y2="42" ${common}/><circle cx="24" cy="12" r="5" fill="${fillCoral}" ${common}/><circle cx="24" cy="28" r="5" fill="${fillSage}" ${common}/><circle cx="24" cy="40" r="4" fill="${fillBlue}" ${common}/><line x1="24" y1="12" x2="36" y2="12" ${common}/><line x1="24" y1="28" x2="10" y2="28" ${common}/></svg>`,
+        tools: `<svg viewBox="0 0 48 48"><rect x="6" y="12" width="36" height="24" rx="3" fill="${fillBrown}" ${common}/><path d="M6 18 L42 18" ${common}/><circle cx="16" cy="27" r="3" fill="${fillYellow}" ${common}/><line x1="24" y1="24" x2="34" y2="24" ${thin}/><line x1="24" y1="30" x2="36" y2="30" ${thin}/></svg>`,
+
+        // 操作图标
+        edit: `<svg viewBox="0 0 48 48"><path d="M8 38 L12 26 L34 8 L42 16 L20 36 Z" fill="${fillSage}" ${common}/><line x1="30" y1="12" x2="38" y2="20" ${common}/><line x1="12" y1="26" x2="20" y2="34" ${common}/></svg>`,
+        delete: `<svg viewBox="0 0 48 48"><rect x="10" y="14" width="28" height="28" rx="3" fill="${fillCoral}" ${common}/><path d="M18 14 L20 8 L28 8 L30 14" fill="${fillYellow}" ${common}/><line x1="6" y1="14" x2="42" y2="14" ${common}/><line x1="18" y1="22" x2="18" y2="34" ${common}/><line x1="24" y1="22" x2="24" y2="34" ${common}/><line x1="30" y1="22" x2="30" y2="34" ${common}/></svg>`,
+        write: `<svg viewBox="0 0 48 48"><path d="M8 40 L14 24 L34 6 L42 14 L22 34 Z" fill="${fillYellow}" ${common}/><line x1="30" y1="10" x2="38" y2="18" ${common}/><line x1="14" y1="24" x2="22" y2="32" ${common}/></svg>`,
+        plus: `<svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="18" fill="${fillSage}" ${common}/><line x1="24" y1="14" x2="24" y2="34" ${common}/><line x1="14" y1="24" x2="34" y2="24" ${common}/></svg>`,
+        copy: `<svg viewBox="0 0 48 48"><rect x="10" y="6" width="26" height="32" rx="3" fill="white" ${common}/><rect x="18" y="14" width="22" height="28" rx="3" fill="${fillBlue}" ${common}/><line x1="14" y1="14" x2="28" y2="14" ${thin}/><line x1="14" y1="20" x2="24" y2="20" ${thin}/></svg>`,
+        link: `<svg viewBox="0 0 48 48"><path d="M18 30 C12 30 8 26 8 20 C8 14 12 10 18 10 L22 10" fill="none" ${common}/><path d="M30 38 C36 38 40 34 40 28 C40 22 36 18 30 18 L26 18" fill="none" ${common}/><line x1="16" y1="16" x2="32" y2="32" ${common}/></svg>`,
+        refresh: `<svg viewBox="0 0 48 48"><path d="M40 24 C40 34 32 40 24 40 C14 40 8 32 8 24 C8 14 16 8 24 8 C30 8 34 11 37 15" fill="none" ${common}/><path d="M36 8 L38 16 L30 16" fill="${fillSage}" ${common}/></svg>`,
+        export: `<svg viewBox="0 0 48 48"><rect x="8" y="8" width="28" height="34" rx="3" fill="white" ${common}/><path d="M8 16 L36 16" ${common}/><line x1="14" y1="24" x2="26" y2="24" ${thin}/><line x1="14" y1="30" x2="24" y2="30" ${thin}/><path d="M36 22 L44 28 L36 34" fill="${fillBlue}" ${common}/></svg>`,
+        import: `<svg viewBox="0 0 48 48"><rect x="12" y="8" width="28" height="34" rx="3" fill="white" ${common}/><path d="M12 16 L40 16" ${common}/><line x1="18" y1="24" x2="30" y2="24" ${thin}/><line x1="18" y1="30" x2="28" y2="30" ${thin}/><path d="M12 22 L4 28 L12 34" fill="${fillSage}" ${common}/></svg>`,
+        key: `<svg viewBox="0 0 48 48"><circle cx="18" cy="24" r="10" fill="${fillYellow}" ${common}/><circle cx="18" cy="24" r="4" fill="white" ${common}/><line x1="26" y1="24" x2="42" y2="24" ${common}/><line x1="36" y1="24" x2="36" y2="30" ${common}/><line x1="40" y1="24" x2="40" y2="30" ${common}/></svg>`,
+        poster: `<svg viewBox="0 0 48 48"><rect x="6" y="6" width="36" height="36" rx="3" fill="white" ${common}/><rect x="12" y="12" width="24" height="18" rx="2" fill="${fillSage}" ${common}/><circle cx="16" cy="16" r="2" fill="${fillYellow}" ${common}/><path d="M12 30 L18 22 L24 30" fill="none" ${common}/><line x1="12" y1="36" x2="36" y2="36" ${thin}/></svg>`,
+        sparkle: `<svg viewBox="0 0 48 48"><path d="M24 4 L28 18 L42 22 L28 26 L24 40 L20 26 L6 22 L20 18 Z" fill="${fillYellow}" ${common}/></svg>`,
+        download: `<svg viewBox="0 0 48 48"><rect x="8" y="6" width="32" height="36" rx="3" fill="${fillBlue}" ${common}/><path d="M8 14 L40 14" ${common}/><line x1="24" y1="18" x2="24" y2="32" ${common}/><path d="M18 28 L24 34 L30 28" fill="none" ${common}/></svg>`,
+        eye: `<svg viewBox="0 0 48 48"><path d="M6 24 C12 14 36 14 42 24 C36 34 12 34 6 24 Z" fill="${fillSage}" ${common}/><circle cx="24" cy="24" r="7" fill="white" ${common}/><circle cx="24" cy="24" r="3" fill="${stroke}" stroke="none"/></svg>`,
+        sheep: `<svg viewBox="0 0 48 48"><ellipse cx="22" cy="30" rx="14" ry="10" fill="white" ${common}/><circle cx="34" cy="22" r="8" fill="white" ${common}/><ellipse cx="28" cy="16" rx="3" ry="6" fill="white" ${common} transform="rotate(-15 28 16)"/><ellipse cx="40" cy="16" rx="3" ry="6" fill="white" ${common} transform="rotate(15 40 16)"/><circle cx="31" cy="20" r="1" fill="${stroke}" stroke="none"/><circle cx="37" cy="20" r="1" fill="${stroke}" stroke="none"/><path d="M18 38 L18 44 M26 38 L26 44" ${common}/></svg>`,
+        home: `<svg viewBox="0 0 48 48"><path d="M8 20 L24 8 L40 20 L40 40 L8 40 Z" fill="${fillBrown}" ${common}/><path d="M18 40 L18 28 L30 28 L30 40" fill="white" ${common}/></svg>`,
+        menu: `<svg viewBox="0 0 48 48"><line x1="8" y1="14" x2="40" y2="14" ${common}/><line x1="8" y1="24" x2="40" y2="24" ${common}/><line x1="8" y1="34" x2="40" y2="34" ${common}/></svg>`,
+        close: `<svg viewBox="0 0 48 48"><line x1="12" y1="12" x2="36" y2="36" ${common}/><line x1="36" y1="12" x2="12" y2="36" ${common}/></svg>`,
+        star: `<svg viewBox="0 0 48 48"><path d="M24 6 L28 18 L40 18 L30 26 L34 38 L24 30 L14 38 L18 26 L8 18 L20 18 Z" fill="${fillYellow}" ${common}/></svg>`,
+        clock: `<svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="16" fill="white" ${common}/><line x1="24" y1="24" x2="24" y2="14" ${common}/><line x1="24" y1="24" x2="32" y2="28" ${common}/></svg>`,
+        phone: `<svg viewBox="0 0 48 48"><rect x="14" y="6" width="20" height="36" rx="3" fill="${fillBlue}" ${common}/><circle cx="24" cy="34" r="3" fill="white" ${common}/><line x1="20" y1="12" x2="28" y2="12" ${thin}/></svg>`,
+
+        // 交通细分
+        plane: `<svg viewBox="0 0 48 48"><path d="M8 28 L22 22 L28 8 L34 8 L32 22 L42 20 L44 24 L32 28 L30 42 L24 42 L24 28 Z" fill="${fillBlue}" ${common}/></svg>`,
+        train: `<svg viewBox="0 0 48 48"><rect x="6" y="10" width="36" height="24" rx="4" fill="${fillBlue}" ${common}/><rect x="10" y="14" width="10" height="8" rx="1" fill="white" ${common}/><rect x="24" y="14" width="10" height="8" rx="1" fill="white" ${common}/><circle cx="14" cy="38" r="3" fill="${fillYellow}" ${common}/><circle cx="34" cy="38" r="3" fill="${fillYellow}" ${common}/><line x1="6" y1="34" x2="42" y2="34" ${common}/></svg>`,
+        bus: `<svg viewBox="0 0 48 48"><rect x="6" y="10" width="36" height="24" rx="3" fill="${fillYellow}" ${common}/><rect x="10" y="14" width="10" height="8" rx="1" fill="white" ${common}/><rect x="24" y="14" width="10" height="8" rx="1" fill="white" ${common}/><circle cx="12" cy="38" r="3" fill="${fillYellow}" ${common}/><circle cx="36" cy="38" r="3" fill="${fillYellow}" ${common}/><line x1="6" y1="34" x2="42" y2="34" ${common}/></svg>`,
+        car: `<svg viewBox="0 0 48 48"><path d="M8 30 L10 20 L18 16 L30 16 L38 20 L40 30 L40 36 L8 36 Z" fill="${fillSage}" ${common}/><circle cx="14" cy="36" r="4" fill="${fillYellow}" ${common}/><circle cx="34" cy="36" r="4" fill="${fillYellow}" ${common}/><rect x="14" y="20" width="20" height="8" rx="1" fill="white" ${common}/></svg>`,
+        taxi: `<svg viewBox="0 0 48 48"><path d="M8 30 L12 20 L20 16 L28 16 L36 20 L40 30 L40 36 L8 36 Z" fill="${fillYellow}" ${common}/><rect x="18" y="10" width="12" height="4" fill="${fillCoral}" ${common}/><circle cx="14" cy="36" r="4" fill="white" ${common}/><circle cx="34" cy="36" r="4" fill="white" ${common}/></svg>`,
+        metro: `<svg viewBox="0 0 48 48"><rect x="8" y="12" width="32" height="22" rx="10" fill="${fillBlue}" ${common}/><rect x="14" y="18" width="8" height="8" rx="3" fill="white" ${common}/><rect x="26" y="18" width="8" height="8" rx="3" fill="white" ${common}/><line x1="12" y1="36" x2="36" y2="36" ${common}/></svg>`,
+        ship: `<svg viewBox="0 0 48 48"><path d="M6 30 L42 30 L36 40 L12 40 Z" fill="${fillBlue}" ${common}/><path d="M12 30 L16 16 L32 16 L36 30" fill="white" ${common}/><path d="M20 10 L28 10 L30 16 L18 16 Z" fill="${fillYellow}" ${common}/><line x1="24" y1="8" x2="24" y2="4" ${common}/><path d="M18 6 L30 6" ${common}/></svg>`,
+        scooter: `<svg viewBox="0 0 48 48"><circle cx="12" cy="34" r="5" fill="${fillYellow}" ${common}/><circle cx="36" cy="34" r="5" fill="${fillYellow}" ${common}/><path d="M12 34 L18 22 L34 22 L40 34" fill="none" ${common}/><path d="M20 22 L24 14 L30 14" fill="none" ${common}/><line x1="30" y1="14" x2="30" y2="10" ${common}/></svg>`,
+
+        // 清单分类
+        doc: `<svg viewBox="0 0 48 48"><rect x="10" y="6" width="28" height="36" rx="3" fill="white" ${common}/><path d="M10 14 L38 14" ${common}/><circle cx="16" cy="10" r="1.5" fill="${stroke}" stroke="none"/><circle cx="22" cy="10" r="1.5" fill="${stroke}" stroke="none"/><line x1="16" y1="22" x2="32" y2="22" ${thin}/><line x1="16" y1="28" x2="32" y2="28" ${thin}/><line x1="16" y1="34" x2="26" y2="34" ${thin}/></svg>`,
+        clothing: `<svg viewBox="0 0 48 48"><path d="M14 10 L20 10 L24 16 L28 10 L34 10 L38 18 L34 20 L34 40 L14 40 L14 20 L10 18 Z" fill="${fillBlue}" ${common}/></svg>`,
+        electronics: `<svg viewBox="0 0 48 48"><rect x="12" y="6" width="24" height="32" rx="3" fill="${fillSage}" ${common}/><circle cx="24" cy="30" r="2" fill="white" ${common}/><line x1="18" y1="12" x2="30" y2="12" ${thin}/><path d="M36 16 L44 12 L44 32 L36 28" fill="${fillYellow}" ${common}/></svg>`,
+        toiletries: `<svg viewBox="0 0 48 48"><rect x="18" y="8" width="12" height="32" rx="2" fill="${fillBlue}" ${common}/><path d="M18 14 L30 14" ${common}/><circle cx="24" cy="26" r="5" fill="white" ${common}/><path d="M21 26 Q24 30 27 26" fill="none" ${common}/></svg>`,
+        medicine: `<svg viewBox="0 0 48 48"><rect x="14" y="10" width="20" height="32" rx="4" fill="${fillCoral}" ${common}/><line x1="24" y1="18" x2="24" y2="34" ${common}/><line x1="16" y1="26" x2="32" y2="26" ${common}/></svg>`,
+        luggage: `<svg viewBox="0 0 48 48"><rect x="12" y="12" width="24" height="30" rx="3" fill="${fillBrown}" ${common}/><path d="M20 12 L20 6 L28 6 L28 12" fill="${fillYellow}" ${common}/><line x1="12" y1="20" x2="36" y2="20" ${thin}/><line x1="12" y1="28" x2="36" y2="28" ${thin}/></svg>`,
+
+        // 住宿类型
+        hotel: `<svg viewBox="0 0 48 48"><rect x="8" y="10" width="32" height="32" rx="2" fill="${fillBrown}" ${common}/><rect x="14" y="18" width="8" height="8" rx="1" fill="white" ${common}/><rect x="26" y="18" width="8" height="8" rx="1" fill="white" ${common}/><line x1="8" y1="16" x2="40" y2="16" ${common}/><path d="M18 32 L30 32" ${thin}/></svg>`,
+        homestay: `<svg viewBox="0 0 48 48"><path d="M8 22 L24 10 L40 22 L40 42 L8 42 Z" fill="${fillBrown}" ${common}/><rect x="18" y="30" width="12" height="12" rx="1" fill="white" ${common}/><rect x="22" y="18" width="8" height="8" rx="1" fill="${fillYellow}" ${common}/></svg>`,
+        hostel: `<svg viewBox="0 0 48 48"><rect x="8" y="12" width="32" height="30" rx="2" fill="${fillBlue}" ${common}/><rect x="14" y="18" width="20" height="8" rx="1" fill="white" ${common}/><line x1="14" y1="34" x2="20" y2="34" ${thin}/><line x1="28" y1="34" x2="34" y2="34" ${thin}/></svg>`,
+        camping: `<svg viewBox="0 0 48 48"><path d="M6 40 L24 12 L42 40" fill="${fillSage}" ${common}/><path d="M16 40 L24 24 L32 40" fill="white" ${common}/><line x1="6" y1="40" x2="42" y2="40" ${common}/></svg>`
+    };
+    return icons[name] || '';
+}
+
+function renderIcons() {
+    document.querySelectorAll('.icon-svg[data-icon]:not([data-rendered])').forEach(el => {
+        const svg = getIconSvg(el.dataset.icon);
+        if (svg) {
+            el.innerHTML = svg;
+            el.setAttribute('data-rendered', 'true');
+        }
+    });
 }
 
 // ================= 增删改查 =================
